@@ -1,177 +1,183 @@
-# 角色设计规范 · Character Design Guide
+# Character Design Guide
 
-> 从零创造一个新的 Mood Mates 角色的完整指南。一个角色 = 一个自包含的纯数据文件，不需要改动任何引擎代码。
+> A complete guide to creating a new Mood Mates character from scratch. A character is one self-contained pure-data file; no engine code needs to change.
 
-## 一、角色数据包 Schema
+## 1. Character data schema
 
-```js
-window.MoodMates.characters.register({
-  id: 'puffy',                     // 唯一 ID(小写字母)
-  name: '泡芙',                    // 中文名
-  en: { name: 'Puffy', desc: '...' },
-  industry: 'general',             // general / 自定义(站点文案补 industry_<key> 即可)
-  desc: '角色一句话介绍',
+A character is a typed object (`CharacterRaw` in `src/engine/mood-mates/types.ts`) in its own file under `src/engine/mood-mates/characters/`, registered from `src/engine/mood-mates/index.ts`:
 
-  /* 1. 身体剪影:参数化生成器描述符(见下文"身体生成器") */
+```ts
+import type { CharacterRaw } from '../types';
+
+export const puffy: CharacterRaw = {
+  id: 'puffy',                     // unique ID (lowercase letters)
+  name: 'Puffy',                   // display name
+  industry: 'general',             // general / custom (add the label in the gallery's industry map)
+  desc: 'One-line character intro',
+
+  // 1. Body silhouette: parametric generator descriptor (see "Body generators")
   body: { type: 'puff', r: 0.96, waves: [{ k: 6, amp: 0.05 }] },
 
-  /* 2. 面部拟合:五官整体在剪影上的偏移与缩放 */
+  // 2. Face fit: overall offset and scale of the features on the silhouette
+  //    x/y translate; sx/sy scale the eye placement; eye is the eye size factor
   face: { x: 0, y: 6, sx: 1, sy: 0.96, eye: 1 },
-  //  x/y 平移;sx/sy 眼位横纵缩放;eye 眼睛尺寸系数
 
-  /* 3. 色板:body 主体色 + states 语义状态色(表情数据用 @token 引用) */
+  // 3. Palette: body main color + states for semantic colors (emotion data references them as @tokens)
   palette: {
     body: '#8AD6C8',
-    eye: '#25333B',                // 眼睛颜色(@eye)
+    eye: '#25333B',                // eye color (@eye)
     eyeHighlight: '#FFFFFF',
-    blush: '#F0A8A8',              // 腮红
-    mouth: '#31424B',              // 嘴巴(缺省用 eye 色)
-    zzz: '#8FB5AC',                // 睡眠字母粒子
-    fx: ['#7FD8CE', '#9BC7F0'],    // 可选:覆盖特效皮肤默认配色
+    blush: '#F0A8A8',
+    mouth: '#31424B',              // falls back to the eye color
+    zzz: '#8FB5AC',                // sleep letter particles
+    fx: ['#7FD8CE', '#9BC7F0'],    // optional: override the FX skin colors
     states: {
-      base: '#8AD6C8',             // @base 常态
-      dim: '#7CB4A9',              // @dim  低落/睡眠
-      soft: '#98E0D2',             // @soft 柔和/开心
-      blush: '#EFB9BC',            // @blush 泛红
-      angry: '#E5705F',            // @angry 涨红
-      alert: '#E25B5B',            // @alert 出错警示
-      off: '#93AFA8'               // @off  停止
-    }
+      base: '#8AD6C8',             // @base resting
+      dim: '#7CB4A9',              // @dim low / sleeping
+      soft: '#98E0D2',             // @soft gentle / happy
+      blush: '#EFB9BC',            // @blush flushed
+      angry: '#E5705F',            // @angry red
+      alert: '#E25B5B',            // @alert error warning
+      off: '#93AFA8',              // @off halted
+    },
   },
 
-  /* 4. 眼型基调:决定 20 个语义眼形槽位的"长相" */
+  // 4. Eye style: sets the "look" of the 20 semantic eye-shape slots
   eyeStyle: {
-    dx: 30,       // 眼心到面部中线距离
-    cy: 102,      // 眼心纵坐标(头部中心 120)
-    w: 25, h: 33, // 眼宽 / 眼高
-    taper: 0.42,  // 端部收尖:0.3 圆角矩形感 ~ 1.2 两端极尖
-    tilt: 0,      // 整体倾角(度,正值外高内低)
-    bend: 0.02,   // 中轴弯曲(正值上拱)
-    highlight: { dx: 4, dy: -7, r: 3.2 },  // 豆眼高光点,null 关闭
+    dx: 30,       // distance from eye center to the face midline
+    cy: 102,      // eye center y (head center is 120)
+    w: 25, h: 33, // eye width / height
+    taper: 0.42,  // end taper: 0.3 rounded-rect feel ~ 1.2 very pointed ends
+    tilt: 0,      // overall tilt in degrees (positive = outer high, inner low)
+    bend: 0.02,   // center-line bend (positive = arched up)
+    highlight: { dx: 4, dy: -7, r: 3.2 },  // bean-eye highlight dot, null disables
 
-    /* 可选:瞳孔眼(填了 pupil 即从豆眼切换为分层眼球)。
-     * 眼睑 lens 环变成 clipPath,内部分层渲染眼白/虹膜/瞳孔/高光:
-     * - 闭眼/眨眼/眯笑时自动切换为深色睫线,瞳孔绝不会露在闭眼之外
-     * - 注视时瞳孔在眼眶内额外滑动(比眼睑多走 50%)
-     * - 高光位置固定(光源方位不变),不随眼球转动 */
+    // Optional pupil eyes: providing `pupil` switches from bean eyes to a layered eyeball.
+    // The eyelid lens ring becomes a clipPath and the sclera / iris / pupil / highlights render inside it:
+    // - closed / blinking / smiling eyes switch to a dark lash line, so the pupil never shows outside a closed eye
+    // - when looking, the pupil slides further inside the socket (50% more than the eyelid)
+    // - highlights stay fixed (the light source does not move) and do not rotate with the eyeball
     pupil: {
-      irisR: 11,               // 虹膜半径
-      pupilR: 5.2,             // 瞳孔半径
-      irisColor: '#23424E',    // 虹膜色(径向渐变自动生成)
-      socket: '#FFFFFF',       // 眼白色
-      highlights: [            // 定光源高光(可多枚,dx 左右眼自动镜像)
+      irisR: 11,               // iris radius
+      pupilR: 5.2,             // pupil radius
+      irisColor: '#23424E',    // iris color (radial gradient generated automatically)
+      socket: '#FFFFFF',       // sclera color
+      highlights: [            // fixed-light highlights (several allowed; dx mirrors between eyes)
         { dx: -3.6, dy: -4.4, r: 3.4 },
-        { dx: 4.2, dy: 2.8, r: 1.5, opacity: 0.65 }
-      ]
-    }
+        { dx: 4.2, dy: 2.8, r: 1.5, opacity: 0.65 },
+      ],
+    },
   },
 
-  /* 4b. 专属轮廓组(可选):为特定表情定义超越 20 个语义槽位的自定义轮廓。
-   * eyeShapes 用原始 lens 参数(w/h/bend/slope/taper/shift/tilt),
-   * mouthShapes 用原始 mouthLens 参数(w/h/bend/taper);
-   * 之后即可在表情覆盖里用名字引用 */
+  // 4b. Custom outline sets (optional): outlines beyond the 20 semantic slots for specific emotions.
+  //     eyeShapes use raw lens params (w/h/bend/slope/taper/shift/tilt),
+  //     mouthShapes use raw mouthLens params (w/h/bend/taper);
+  //     reference them by name from emotion overrides afterwards
   eyeShapes: {
-    delight: { w: 28, h: 15, bend: 0.7, taper: 1.3 }
+    delight: { w: 28, h: 15, bend: 0.7, taper: 1.3 },
   },
   mouthShapes: {
-    bigGrin: { w: 20, h: 9, bend: -0.35, taper: 0.5 }
+    bigGrin: { w: 20, h: 9, bend: -0.35, taper: 0.5 },
   },
 
-  /* 5. 五官配置 */
+  // 5. Facial features
   features: {
-    mouth: { w: 25, dy: 33 },                       // 嘴宽 / 纵向位置;false 关闭
-    blush: { dx: 42, dy: 22, rx: 11, ry: 6.5, max: 0.85 },  // 腮红;true 用默认;false 关闭
-    brows: { w: 15, h: 3.2, dx: 30, dyTop: -26, always: false },  // 眉毛;false 关闭
-    /* 配饰联动组件(见"四、配饰联动系统") */
+    mouth: { w: 25, dy: 33 },                                     // mouth width / vertical position; false disables
+    blush: { dx: 42, dy: 22, rx: 11, ry: 6.5, max: 0.85 },        // true uses defaults; false disables
+    brows: { w: 15, h: 3.2, dx: 30, dyTop: -26, always: false },  // false disables
+    // linked accessory components (see "4. Linked accessories")
     accessories: [
       { kind: 'glasses', color: '#C9973F', fit: 1.3 },
-      { kind: 'path', layer: 'back', d: 'M...', fill: '...', micro: { type: 'float', amp: 1.6, period: 3000 } }
-    ]
+      { kind: 'path', layer: 'back', d: 'M...', fill: '...', micro: { type: 'float', amp: 1.6, period: 3000 } },
+    ],
   },
 
-  /* 6. 特效皮肤(含签名动作):
-   * cloudpuff 云泡·一口远近不一的小云泡，连点换扇区 / stardust 星尘·星星爆闪+思考铅笔轨道。
-   * 皮肤可设 signatureMouth：签名触发时嘴形临时覆盖，到期弹回当前表情嘴形 */
+  // 6. FX skin (including the signature move):
+  //    cloudpuff = cloud bubbles blown at varied distances, repeated clicks change sector /
+  //    stardust = star burst + a pencil in the thinking orbit.
+  //    A skin may set signatureMouth: the mouth is overridden while the signature plays, then returns to the emotion's mouth
   fxSkin: 'cloudpuff',
 
-  /* 7. 表情覆盖(可选):按表情 ID 浅合并覆盖共享基座;
-   * pool / mouth 可引用 4b 定义的专属轮廓名 */
+  // 7. Emotion overrides (optional): shallow-merged over the shared base by emotion ID;
+  //    pool / mouth may reference the custom outline names from 4b
   emotions: {
     '02': { antics: false, poolMs: [14000, 22000] },
     '21': { pool: ['delight'] },
-    '33': { body: { spinFx: 0, confetti: 0.8 }, mouth: 'bigGrin' }
-  }
-});
+    '33': { body: { spinFx: 0, confetti: 0.8 }, mouth: 'bigGrin' },
+  },
+};
 ```
 
-## 二、身体生成器
+Register it in `src/engine/mood-mates/index.ts` (`characters.register(puffy)`), after the existing characters.
 
-全部生成器位于 `src/core/geometry.js`，输出 96 点闭合环。用 `tools/ring-editor.html` 可视化调参后把描述符复制进角色文件。
+## 2. Body generators
 
-| type | 剪影 | 关键参数 |
+All generators live in `src/engine/mood-mates/geometry.ts` and output a 96-point closed ring. Tune them visually in the ring editor (`pnpm dev`, then open `/mood-mates/tools/ring-editor.html`) and copy the descriptor into the character file.
+
+| type | Silhouette | Key parameters |
 | --- | --- | --- |
-| `cloud` | 扇贝云 | `lobes` 瓣数、`amp` 波幅、`flat` 底部收平 |
-| `star` | 圆角星 | `points` 角数、`inner` 内径比、`sharp` 尖锐度 |
-| `puff` | 谐波扰动圆 | `waves: [{k, amp, phase}]`(自由基元,二创起点) |
+| `cloud` | Scalloped cloud | `lobes` petal count, `amp` wave amplitude, `flat` flattened bottom |
+| `star` | Rounded star | `points` point count, `inner` inner radius ratio, `sharp` sharpness |
+| `puff` | Harmonically perturbed circle | `waves: [{k, amp, phase}]` (free primitives, a starting point for derivatives) |
 
-**出画检查**：viewBox 是 0 0 240 240，头部中心 120、基准半径 104。`r × 104 × (1 + 最大隆起)` 不要超过 118，否则剪影顶部会出画。
+**Overflow check**: the viewBox is 0 0 240 240, the head center is 120 and the base radius is 104. `r × 104 × (1 + max bulge)` must not exceed 118, or the top of the silhouette leaves the frame.
 
-## 三、眼形语义槽位
+## 3. Eye-shape semantic slots
 
-表情基座通过槽位名引用眼形，每个角色用自己的 `eyeStyle` 实例化。20 个槽位：
+The emotion base references eye shapes by slot name, and each character realizes them with its own `eyeStyle`. The 20 slots:
 
-- 平静：`calm` `calm2`
-- 笑眼：`happy` `happy2`
-- 圆睁：`wide` `wide2`
-- 闭合：`closed` `closed2` `sleepy`
-- 斜眼：`squint` `squint2`
-- 怒目：`angry` `angry2`
-- 扫读：`scan` `scan2` `scan3`
-- 聆听：`listen` `listen2`
-- 羞怯：`shy` · 哀伤：`sad`
+- Calm: `calm` `calm2`
+- Smiling: `happy` `happy2`
+- Wide open: `wide` `wide2`
+- Closed: `closed` `closed2` `sleepy`
+- Squint: `squint` `squint2`
+- Angry: `angry` `angry2`
+- Scanning: `scan` `scan2` `scan3`
+- Listening: `listen` `listen2`
+- Shy: `shy` · Sad: `sad`
 
-嘴形槽位 9 个：`smile` `grin` `o` `flat` `frown` `wavy` `pout` `open` `dot`。
+The 9 mouth slots: `smile` `grin` `o` `flat` `frown` `wavy` `pout` `open` `dot`.
 
-角色气质主要靠 `eyeStyle` 四个参数拉开：`taper`（圆润 ↔ 锐利）、`tilt`（无辜 ↔ 精明）、`bend`（平直 ↔ 弯月）、`w/h` 比例（机敏 ↔ 呆萌）。
+A character's temperament is mostly set by four `eyeStyle` parameters: `taper` (round ↔ sharp), `tilt` (innocent ↔ shrewd), `bend` (flat ↔ crescent) and the `w/h` ratio (alert ↔ dopey).
 
-## 四、配饰联动系统
+## 4. Linked accessories
 
-配饰不是静态贴图，而是带锚点绑定与微动效的联动组件（`src/core/features.js`）：
+Accessories are not static decals. They are components with anchor bindings and micro-motion (`src/engine/mood-mates/features.ts`):
 
-| kind | 说明 | 联动行为 |
+| kind | Description | Linked behavior |
 | --- | --- | --- |
-| `glasses` | 圆框眼镜 | **autoFit**：镜框圆心 / 半径由角色实际眼位眼形自动求出（`fit` 缩放系数）；追随目光 75%（眼球在镜片内滑动形成视差）；眨眼时镜框下滑回弹；镜片周期扫光（`glintPeriod`） |
-| `path` | 自定义 path | `anchor: 'face'` 贴脸投影 / `'abs'` 身体坐标；`micro: { type: 'float' | 'swing', amp, period }` 微动效 |
+| `glasses` | Round-frame glasses | **autoFit**: the frame centers and radii are derived from the character's real eye positions and shapes (`fit` scales them); follows the gaze at 75% (the eyeballs slide inside the lenses for parallax); the frame slips down and rebounds on blinks; the lenses sweep with a periodic glint (`glintPeriod`) |
+| `path` | Custom path | `anchor: 'face'` projects onto the face / `'abs'` uses body coordinates; `micro: { type: 'float' \| 'swing', amp, period }` adds micro-motion |
 
-所有配饰均写在身体坐标系（240 × 240，中心 120）里，跟随身体呼吸 / 倾斜 / 弹跳；`layer: 'back'` 渲染在身体之后（提手、翅膀），`layer: 'front'` 渲染在五官之上（眼镜、徽章）。
+All accessories are authored in body coordinates (240 × 240, center 120) and follow body breathing / tilt / bounce. `layer: 'back'` renders behind the body (handles, wings) and `layer: 'front'` renders above the features (glasses, badges).
 
-眼睛实际位置参考：x = 120 ± eyeStyle.dx × face.sx，y = 120 + face.y + (eyeStyle.cy − 120) × face.sy。
+Actual eye position: x = 120 ± eyeStyle.dx × face.sx, y = 120 + face.y + (eyeStyle.cy − 120) × face.sy.
 
-## 四b、物理正确性守则
+## 4b. Physical-correctness rules
 
-引擎已内建以下守则，设计新角色 / 新表情时请勿破坏：
+The engine already enforces these rules. Do not break them when designing new characters or emotions:
 
-1. **闭眼不见瞳孔**：瞳孔眼的闭合感由轮廓实际厚度（鞋带面积 ÷ 宽度）× 开合度判定。`effOpen < 0.26` 自动切换深色睫线；`0.26~0.45` 为小眼模式（瞳孔与虹膜按开合度等比缩小、仅隐藏白色高光，最深色的瞳点始终可见）。自定义 `eyeShapes` 若表达"闭眼 / 眯笑"，把厚度做薄即可自动获得睫线效果；
-2. **五官同向联动**：眼球注视时，瞳孔多走 50%、眉毛跟 80%、眼镜跟 75%、嘴巴跟 35%、腮红跟 25%——层次差形成立体感，新配饰请沿用此梯度；
-3. **闭眼连锁**：眨眼 / 闭眼时眉毛放松下垂、眼镜下滑回弹；豆眼高光按**有效可见高度**（bbox 高与轮廓厚度取小 × open × scaleY，约低于 18px）隐藏，不再只用 `open<0.35`；
-4. **高光 / 瞳孔不出眶**：豆眼高光偏移按当前眼环 bbox 相对默认 bbox 缩放，并钳制点心距边缘 ≥ 半径；瞳孔圆心钳制在当前眼环 bbox 收缩 `pupilR` 的范围内（虹膜约束更松），防止注视时被眼睑裁成月牙；
-5. **绕背隐藏**：所有贴脸五官配饰共享同一套经度投影，自旋到背面自动隐藏。
+1. **Closed eyes never show a pupil**: the closed feel of a pupil eye is decided by the outline's real thickness (shoelace area ÷ width) × openness. `effOpen < 0.26` switches to a dark lash line; `0.26–0.45` is the small-eye mode (pupil and iris shrink in proportion to openness, only the white highlights hide, and the darkest pupil dot stays visible). A custom `eyeShapes` entry that expresses "closed / squint" gets the lash effect automatically if you make it thin;
+2. **Features follow the gaze in a gradient**: when the eyes look somewhere, the pupil travels 50% extra, the brows follow 80%, the glasses 75%, the mouth 35% and the blush 25%. The layering creates depth; new accessories should follow the same gradient;
+3. **Closing chain reaction**: when blinking or closing, the brows relax downward and the glasses slip and rebound. Bean-eye highlights hide by **effective visible height** (the smaller of bbox height and outline thickness × open × scaleY, roughly below 18 px), not just `open < 0.35`;
+4. **Highlights and pupils stay in the socket**: bean-eye highlight offsets scale with the current eye ring bbox relative to the default bbox and are clamped so the dot center stays at least one radius from the edge; the pupil center is clamped to the current eye bbox shrunk by `pupilR` (the iris constraint is looser), so the lid never crops the pupil into a crescent;
+5. **Hidden when facing away**: all face-attached features and accessories share one longitude projection and hide automatically when the character spins to its back.
 
-## 五、性格 = 数据
+## 5. Personality = data
 
-不改代码，用表情覆盖表达性格：
+Express personality with emotion overrides, without touching code:
 
-- **沉稳**（金融）：`antics: false`、`poolMs` 拉长、动画 `amp` 减半、`period` 加长；
-- **躁动**（游戏）：`poolMs` 缩短、`amp` 加大、常驻眉毛；
-- **慢性子**：待机 glance `period` 加到 6000+；
-- **庆祝风格**：点击走 `celebrate()`（云宝吹云泡且不叠自旋撒花；亮亮仍是签名 + 肢体 + 撒花）。图鉴 `'33'` 的 `spinFx` / `confetti` 只作用于进入该表情时，不是点击庆祝。
-- **专属表情长相**：`pool` / `mouth` 引用 `eyeShapes` / `mouthShapes` 自定义轮廓，让关键表情有独一无二的五官。
+- **Steady** (finance): `antics: false`, longer `poolMs`, halved animation `amp`, longer `period`;
+- **Restless** (games): shorter `poolMs`, larger `amp`, brows always visible;
+- **Slow-paced**: raise the idle glance `period` to 6000+;
+- **Celebration style**: clicks go through `celebrate()` (Nimbo blows cloud bubbles without stacking spin or confetti; Twinkle still does signature + limbs + confetti). The gallery's `'33'` `spinFx` / `confetti` only apply when entering that emotion; they are not the click celebration;
+- **Distinctive emotion faces**: `pool` / `mouth` can reference custom `eyeShapes` / `mouthShapes` outlines, giving key emotions one-of-a-kind features.
 
-## 六、上线检查清单
+## 6. Launch checklist
 
-1. `tools/ring-editor.html` 调参完成，剪影无出画、无自交；
-2. 六个基础状态肉眼过一遍：02 待机 / 10 开心 / 14 害羞 / 21 生气 / 30 思考 / 33 完成；
-3. 色板 7 个 states 全部填写（缺省会回退主体色，导致生气不变红）；
-4. 在 `index.html` 加一行 `<script src="src/characters/你的角色.js"></script>`（在 engine.js 之后）；
-5. **在 `docs/DESIGN-PROVENANCE.md` 追加角色档案**（动机、参数、日期、迭代记录）——原创证据链要求；
-6. 剪影与现有角色横向对比，确保互不雷同、且不与任何第三方知名形象近似。
+1. Finish tuning in the ring editor; the silhouette must not overflow or self-intersect;
+2. Eyeball the six base states: 02 Idle / 10 Happy / 14 Shy / 21 Angry / 30 Thinking / 33 Done;
+3. Fill in all 7 palette states (missing ones fall back to the body color, so anger would not turn red);
+4. Register the character in `src/engine/mood-mates/index.ts`, after `engine`'s own imports;
+5. **Append a character profile to `docs/DESIGN-PROVENANCE.md`** (motivation, parameters, date, iteration log), as the originality evidence chain requires;
+6. Compare the silhouette against the existing characters to be sure none look alike, and that none resembles any well-known third-party character.

@@ -1,0 +1,39 @@
+{
+  "name": "aora-bot",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Emotion Ball and Mood Mates: SVG expression engines for AI mascots, with a React gallery",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc",
+    "lint": "biome check",
+    "build:lib": "LIB=mood-mates vite build -c vite.lib.config.ts && LIB=emotion-ball vite build -c vite.lib.config.ts",
+    "test:live": "node tests/live/live-check.mjs",
+    "parity:engine": "node tests/parity/engine-capture.mjs",
+    "parity:ui": "node tests/parity/ui-capture.mjs",
+    "parity:compare": "node tests/parity/compare.mjs"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

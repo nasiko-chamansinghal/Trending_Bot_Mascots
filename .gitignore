@@ -1,7 +1,14 @@
-# internal docs — never publish
-emotion-ball/docs/口播与发布文案.md
-emotion-ball/docs/商业授权运营手册.md
+emotion-ball/docs/
 
-# editor / agent internals
 .cursor/
 **/.cursor/
+
+node_modules/
+dist/
+dist-lib/
+test-results/
+playwright-report/
+tests/parity/__baseline__/
+tests/parity/__output__/
+.claude/
+.DS_Store

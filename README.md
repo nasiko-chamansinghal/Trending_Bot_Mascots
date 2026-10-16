@@ -1,91 +1,109 @@
 <div align="center">
 
-# Emotion Ball 表情馆
+# Emotion Ball Gallery
 
-**为 AI 助手打造的表情引擎 —— 32 种状态表情 · 3 种身体形态 · 纯 SVG + 原生 JavaScript · 零依赖**
+**An expression engine for AI assistants — 32 emotion states · 3 body shapes · pure SVG · strict TypeScript · React gallery**
 
-[![在线预览](https://img.shields.io/badge/demo-emotion--balls.vercel.app-8A63F4?logo=vercel&logoColor=white)](https://emotion-balls.vercel.app/)
-[![许可](https://img.shields.io/badge/license-learning--only-orange)](LICENSE)
-[![零依赖](https://img.shields.io/badge/dependencies-zero-brightgreen)](#)
-[![技术栈](https://img.shields.io/badge/made%20with-vanilla%20JS%20%2B%20SVG-F7DF1E?logo=javascript&logoColor=black)](#)
+[![Live Demo](https://img.shields.io/badge/demo-emotion--balls.vercel.app-8A63F4?logo=vercel&logoColor=white)](https://emotion-balls.vercel.app/)
+[![License](https://img.shields.io/badge/license-learning--only-orange)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](#tech-stack)
+[![Made With](https://img.shields.io/badge/made%20with-React%20%2B%20Vite%20%2B%20SVG-61DAFB?logo=react&logoColor=black)](#tech-stack)
 
-**中文** | [English](README.en.md)
-
-[在线预览](https://emotion-balls.vercel.app/) · [特性](#特性) · [快速开始](#快速开始) · [集成指南](#集成指南) · [自定义与扩展](#自定义与扩展) · [许可](#许可)
+[Live demo](https://emotion-balls.vercel.app/) · [Features](#features) · [Quick start](#quick-start) · [Integration guide](#integration-guide) · [Customization](#customization--extensibility) · [License](#license)
 
 </div>
 
 ---
 
-> **授权声明**:仓库内 [emotion-ball/](emotion-ball/) 目录的球形角色**视觉形象**(blob / wedge / gem 身体造型、配色与特效视觉)仅供个人技术学习与研究,**禁止任何商业用途**且永不提供商业授权;表情引擎源代码与表情配置数据(眼形 / 嘴形参数、动画原语、关键帧序列)为独立编写,**双许可**——非商业免费,商业用途可获取授权。详见 [LICENSE](LICENSE)、[LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) 与 [NOTICE.md](NOTICE.md)。
+> **License notice**: The **visual designs** of the ball-shaped characters in the [emotion-ball/](emotion-ball/) directory (blob / wedge / gem body silhouettes, color schemes and FX visuals) are for personal technical study and research only — **any commercial use is prohibited** and no commercial license will ever be offered for them. The expression engine source code and emotion configuration data (eye/mouth-shape parameters, animation primitives, keyframe sequences) are independently written and **dual-licensed**: free for non-commercial use, with commercial licensing available. See [LICENSE](LICENSE), [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) and [NOTICE.md](NOTICE.md).
 >
-> [mood-mates/](mood-mates/) 目录为同源引擎的**原创角色子项目**(云宝 Nimbo / 亮亮 Twinkle),独立原创设计,采用**双许可**(个人学习免费 + 可获取商业授权),不受上述限制约束。
+> The [mood-mates/](mood-mates/) directory is an **original-character sub-project** built on the same engine lineage (Nimbo the cloud / Twinkle the star). Those characters are independently created original designs under a **dual license** (free for personal learning + commercial licensing available) and are not subject to the restriction above.
 
-本仓库由「一座总馆 + 两个子项目」组成:
+This repository is "one main gallery + two sub-projects":
 
-- **总馆(根目录 `index.html`)**:云宝 × 亮亮 × 球球 三个角色**同台切换展示**——同一面 32 表情陈列墙,点击顶部角色卡即可整馆换角,由两套引擎(MoodMates + EmotionBall)共同驱动;
-- **[mood-mates/](mood-mates/)**:原创角色项目(云宝 / 亮亮),多角色架构、双许可、可商用,自带独立展示站与集成文档;
-- **[emotion-ball/](emotion-ball/)**:球形角色项目(形象仅供学习,引擎与表情数据可商业授权),32 种状态表情、3 种身体形态,自带独立展示站。
+- **Main gallery (`/`)**: Nimbo × Twinkle × Ball share **one stage** — the same 32-emotion wall, switchable via the cast cards on top, driven by the two engines (Mood Mates + Emotion Ball) side by side;
+- **Mood Mates (`/mood-mates/`)**: the original-character project (Nimbo / Twinkle) — multi-character architecture, dual-licensed and commercially licensable, with its own gallery site and docs;
+- **Emotion Ball (`/emotion-ball/`)**: the ball-character project (visuals learning-only; engine & emotion data commercially licensable) — 32 emotion states, 3 body shapes, with its own gallery site.
 
-Emotion Ball 是一套面向 AI 助手的表情引擎:32 种状态表情全部由纯 SVG 与原生 JavaScript 实时驱动,零框架、零图片资源。AI 侧只需输出一个 `emotionId`,即可切换到对应表情,可直接用作聊天机器人、桌面宠物、悬浮助手的情绪表达层。
+Emotion Ball is an expression engine for AI assistants: 32 emotion states rendered entirely in pure SVG — no image assets. Your AI only needs to output a single `emotionId` and the ball switches to the matching expression, making it a drop-in emotion layer for chatbots, desktop pets and floating assistants.
 
-它也不只是"一颗球":内置圆胖(blob)、三角(wedge)、菱形(gem)三种身体形态,支持主题色多实例与线稿模式;整套表情体系围绕纯数据配置设计——眼环池、动画原语、关键帧序列自由组合,基于现有设计即可自主扩展新表情与新玩法。
+It is also more than "a ball": three body shapes ship out of the box — blob, wedge and gem — along with themed multi-instance support and a wireframe mode. The whole expression system is pure-data driven: eye-ring pools, animation primitives and keyframe sequences compose freely, so you can build new expressions and behaviors on top of the existing design without touching engine code.
 
-仓库同时内置完整的「表情展示馆」站点:开屏线稿 Hero、陈列墙与画册双浏览模式、中英双语界面、明暗双主题。
+The repository also ships a complete gallery site: a wireframe hero opening, wall and album browsing modes and dark / light themes.
 
-## 预览
+## Preview
 
-![总馆开屏](emotion-ball/assets/screenshots/total.png)
+![Gallery hero](emotion-ball/assets/screenshots/total.png)
 
-| 球球 · 暗黑 | 球球 · 明亮 |
+| Emotion Ball · Dark | Emotion Ball · Light |
 | :---: | :---: |
-| ![球球暗黑](emotion-ball/assets/screenshots/qiuqiu.png) | ![球球明亮](emotion-ball/assets/screenshots/qiuqiu-mingliang.png) |
+| ![Emotion Ball dark](emotion-ball/assets/screenshots/qiuqiu.png) | ![Emotion Ball light](emotion-ball/assets/screenshots/qiuqiu-mingliang.png) |
 
-| 云宝 · 暗黑 | 云宝 · 明亮 |
+| Nimbo · Dark | Nimbo · Light |
 | :---: | :---: |
-| ![云宝暗黑](emotion-ball/assets/screenshots/yunbao.png) | ![云宝明亮](emotion-ball/assets/screenshots/yunbao-mingliang.png) |
+| ![Nimbo dark](emotion-ball/assets/screenshots/yunbao.png) | ![Nimbo light](emotion-ball/assets/screenshots/yunbao-mingliang.png) |
 
-| 亮亮 · 暗黑 | 亮亮 · 明亮 |
+| Twinkle · Dark | Twinkle · Light |
 | :---: | :---: |
-| ![亮亮暗黑](emotion-ball/assets/screenshots/liangliang.png) | ![亮亮明亮](emotion-ball/assets/screenshots/liangliang-mingliang.png) |
+| ![Twinkle dark](emotion-ball/assets/screenshots/liangliang.png) | ![Twinkle light](emotion-ball/assets/screenshots/liangliang-mingliang.png) |
 
-## 特性
+## Features
 
-- **32 种状态表情**:覆盖生命周期(睡眠 / 唤醒 / 待机…)、情绪反应(开心 / 害羞 / 生气 / 惊讶…)与代理工作状态(思考中 / 检索资料 / 出错 / 任务完成…)三大分组,全部由配置驱动
-- **3 种身体形态**:圆胖(blob)、三角(wedge)、菱形(gem),同一套眼睛与动画系统按轮廓自动适配;另支持主题色实例(团队小球)与线稿模式
-- **分段式 emotionId**:十位数字即分组前缀 —— `00-09` 生命周期、`10-29` 情绪、`30-49` 代理状态、`50+` 自定义;组间空号为新表情预留,已有编号永不重排,对接方可放心硬编码
-- **轮廓环眼睛系统**:25 组 48 点轮廓眼环,逐点弹簧插值形变,表情池随机轮换,眨眼带过冲关键帧
-- **球面投影**:眼睛按身体轮廓做经度换算与余弦压缩,自旋绕到背面时自动隐藏
-- **彩带与撒花**:自旋达速甩出 3D 轨道拖尾彩带(5-stop 色相渐变),思考状态头顶常驻环带,庆祝状态物理粒子撒花
-- **鼠标注视**:全页面注视跟随,帧率无关指数平滑,叠加常驻眼神微漂移
-- **配置驱动、可自主扩展**:每个表情都是「眼环池 + 动画原语 + 关键帧序列」的纯数据组合,支持运行时注册自定义表情、导入导出全部配置,详见[自定义与扩展](#自定义与扩展)
-- **AI 对接协议健壮**:`handleAIMessage` 接受对象或 JSON 字符串,未知 ID、解析失败、缺字段均自动回退待机并触发 `error` 事件,永不白屏
-- **零依赖**:HTML + SVG + 原生 JavaScript,无构建步骤,可直接迁移到 Electron 悬浮窗
-- **展示馆站点**:陈列墙(网格 + 点击弹窗大图)与画册(横向长廊 + 大舞台翻页)双模式,顶部工具行集中提供分组 / 形状 / 间隔下拉与线稿、自动播放开关,中英双语、明暗主题,全部偏好经 localStorage 持久化
+- **32 emotion states** across three groups — Lifecycle (sleeping / waking / idle…), Emotions (happy / shy / angry / surprised…) and Agent States (thinking / searching / error / done…) — all config-driven;
+- **3 body shapes**: blob, wedge and gem, with one eye and animation system that adapts automatically to each silhouette; themed instances (team bots) and wireframe mode are also supported;
+- **Segmented emotionId scheme**: the tens digit is the group prefix — `00-09` Lifecycle, `10-29` Emotions, `30-49` Agent States, `50+` Custom; gaps between groups are reserved slots and existing IDs are never renumbered, so integrations can hard-code them safely;
+- **Contour-ring eye system**: 25 sets of 48-point eye contours, point-by-point spring morphing, expression-pool rotation and overshooting blink keyframes;
+- **Spherical projection**: eyes follow the body silhouette with longitude mapping and cosine compression, hiding automatically when spun to the back;
+- **Ribbons & confetti**: spin-triggered 3D orbital ribbon trails with 5-stop hue gradients, a persistent halo ribbon for the thinking state, and physics-based confetti bursts;
+- **Mouse gaze**: page-wide gaze tracking with frame-rate-independent smoothing, plus constant subtle eye wander;
+- **Config-driven and extensible**: every expression is a pure-data composition of eye-ring pool + animation primitives + keyframe sequence; register custom expressions at runtime and import / export the full config — see [Customization](#customization--extensibility);
+- **Robust AI protocol**: `handleAIMessage` accepts an object or a JSON string; unknown IDs, parse failures and missing fields all fall back to idle and emit an `error` event — it never breaks the page;
+- **Typed engine, no runtime dependencies**: the engines are framework-free strict TypeScript modules; they ship as ES modules or as drop-in script-tag bundles;
+- **React gallery**: wall mode (grid + click-to-open lightbox) and album mode (horizontal strip + big stage with paging), group / shape / interval dropdowns plus sketch and autoplay switches, dark / light themes, all preferences persisted in localStorage.
 
-## 快速开始
+## Tech stack
+
+| Layer | Choice |
+| --- | --- |
+| Language | TypeScript 7 (strict) |
+| UI | React 19 |
+| Build | Vite 8 (multi-page), plus a library build for script-tag bundles |
+| Rendering | Pure SVG driven by a shared `requestAnimationFrame` heartbeat — the engines never go through React state |
+| Lint / format | Biome |
+| Parity gates | Playwright + pixelmatch (see [Parity testing](#parity-testing)) |
+
+## Quick start
 
 ```bash
-# 任意静态服务器均可,例如:
-python -m http.server 8765
-# 总馆(三角色同台):  http://localhost:8765/
-# Mood Mates 子站:    http://localhost:8765/mood-mates/
-# Emotion Ball 子站:  http://localhost:8765/emotion-ball/
+pnpm install
+pnpm dev            # http://localhost:5173
 ```
 
-或直接双击 `index.html`(建议通过本地服务器访问,以正常加载 Google Fonts)。
+| URL | Page |
+| --- | --- |
+| `/` | Main gallery: Nimbo × Twinkle × Ball on one stage |
+| `/mood-mates/` | Mood Mates gallery |
+| `/emotion-ball/` | Emotion Ball gallery |
+| `/mood-mates/tools/ring-editor.html` | Parametric contour editor |
 
-## 集成指南
+Other scripts:
 
-### 最小接入
+```bash
+pnpm build          # type-check, then build all pages into dist/
+pnpm preview        # serve dist/
+pnpm build:lib      # script-tag bundles into dist-lib/ (mood-mates.iife.js, emotion-ball.iife.js)
+pnpm typecheck      # tsc
+pnpm lint           # biome check
+```
 
-按顺序引入四个脚本(无构建、无依赖)即可创建实例;`i18n.js` 与 `app.js` 属于展示站,宿主接入不需要:
+## Integration guide
+
+### Minimal setup
+
+As a script tag (after `pnpm build:lib`):
 
 ```html
-<script src="emotion-ball/js/rings.js"></script>
-<script src="emotion-ball/js/emotions.js"></script>
-<script src="emotion-ball/js/ball.js"></script>
-<script src="emotion-ball/js/engine.js"></script>
+<script src="dist-lib/emotion-ball.iife.js"></script>
 
 <div id="bot" style="width:200px;height:200px"></div>
 <script>
@@ -95,151 +113,182 @@ python -m http.server 8765
 </script>
 ```
 
-### AI 对接协议
+As an ES module:
 
-AI 只需输出一段 JSON,交给 `handleAIMessage`(接受对象或字符串):
+```ts
+import { EmotionBall } from './src/engine/emotion-ball';
 
-```js
-ball.handleAIMessage('{"emotionId":"30","tips":"正在思考用户问题"}');
+const ball = EmotionBall.create(document.getElementById('bot') as HTMLElement, {
+  emotion: '02',
+  idle: true,
+});
 ```
 
-- 未知 `emotionId`、JSON 解析失败、缺少字段 → 触发 `error` 事件并自动回退待机(`fallbackId`,默认 `'02'`);
-- `tips` 为可选展示文案,通过 `tips` 事件透出,由宿主决定如何呈现。
+In React, mount it through the `Mascot` component (`src/app/components/Mascot.tsx`), which owns the engine lifecycle.
 
-### 创建选项
+### AI protocol
 
-| 选项 | 默认 | 说明 |
+Your AI outputs a single JSON payload and hands it to `handleAIMessage` (object or string):
+
+```js
+ball.handleAIMessage('{"emotionId":"30","tips":"thinking about the question"}');
+```
+
+- Unknown `emotionId`, JSON parse failures and missing fields emit an `error` event and fall back to idle (`fallbackId`, default `'02'`);
+- `tips` is optional display text, surfaced through the `tips` event for the host to render as it sees fit.
+
+### Creation options
+
+| Option | Default | Description |
 | --- | --- | --- |
-| `emotion` | `'02'` | 初始表情 ID |
-| `shape` | `'blob'` | 身体形态:`blob` 圆胖 / `wedge` 三角 / `gem` 菱形 |
-| `color` / `eyeColor` | — | 主题实例体色 / 眼色,优先于表情配置的体色 |
-| `eyeScale` | `1` | 眼睛放大倍率;小于 80px 的实例建议 `1.5~1.8` 保证可读 |
-| `idle` | `false` | 待机策略,超时自动切换待机 / 睡眠,可传对象自定义时长与目标表情 |
-| `autostart` | `true` | 设为 `false` 时只渲染静态帧,不进入动画循环(缩略图用) |
-| `lite` | 跟随 `autostart` | 精简模式:关闭彩带 / 撒花特效 |
-| `fallbackId` | `'02'` | 未知 ID 的回退表情 |
+| `emotion` | `'02'` | initial emotion ID |
+| `shape` | `'blob'` | body shape: `blob` / `wedge` / `gem` |
+| `color` / `eyeColor` | — | themed instance body / eye color, overriding per-emotion colors |
+| `eyeScale` | `1` | eye magnification; `1.5–1.8` recommended below 80 px for readability |
+| `idle` | `false` | idle policy — auto standby / sleep after a timeout; pass an object to customize durations and target states |
+| `autostart` | `true` | `false` renders a single static frame without entering the animation loop (for thumbnails) |
+| `lite` | follows `autostart` | lite mode: disables ribbon / confetti effects |
+| `fallbackId` | `'02'` | fallback emotion for unknown IDs |
 
-### 事件与方法
+### Events & methods
 
 ```js
-ball.on('change', e => {});         // 表情已切换 { id, def, auto }
-ball.on('tips',   e => {});         // AI 附带文案 { text }
-ball.on('error',  e => {});         // 协议错误 { message, ... }
+ball.on('change', e => {});         // emotion switched { id, def, auto }
+ball.on('tips',   e => {});         // AI display text { text }
+ball.on('error',  e => {});         // protocol error { message, ... }
 
-ball.setEmotion('21');              // 直接切换表情
-ball.setGaze(nx, ny);               // 归一化目光 [-1, 1],宿主自行监听 pointermove
-ball.setStyle({ sketch: 1 });       // 线稿模式
-ball.spin(3);                       // 自旋甩彩带
-ball.burst(24);                     // 撒花
-ball.bounce();                      // 弹跳
-ball.startTour(ids, 2500);          // 自动巡演 / ball.stopTour()
-ball.setActive(false);              // 视口外停帧省电,true 恢复
-ball.renderStatic();                // 停帧状态下渲染一张静态帧
-ball.registerEmotion(raw);          // 运行时注册自定义表情
-ball.destroy();                     // 销毁实例
+ball.setEmotion('21');              // switch directly
+ball.setGaze(nx, ny);               // normalized gaze [-1, 1]; host listens to pointermove
+ball.setStyle({ sketch: 1 });       // wireframe mode
+ball.spin(3);                       // spin & throw ribbons
+ball.burst(24);                     // confetti
+ball.bounce();                      // bounce
+ball.startTour(ids, 2500);          // auto tour / ball.stopTour()
+ball.setActive(false);              // pause off-screen to save power; true resumes
+ball.renderStatic();                // render one static frame while paused
+ball.registerEmotion(raw);          // register a custom emotion at runtime
+ball.destroy();                     // dispose the instance
 ```
 
-### 多实例与性能
+### Multi-instance & performance
 
-- 所有实例共享同一个 rAF 心跳,实例数量不增加循环开销;
-- 缩略图墙场景:以 `autostart: false` 静态渲染,悬停时 `setActive(true)`、移出时 `setActive(false)`;
-- 配合 IntersectionObserver 在视口外调用 `setActive(false)` 停帧省电。
+- All instances share a single rAF heartbeat, so the instance count does not multiply loop overhead;
+- Thumbnail walls: render statically with `autostart: false`, then `setActive(true)` on hover and `setActive(false)` on leave;
+- Pair with IntersectionObserver to pause off-screen instances via `setActive(false)`.
 
-### 桌面宠物 / Electron 接入
+### Desktop pet / Electron
 
-- 窗口参数:`transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true`,页面背景透明,只保留小球容器;
-- 鼠标穿透:`win.setIgnoreMouseEvents(true, { forwardMouseMove: true })`,穿透的同时仍可驱动 `setGaze` 注视;
-- AI 消息经主进程 IPC 转发:`ipcRenderer.on('emotion', (_, msg) => ball.handleAIMessage(msg))`;
-- 小尺寸悬浮窗(≤ 120px)建议 `eyeScale: 1.5` 并开启 `lite: true`。
+- Window flags: `transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true`, with a transparent page background and only the ball container;
+- Click-through: `win.setIgnoreMouseEvents(true, { forwardMouseMove: true })` — the ball still receives `setGaze` while clicks pass through;
+- Forward AI messages via IPC: `ipcRenderer.on('emotion', (_, msg) => ball.handleAIMessage(msg))`;
+- For small floating windows (≤ 120 px), use `eyeScale: 1.5` with `lite: true`.
 
-## 自定义与扩展
+## Customization & extensibility
 
-表情引擎与渲染层是稳定基座,基于现有设计即可自主扩展新表情与新玩法——新增表情只需编写纯数据配置,不需要触碰引擎代码。
+The engine and render layers are a stable foundation — new expressions and behaviors are built from pure-data configs on top of the existing design, without touching engine code.
 
-### 表情配置格式
+### Emotion config format
 
-```js
+```ts
 {
-  id: '50', name: '自定义', group: 'custom',
-  desc: '中文描述', en: { name: 'Custom', desc: '...' },
-  transition: 380,            // 切入过渡时长(ms)
-  gaze: true,                 // false = 不注视鼠标(睡眠/停止类)
-  pool: [2, 11, 17, 19],      // 眼环索引池,poolMs 间隔内随机轮换
-  poolMs: [2500, 4500],       // 轮换间隔;poolSpeed 控制形变速度
-  blinkMs: [2500, 5000],      // 眨眼间隔(null 不眨)
-  openness: 1,                // 常驻眼睛开合度(疲惫 0.55、睡眠 0.08)
-  antics: true,               // 待机随机小动作(自旋/弹跳)
+  id: '50', name: 'Custom', group: 'custom',
+  desc: 'A short description',
+  transition: 380,            // entry transition duration (ms)
+  gaze: true,                 // false = ignore mouse gaze (sleep / halt states)
+  pool: [2, 11, 17, 19],      // eye-ring pool, rotated randomly within poolMs
+  poolMs: [2500, 4500],       // rotation interval; poolSpeed controls morph speed
+  blinkMs: [2500, 5000],      // blink interval (null = never)
+  openness: 1,                // resting eye openness (tired 0.55, sleeping 0.08)
+  antics: true,               // random idle antics (spin / bounce)
   body: { breathe: 0.014, color: '#F6EFE4', zzz: 0, orbit: 0 },
   anims: [ { target: 'eyes', prop: 'lookY', type: 'glance', amp: 6, period: 3000 } ],
-  sequence: { ... }           // 可选:进入表情时的关键帧序列
+  sequence: { ... }           // optional entry keyframe sequence
 }
 ```
 
-### 动画原语
+The type is `EmotionRaw` in `src/engine/emotion-ball/types.ts` (Mood Mates has its own in `src/engine/mood-mates/types.ts`).
 
-每个表情最多叠加 3 条动画,由 6 种原语组合而成:
+### Animation primitives
 
-| 类型 | 效果 | 关键参数 |
+Each expression layers up to three animators, composed from six primitives:
+
+| Type | Effect | Key parameters |
 | --- | --- | --- |
-| `sine` | 正弦漂移 / 呼吸 / 扫视 | `amp, period, phase` |
-| `glance` | 平滑方波,两端停留(左看看、右看看) | `amp, period` |
-| `pulse` | 0 → amp 节奏缩放 | `amp, period` |
-| `jitter` | 伪噪声抖动,可随时间衰减 | `amp, speed, decay` |
-| `scan` | 三角波快速扫动(检索 / 扫读) | `amp, period` |
-| `blink` | 周期闭合(多实例自动错峰) | `interval, dur, phaseMs` |
+| `sine` | sine drift / breathing / sweeping | `amp, period, phase` |
+| `glance` | smoothed square wave, dwelling at both ends (look left, look right) | `amp, period` |
+| `pulse` | rhythmic 0 → amp scaling | `amp, period` |
+| `jitter` | pseudo-noise shake with optional decay | `amp, speed, decay` |
+| `scan` | fast triangular sweep (searching / scanning) | `amp, period` |
+| `blink` | periodic closing (auto-desynced across instances) | `interval, dur, phaseMs` |
 
-`target` 可选 `eyes / body / left / right`;`prop` 可选 `lookX / lookY / x / y / scale / open / rotate`。
+`target`: `eyes / body / left / right`; `prop`: `lookX / lookY / x / y / scale / open / rotate`.
 
-### 关键帧序列
+### Keyframe sequences
 
-`sequence` 定义进入表情时的一次性演出,播完后按 `settle` 语义收尾:`'base'` 回落基础姿态(惊讶),`'hold'` 定格末帧(害羞变粉、生气变红),`{ next: '02' }` 自动切换到下一个表情(唤醒 → 待机)。
+A `sequence` defines a one-shot performance played on entering an expression, then settles per its `settle` semantics: `'base'` eases back to the resting pose (surprise), `'hold'` freezes on the last frame (blushing pink, angry red), and `{ next: '02' }` chains into another expression (wake up → idle).
 
-### 注册与导入导出
+### Registration and import / export
 
 ```js
-// 运行时注册新表情(50+ 为自定义编号段,带完整校验)
-EmotionBall.config.register({ id: '50', name: '自定义', group: 'custom', ... });
+// register a new expression at runtime (IDs 50+ are the custom range, fully validated)
+EmotionBall.config.register({ id: '50', name: 'Custom', group: 'custom', ... });
 
-// 全量导出 / 导入配置 JSON(Emotion Ball 子站的设置抽屉内也提供同款按钮)
+// export / import the full config as JSON
+// (the Emotion Ball site's settings drawer offers the same buttons)
 EmotionBall.config.exportConfig();
 EmotionBall.config.importConfig(json);
 ```
 
-### AI 协作 Skills
+### AI collaboration skills
 
-`.cursor/skills/` 内置两份工程化规范文档,在 Cursor 等 AI 编辑器中打开本仓库时,AI 会自动遵循:
+`.cursor/skills/` ships two engineering guides that AI editors such as Cursor pick up automatically when this repository is open:
 
-- **emotion-design**:表情设计规范——眼环池速查表、动画参数取值范围、关键帧语义与双语文案要求,让 AI 按统一视觉语言帮你设计新表情;
-- **emotion-integration**:集成实践——SDK 选项、AI 协议、多实例性能与 Electron 接入要点,让 AI 帮你完成宿主接入。
+- **emotion-design** — the expression design spec: eye-ring pool reference, animation parameter ranges, keyframe semantics and copy requirements, so an AI designs new expressions within a consistent visual language;
+- **emotion-integration** — integration practices: SDK options, the AI protocol, multi-instance performance and Electron guidance, so an AI can wire the ball into your host app.
 
-## 项目结构
+## Project layout
 
 ```
-(仓库根)
-├── index.html          # 总馆入口:云宝 × 亮亮 × 球球 同台切换
-├── site/               # 总馆外壳:样式 / 文案 / 双引擎适配交互层
-├── mood-mates/         # 原创角色子项目:云宝 / 亮亮(双许可,自带展示站与文档)
-│   ├── index.html      #   Mood Mates 独立展示站
-│   ├── src/            #   引擎:几何 / 渲染 / 五官 / 特效 / 驱动 / 角色包
-│   ├── LICENSE         #   社区许可(个人学习免费)
-│   ├── LICENSE-COMMERCIAL.md  # 商业许可
-│   └── docs/           #   角色设计规范 + 原创证据链
-├── emotion-ball/       # 球形角色项目(形象仅供学习;引擎与表情数据可商业授权)
-│   ├── index.html      #   Emotion Ball 独立展示站
-│   ├── css/ js/        #   双主题样式 + 引擎(rings / emotions / ball / engine)
-│   ├── assets/         #   站点图标与 README 截图
-│   └── docs/           #   发布文案
-└── .cursor/skills/     # AI 协作 Skills:表情设计规范 + 集成实践
+(repo root)
+├── index.html, mood-mates/index.html, emotion-ball/index.html   # Vite page entries (same URLs as before)
+├── mood-mates/tools/ring-editor.html                            # ring editor entry
+├── src/
+│   ├── engine/
+│   │   ├── shared/         # SVG helpers, spring / easing / color math shared by both engines
+│   │   ├── mood-mates/     # engine: geometry / render / features / fx / driver / characters / data
+│   │   └── emotion-ball/   # engine: rings / emotions / ball / driver / hero particles
+│   ├── app/                # React gallery: pages, components, shared state hooks
+│   ├── entries/            # one tiny bootstrap per page
+│   └── styles/             # one stylesheet per page
+├── tests/
+│   ├── harness/            # engine harness page for the script-tag bundles
+│   └── parity/             # capture + compare tooling for the parity gates
+├── mood-mates/             # original-character sub-project: assets, docs, licenses (dual-licensed)
+├── emotion-ball/assets/    # favicon & README screenshots
+└── .cursor/skills/         # AI collaboration skills: emotion design + integration
 ```
 
-## 许可
+## Parity testing
 
-本仓库包含三类授权不同的内容,请注意区分:
+Commands: `pnpm parity:engine <harnessUrl> <outDir>`, `pnpm parity:ui <baseUrl> <outDir>` and `pnpm parity:compare <dirA> <dirB>`.
 
-- **表情引擎与表情数据(根目录及 [emotion-ball/](emotion-ball/) 目录)**:源代码(状态机、弹簧插值、球面投影、配置注册中心等)与表情配置数据(眼环 / 眼形 / 嘴形参数、动画原语、关键帧序列)为独立编写与设计,**双许可**——个人学习、研究免费([LICENSE](LICENSE));商业用途可获取商业授权([LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)),商业集成须搭配自有或另行合法授权的角色形象。
-- **球形角色视觉形象(blob / wedge / gem 身体造型、配色与特效视觉)**:仅供**个人技术学习与研究**,禁止任何商业用途,**不提供、也永不提供商业授权**,详见 [NOTICE.md](NOTICE.md)。
-- **原创角色 云宝 / 亮亮([mood-mates/](mood-mates/) 目录)**:独立原创设计,**双许可**——个人学习、研究免费使用([社区许可](mood-mates/LICENSE));商业产品、SaaS、客户交付等商业场景可获取授权([商业许可](mood-mates/LICENSE-COMMERCIAL.md))。原创证据链见 [mood-mates/docs/DESIGN-PROVENANCE.md](mood-mates/docs/DESIGN-PROVENANCE.md)。
+The migration from the original global-script JavaScript to TypeScript + React was verified with two gates (`tests/parity/`):
 
-## 相关项目
+- **Engine gate** — `engine-capture.mjs` runs the same scripted scenario against the original scripts and against the new `dist-lib` bundles under a deterministic virtual clock and seeded `Math.random`, and `compare.mjs` diffs the resulting SVG. Every character × variant × emotion, the actions, tours, idle policy, AI messages and config round trip were byte-identical.
+- **UI gate** — `ui-capture.mjs` drives the original site and the React build through the same user flows (character / shape / group changes, stage open, paging, drawer, AI messages, theme, modes, gaze, hover) and compares a normalized DOM skeleton, saved preferences and screenshots.
 
-原创角色表情引擎 **Mood Mates**(云宝 / 亮亮,双许可、可商用)位于本仓库的 [mood-mates/](mood-mates/) 目录:自带独立展示站(`mood-mates/index.html`)、集成指南与角色设计规范,与球形角色项目互不影响。
+Both gates need the original site served separately (for example from a `git archive` of the pre-migration commit) and a production build of this repo; see the scripts for the exact arguments.
+
+A third check, `pnpm test:live <baseUrl>` (`tests/live/live-check.mjs`), exercises a running build in real time with a real mouse and keyboard: mascot animation and gaze, paging, stage open / close, theme and mode persistence across reloads, config export and import, AI messages, character switching, autoplay, a mobile viewport and the ring editor. It passes against both `pnpm preview` and `pnpm dev`.
+
+## License
+
+This repository contains three differently licensed parts — please keep them apart:
+
+- **Expression engine & emotion data (repository root and the [emotion-ball/](emotion-ball/) directory)**: the source code (state machine, spring interpolation, spherical projection, config registry, etc.) and the emotion configuration data (eye-ring / eye-shape / mouth-shape parameters, animation primitives, keyframe sequences) are independently written and designed, under a **dual license** — free for personal learning and research ([LICENSE](LICENSE)); commercial licensing available ([LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)). Commercial integrations must pair them with your own or otherwise lawfully licensed character designs.
+- **Ball-character visual designs (blob / wedge / gem body silhouettes, color schemes and FX visuals)**: for **personal technical study and research only**; any commercial use is prohibited and **no commercial license is or will ever be offered** — see [NOTICE.md](NOTICE.md).
+- **Original characters Nimbo & Twinkle ([mood-mates/](mood-mates/) directory)**: independently created original designs under a **dual license** — free for personal learning and research ([community license](mood-mates/LICENSE)); commercial products, SaaS and client deliverables can obtain a commercial license ([commercial license](mood-mates/LICENSE-COMMERCIAL.md)). See the originality evidence chain in [mood-mates/docs/DESIGN-PROVENANCE.md](mood-mates/docs/DESIGN-PROVENANCE.md).
+
+## Related projects
+
+**Mood Mates**, the original-character expression engine (Nimbo & Twinkle, dual-licensed and commercially licensable), lives in the [mood-mates/](mood-mates/) directory and in `src/engine/mood-mates/`: it ships its own gallery site (`/mood-mates/`), integration guide and character design docs, fully independent from the ball project.

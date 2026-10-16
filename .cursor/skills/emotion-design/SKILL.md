@@ -1,78 +1,80 @@
 ---
 name: emotion-design
-description: 设计与新增 Emotion Ball 表情:眼环池选择、动画原语参数、关键帧序列、体色与双语文案规范。Use when adding or tuning emotions in js/emotions.js, designing new expression behaviors, choosing eye-ring pools, or adjusting the emotion ball's visual language.
+description: "Design and add Emotion Ball emotions: eye-ring pool selection, animation primitive parameters, keyframe sequences, body color and copy rules. Use when adding or tuning emotions in src/engine/emotion-ball/emotions.ts, designing new expression behaviors, choosing eye-ring pools, or adjusting the emotion ball's visual language."
 ---
 
-# Emotion Ball 表情设计
+# Emotion Ball emotion design
 
-## 视觉语言(硬约束)
+## Visual language (hard constraints)
 
-- 表情差异只靠四件事表达:**眼环池轮换、目光方向、身体姿态(位移/旋转/缩放)、体色**。不新增图形元素(嘴、眉毛、手等)。
-- 体色基准为陶瓷白 `#F3F0EA`;情绪色只用于强表达(生气/出错红 `#E4574A`、害羞粉 `#F4D3D0`),灰调降饱和用于低能量态(睡眠/休眠/失落)。
-- 克制原则:单个表情叠加的 `anims` 不超过 3 条;振幅宁小勿大(目光 ±2~11,身体位移 ±1~9)。
-- 特效是事件不是常态:`ribbons` / `confetti` 只在进入表情时触发一次;常驻效果仅有 `body.orbit`(思考环带)与 `body.zzz`(睡眠字母)。
+- Emotions differ through four things only: **eye-ring pool rotation, gaze direction, body pose (offset / rotation / scale) and body color**. Do not add new graphic elements (mouth, brows, hands, etc.).
+- The body color baseline is ceramic white `#F3F0EA`; emotion colors are reserved for strong expression (angry / error red `#E4574A`, shy pink `#F4D3D0`), and desaturated grays are for low-energy states (sleeping / dormant / dejected).
+- Restraint: no more than 3 `anims` per emotion; prefer small amplitudes (gaze ±2~11, body offset ±1~9).
+- FX are events, not a constant: `ribbons` / `confetti` trigger once on entering an emotion; the only persistent effects are `body.orbit` (thinking ribbon orbit) and `body.zzz` (sleep letters).
 
-## 眼环池速查(EXPRESSIONS 索引)
+## Eye-ring pool reference (EXPRESSIONS index)
 
-| 情绪族 | 索引 |
+| Emotion family | Indices |
 |---|---|
-| 平静 | 0, 8 |
-| 笑眼 | 2, 11, 17, 19 |
-| 圆睁 | 3, 21 |
-| 闭合 / 困倦 | 13, 22, 4 |
-| 斜眼 / 无奈 | 14, 5, 23 |
-| 怒目 | 7, 16 |
-| 扫读 / 检索 | 15, 9, 20, 12, 18 |
-| 聆听 | 10, 1 |
-| 羞怯 | 24 |
+| Calm | 0, 8 |
+| Smiling | 2, 11, 17, 19 |
+| Wide open | 3, 21 |
+| Closed / sleepy | 13, 22, 4 |
+| Squint / resigned | 14, 5, 23 |
+| Angry | 7, 16 |
+| Scanning / searching | 15, 9, 20, 12, 18 |
+| Listening | 10, 1 |
+| Shy | 24 |
 
-## 配置字段
+## Config fields
 
-```js
+```ts
 {
-  id: '10',                    // 两位字符串;00-07 生命周期,10-21 情绪,30-41 代理,50+ 自定义
-  name: '开心', group: 'emotion',
-  desc: '…', en: { name: 'Happy', desc: '…' },   // 双语文案必填
-  transition: 380,             // 切入过渡 ms(兴奋类 180-400,低能量态 700-1200)
-  gaze: true,                  // false = 不注视鼠标(睡眠/停止类)
-  pool: [2, 11, 17, 19],       // 眼环索引池
-  poolMs: [2500, 4500],        // 池内轮换间隔;poolSpeed: 10 用于高速轮换(检索)
-  blinkMs: [2500, 5000],       // 眨眼间隔;null = 不眨(睡眠/加载类)
-  openness: 1,                 // 常驻开合度(疲惫 0.55、睡眠 0.08)
-  antics: true,                // 待机随机自旋/弹跳(仅放松类表情开启)
+  id: '10',                    // two-character string; 00-07 lifecycle, 10-21 emotions, 30-41 agent, 50+ custom
+  name: 'Happy', group: 'emotion',
+  desc: '...',                 // English display text; both name and desc are required
+  transition: 380,             // entry transition in ms (excited 180-400, low-energy 700-1200)
+  gaze: true,                  // false = ignore mouse gaze (sleep / halt states)
+  pool: [2, 11, 17, 19],       // eye-ring index pool
+  poolMs: [2500, 4500],        // rotation interval within the pool; poolSpeed: 10 for fast rotation (searching)
+  blinkMs: [2500, 5000],       // blink interval; null = never (sleep / loading states)
+  openness: 1,                 // resting eye openness (tired 0.55, sleeping 0.08)
+  antics: true,                // random idle spin / bounce (relaxed emotions only)
   body: { breathe: 0.012, color: '#F6EFE4', zzz: 0, orbit: 0, ribbons: 0, confetti: 0 },
   eyes: { both: {...}, left: {...}, right: {...} },
   anims: [...], sequence: {...}
 }
 ```
 
-## 动画原语(anims 条目)
+The type is `EmotionRaw` in `src/engine/emotion-ball/types.ts`.
 
-| type | 效果 | 关键参数 |
+## Animation primitives (anims entries)
+
+| type | Effect | Key parameters |
 |---|---|---|
-| `sine` | 正弦漂移 | `amp, period, phase` |
-| `glance` | 平滑方波,两端停留(左看看右看看/点头) | `amp, period` |
-| `pulse` | 0→amp 节奏缩放 | `amp, period` |
-| `jitter` | 伪噪声抖动,可衰减 | `amp, speed, decay(ms)` |
-| `scan` | 三角波快速扫动 | `amp, period` |
-| `blink` | 周期闭合(交替眨眼用 `phaseMs` 错峰) | `interval, dur, phaseMs` |
+| `sine` | sine drift | `amp, period, phase` |
+| `glance` | smoothed square wave, dwelling at both ends (look left, look right / nod) | `amp, period` |
+| `pulse` | rhythmic 0 → amp scaling | `amp, period` |
+| `jitter` | pseudo-noise shake, can decay | `amp, speed, decay (ms)` |
+| `scan` | fast triangular sweep | `amp, period` |
+| `blink` | periodic closing (stagger alternating blinks with `phaseMs`) | `interval, dur, phaseMs` |
 
-`target`: `eyes / body / left / right`;`prop`: `lookX / lookY / x / y / scale / open / rotate`。
+`target`: `eyes / body / left / right`; `prop`: `lookX / lookY / x / y / scale / open / rotate`.
 
-## 关键帧序列(sequence)
+## Keyframe sequences (sequence)
 
-- `settle: 'base'` 播完回落基础姿态(惊讶、接收任务);`'hold'` 定格末帧(害羞变粉、生气变红);`{ next: '02' }` 播完切换表情(唤醒 → 待机)。
-- **缩略图一致性规则**:`settle: 'hold'` 且序列改变体色时,`body.color` 基础值必须等于序列终态色,否则静态缩略图与实际观感不一致。
+- `settle: 'base'` eases back to the resting pose when done (surprise, receiving a task); `'hold'` freezes on the last frame (shy turning pink, angry turning red); `{ next: '02' }` switches emotion when done (wake up → idle).
+- **Thumbnail consistency rule**: when `settle: 'hold'` and the sequence changes the body color, the base `body.color` must equal the final sequence color, or the static thumbnail will not match the real look.
 
-## 新增表情工作流
+## Add-an-emotion workflow
 
 ```
-- [ ] 选 id 分段与 group,name/desc/en 双语齐全
-- [ ] 从眼环池速查表挑 2~5 个索引组成 pool
-- [ ] 配 poolMs / blinkMs / openness / antics
-- [ ] anims 不超过 3 条,振幅克制
-- [ ] 如有 sequence,检查 settle 语义与体色一致性规则
-- [ ] 浏览器验证:缩略图静态帧可辨识、悬停动画正确、主舞台切入过渡自然
+- [ ] Pick an id segment and group; name and desc are filled in
+- [ ] Choose 2~5 indices from the eye-ring pool reference to form the pool
+- [ ] Set poolMs / blinkMs / openness / antics
+- [ ] No more than 3 anims, restrained amplitudes
+- [ ] If there is a sequence, check the settle semantics and the body color consistency rule
+- [ ] Verify in the browser: the static thumbnail frame is recognizable, hover animation is correct, the stage entry transition feels natural
 ```
 
-引擎与渲染层(`js/engine.js` / `js/ball.js`)是稳定基座,新增表情只改 `js/emotions.js`;需要新动画原语时才扩展 `ANIM_TYPES`。
+The engine and render layers (`src/engine/emotion-ball/engine.ts` / `ball.ts`) are a stable foundation; adding an emotion only edits `src/engine/emotion-ball/emotions.ts`. Extend `ANIM_TYPES` only when a new animation primitive is needed.
