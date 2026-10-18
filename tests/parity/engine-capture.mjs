@@ -20,7 +20,8 @@ const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
 await page.addInitScript(initScript, {});
 await page.goto(pageUrl, { waitUntil: 'load' });
-const result = await page.evaluate(scenario);
+const exclude = (process.env.GATE_EXCLUDE || '').split(',').filter(Boolean);
+const result = await page.evaluate(scenario, { exclude });
 await browser.close();
 
 const normalize = (value) => value.replace(/></g, '>\n<');

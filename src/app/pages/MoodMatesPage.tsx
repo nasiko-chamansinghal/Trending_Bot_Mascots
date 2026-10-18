@@ -10,7 +10,7 @@ import { ThumbZone } from '../components/ThumbZone';
 import { Toast } from '../components/Toast';
 import { Topbar } from '../components/Topbar';
 import type { DefLike, MascotEngine } from '../engine-types';
-import { MoodMates, moodMatesConfig } from '../kits';
+import { MoodMates, moodMatesConfigFor } from '../kits';
 import { usePrefs } from '../prefs';
 import { useDrawer, useDrawerTools } from '../useDrawerTools';
 import { type CorePrefs, useGalleryCore } from '../useGalleryCore';
@@ -88,8 +88,9 @@ function CastCard({
 export function MoodMatesPage() {
   const [prefs, updatePrefs, prefsRef] = usePrefs<Prefs>(PREF_KEY, DEFAULTS, sanitize);
   const drawer = useDrawer();
+  const config = moodMatesConfigFor(prefs.character);
   const core = useGalleryCore<Prefs>({
-    config: moodMatesConfig,
+    config,
     prefs,
     prefsRef,
     updatePrefs,
@@ -103,7 +104,7 @@ export function MoodMatesPage() {
     openStage: core.openStage,
     toast: core.toast,
     importApplied: core.importApplied,
-    config: moodMatesConfig,
+    config,
     filename: 'mood-mates-config.json',
   });
 
@@ -122,8 +123,8 @@ export function MoodMatesPage() {
     ? String(prefs.tourMs)
     : '2500';
   const charOptions: DropdownOption[] = CHARS.map((c) => ({ value: c.id, label: `${c.name} · General` }));
-  const counts: Record<string, number> = { all: moodMatesConfig.list().length };
-  for (const g of core.tabs) if (g.key !== 'all') counts[g.key] = moodMatesConfig.list(g.key).length;
+  const counts: Record<string, number> = { all: config.list().length };
+  for (const g of core.tabs) if (g.key !== 'all') counts[g.key] = config.list(g.key).length;
 
   useEffect(() => {
     if (storedVariant && !variant) {
@@ -139,6 +140,16 @@ export function MoodMatesPage() {
     if (!MoodMates.characters.get(id) || id === prefsRef.current.character) return;
     updatePrefs({ character: id });
     if (core.mainRef.current?.touring) core.stopTourUI();
+    core.resetMeta();
+    const next = moodMatesConfigFor(id);
+    const keys = [
+      'all',
+      ...next
+        .groups()
+        .filter((g) => next.list(g.key).length > 0)
+        .map((g) => g.key),
+    ];
+    if (!keys.includes(core.currentTab)) core.setTab('all');
     core.toast(`Switched to ${MoodMates.characters.get(id)?.name}`, 'ok');
   };
 

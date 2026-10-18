@@ -62,6 +62,14 @@ export function useGalleryCore<P extends CorePrefs>({
   configRef.current = config;
   onEscapeRef.current = onEscape;
 
+  useLayoutEffect(() => {
+    if (!config.def(selectedRef.current)) {
+      selectedRef.current = '02';
+      setSelectedId('02');
+      setMetaDef(null);
+    }
+  }, [config]);
+
   const toast = useCallback((text: string, kind = '') => showToast({ text, kind }), [showToast]);
 
   const currentDefs = useCallback(

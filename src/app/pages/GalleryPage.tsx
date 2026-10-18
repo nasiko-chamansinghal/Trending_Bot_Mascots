@@ -8,7 +8,7 @@ import { Toast } from '../components/Toast';
 import { Toggle } from '../components/Toggle';
 import { Topbar } from '../components/Topbar';
 import type { DefLike, EmotionConfigApi, MascotEngine } from '../engine-types';
-import { EmotionBall, emotionBallConfig, MoodMates, moodMatesConfig } from '../kits';
+import { EmotionBall, emotionBallConfig, MoodMates, moodMatesConfigFor } from '../kits';
 import { usePrefs } from '../prefs';
 import { type CorePrefs, useGalleryCore } from '../useGalleryCore';
 
@@ -50,7 +50,12 @@ const CHARS: CharInfo[] = [
   ...MoodMates.characters.list().map((c) => ({ id: c.id, name: c.name, industry: c.industry })),
 ];
 const INDUSTRY: Record<string, string> = { general: 'General', learn: 'Learning only' };
-const BASE_SHAPES: Record<string, string> = { ball: 'Round', nimbo: 'Cloud', twinkle: 'Star' };
+const BASE_SHAPES: Record<string, string> = {
+  ball: 'Round',
+  nimbo: 'Cloud',
+  twinkle: 'Star',
+  nubby: 'Block',
+};
 const BALL_VARIANTS = [
   { id: 'wedge', name: 'Wedge' },
   { id: 'gem', name: 'Gem' },
@@ -67,7 +72,7 @@ function getChar(id: string): CharInfo | undefined {
 }
 
 function configOf(id: string): EmotionConfigApi {
-  return id === 'ball' ? emotionBallConfig : moodMatesConfig;
+  return id === 'ball' ? emotionBallConfig : moodMatesConfigFor(id);
 }
 
 function charVariants(id: string): Array<{ id: string; name: string }> {

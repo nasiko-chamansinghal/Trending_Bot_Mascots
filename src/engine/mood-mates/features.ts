@@ -1,4 +1,5 @@
 import { lens, type Ring } from './geometry';
+import { type Projected, projectOnBody } from './projection';
 import type {
   Accessory,
   BlushCfg,
@@ -33,11 +34,6 @@ export interface FeatureLayer {
   apply: (pose: Pose, sketch: number, yaw: number, now: number) => void;
 }
 
-interface Projection {
-  x: number;
-  cn: number;
-}
-
 interface BuiltAccessory {
   node: SVGElement;
   layer?: 'back' | 'front';
@@ -65,15 +61,8 @@ export function createFeatures(feats: Features, ctx: FeatureCtx): FeatureLayer {
     return back;
   }
 
-  function project(ox: number, oy: number, yaw: number): Projection | null {
-    const sil = ctx.silAt(oy);
-    const cx0 = (sil[0] + sil[1]) / 2;
-    const hw = Math.max((sil[1] - sil[0]) / 2, 12);
-    const theta = clamp(ox / hw, -1.15, 1.15);
-    const total = theta + (yaw || 0);
-    const cn = Math.cos(total);
-    if (cn <= 0.02) return null;
-    return { x: cx0 + hw * Math.sin(total) * 0.985, cn };
+  function project(ox: number, oy: number, yaw: number): Projected | null {
+    return projectOnBody(face.projection === 'plane', C, ctx.silAt(oy), ox, yaw || 0);
   }
 
   function eyeAnchor(side: number): { ox: number; y: number } {

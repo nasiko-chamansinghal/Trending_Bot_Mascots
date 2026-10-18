@@ -23,6 +23,23 @@ export interface LensParams {
   tilt?: number;
 }
 
+export interface LidEdge {
+  y: number;
+  angle?: number;
+  bow?: number;
+}
+
+export interface LidParams {
+  kind: 'lid';
+  rx: number;
+  ry: number;
+  top: LidEdge;
+  bottom: LidEdge;
+  soften?: number;
+}
+
+export type EyeShapeSpec = (Partial<LensParams> & { kind?: 'lens' }) | LidParams;
+
 export interface MouthLensParams {
   w: number;
   h: number;
@@ -56,6 +73,10 @@ export interface BodyDescriptor extends RadialOptions {
   sharp?: number;
   inner?: number;
   waves?: BodyWave[];
+  vertices?: Point[];
+  radius?: number;
+  arcSteps?: number;
+  edgeStep?: number;
 }
 
 const TAU = Math.PI * 2;
@@ -81,6 +102,65 @@ export function sampleRadial(radialFn: (theta: number) => number, opts: RadialOp
     ring.push([r2(cx + r * Math.cos(th)), r2(cy + r * Math.sin(th))]);
   }
   return ring;
+}
+
+export function roundedOutline(vertices: Point[], radius: number, arcSteps: number, edgeStep: number): Ring {
+  const n = vertices.length;
+  const corners: Ring[] = [];
+  for (let i = 0; i < n; i++) {
+    const p0 = vertices[(i - 1 + n) % n] as Point;
+    const p1 = vertices[i] as Point;
+    const p2 = vertices[(i + 1) % n] as Point;
+    const l1 = Math.hypot(p0[0] - p1[0], p0[1] - p1[1]);
+    const l2 = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    if (l1 < 1e-6 || l2 < 1e-6) {
+      corners.push([p1]);
+      continue;
+    }
+    const u1: Point = [(p0[0] - p1[0]) / l1, (p0[1] - p1[1]) / l1];
+    const u2: Point = [(p2[0] - p1[0]) / l2, (p2[1] - p1[1]) / l2];
+    const theta = Math.acos(clampUnit(u1[0] * u2[0] + u1[1] * u2[1]));
+    if (theta < 0.05 || Math.PI - theta < 0.05) {
+      corners.push([p1]);
+      continue;
+    }
+    const t = Math.min(radius / Math.tan(theta / 2), l1 / 2, l2 / 2);
+    const r = t * Math.tan(theta / 2);
+    const bx = u1[0] + u2[0];
+    const by = u1[1] + u2[1];
+    const bl = Math.hypot(bx, by);
+    const d = r / Math.sin(theta / 2);
+    const cx = p1[0] + (bx / bl) * d;
+    const cy = p1[1] + (by / bl) * d;
+    const a0 = Math.atan2(p1[1] + u1[1] * t - cy, p1[0] + u1[0] * t - cx);
+    const a1 = Math.atan2(p1[1] + u2[1] * t - cy, p1[0] + u2[0] * t - cx);
+    let da = a1 - a0;
+    while (da > Math.PI) da -= TAU;
+    while (da < -Math.PI) da += TAU;
+    const arc: Ring = [];
+    for (let s = 0; s <= arcSteps; s++) {
+      const ang = a0 + (da * s) / arcSteps;
+      arc.push([cx + r * Math.cos(ang), cy + r * Math.sin(ang)]);
+    }
+    corners.push(arc);
+  }
+  const ring: Ring = [];
+  for (let i = 0; i < n; i++) {
+    const arc = corners[i] as Ring;
+    for (const p of arc) ring.push([r2(p[0]), r2(p[1])]);
+    const from = arc[arc.length - 1] as Point;
+    const to = (corners[(i + 1) % n] as Ring)[0] as Point;
+    const segs = Math.max(1, Math.ceil(Math.hypot(to[0] - from[0], to[1] - from[1]) / edgeStep));
+    for (let s = 1; s < segs; s++) {
+      const k = s / segs;
+      ring.push([r2(from[0] + (to[0] - from[0]) * k), r2(from[1] + (to[1] - from[1]) * k)]);
+    }
+  }
+  return ring;
+}
+
+function clampUnit(v: number): number {
+  return v < -1 ? -1 : v > 1 ? 1 : v;
 }
 
 const BODY_GEN: Record<string, (p: BodyDescriptor) => Ring> = {
@@ -119,6 +199,13 @@ const BODY_GEN: Record<string, (p: BodyDescriptor) => Ring> = {
       return base * v;
     }, p);
   },
+
+  outline(p) {
+    if (!p.vertices || p.vertices.length < 3) {
+      throw new Error('[MoodMates] outline body needs at least 3 vertices');
+    }
+    return roundedOutline(p.vertices, p.radius ?? 6, p.arcSteps ?? 8, p.edgeStep ?? 3);
+  },
 };
 
 export function buildBody(desc: BodyDescriptor): Ring {
@@ -150,6 +237,34 @@ export function lens(cx: number, cy: number, o: LensParams, mirror = 1): Ring {
     ring.push([r2(cx + x * cs - y * sn), r2(cy + x * sn + y * cs)]);
   }
   return ring;
+}
+
+export function lidRing(cx: number, cy: number, o: LidParams, mirror = 1): Ring {
+  const ring: Ring = [];
+  const edgeY = (e: LidEdge, x: number): number =>
+    e.y * o.ry +
+    Math.tan(((e.angle || 0) * Math.PI) / 180) * x -
+    (e.bow || 0) * o.ry * (1 - (x / o.rx) * (x / o.rx));
+  for (let k = 0; k < EYE_N; k++) {
+    const th = (TAU * k) / EYE_N;
+    const x = o.rx * Math.cos(th);
+    let yTop = edgeY(o.top, x);
+    let yBot = edgeY(o.bottom, x);
+    if (yTop > yBot - 0.2) {
+      const mid = (yTop + yBot) / 2;
+      yTop = mid - 0.1;
+      yBot = mid + 0.1;
+    }
+    const y = Math.min(Math.max(o.ry * Math.sin(th), yTop), yBot);
+    ring.push([x * mirror, y]);
+  }
+  const k = o.soften != null ? o.soften : 0.16;
+  const n = ring.length;
+  return ring.map((p, i) => {
+    const a = ring[(i - 1 + n) % n] as Point;
+    const b = ring[(i + 1) % n] as Point;
+    return [r2(cx + p[0] * (1 - 2 * k) + (a[0] + b[0]) * k), r2(cy + p[1] * (1 - 2 * k) + (a[1] + b[1]) * k)];
+  });
 }
 
 const EYE_SLOTS: Record<string, (s: EyeStyle) => LensParams> = {
@@ -248,7 +363,11 @@ export function buildMouth(slotName: string, base: MouthBase): Ring {
   return fn(base);
 }
 
-export function buildCustomEyePair(o: Partial<LensParams>, style: EyeStyle): EyePair {
+export function buildCustomEyePair(spec: EyeShapeSpec, style: EyeStyle): EyePair {
+  if (spec.kind === 'lid') {
+    return [lidRing(C - style.dx, style.cy, spec, 1), lidRing(C + style.dx, style.cy, spec, -1)];
+  }
+  const o = spec as Partial<LensParams>;
   const merged = Object.assign(
     { w: style.w, h: style.h, taper: style.taper, tilt: style.tilt, bend: style.bend },
     o,

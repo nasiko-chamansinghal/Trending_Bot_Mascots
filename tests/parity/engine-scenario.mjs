@@ -1,4 +1,4 @@
-export const scenario = () => {
+export const scenario = ({ exclude = [] } = {}) => {
   const out = {};
   const MM = window.MoodMates;
   const EB = window.EmotionBall;
@@ -18,7 +18,7 @@ export const scenario = () => {
   const descOf = (d) => (d.en?.desc ? d.en.desc : d.desc || '');
   const groupOf = (g) => (g.en && typeof g.en === 'string' ? g.en : g.name);
 
-  const mmChars = MM.characters.list();
+  const mmChars = MM.characters.list().filter((c) => !exclude.includes(c.id));
   out['mm/meta/characters'] = JSON.stringify(
     mmChars.map((c) => ({
       id: c.id,

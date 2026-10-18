@@ -1,6 +1,9 @@
 import { createFeatures, type FeatureCtx } from './features';
 import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
+import { getMaterial } from './materials';
+import { projectOnBody } from './projection';
+import { createProps } from './props';
 import type { EyePose, HighlightCfg, Pose, ResolvedCharacter } from './types';
 import { centroid, clamp, el, r2, ringPath, shade } from './util';
 
@@ -61,6 +64,7 @@ export interface BallOptions {
   character: ResolvedCharacter;
   label?: string;
   lite?: boolean;
+  material?: string;
 }
 
 export interface BallHandle {
@@ -121,6 +125,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
   const lite = !!opts.lite;
   const ch = opts.character;
   const face = ch.face;
+  const plane = face.projection === 'plane';
   const headRing = ch.bodyRing;
   const palette = ch.palette;
   const feats = ch.features || {};
@@ -179,21 +184,10 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
   const defs = el('defs', {});
   svg.appendChild(defs);
 
-  const grad = el('radialGradient', { id: `${id}g`, cx: '36%', cy: '26%', r: '86%' });
-  const stops = [
-    el('stop', { offset: '0%' }),
-    el('stop', { offset: '38%' }),
-    el('stop', { offset: '78%' }),
-    el('stop', { offset: '100%' }),
-  ] as [SVGStopElement, SVGStopElement, SVGStopElement, SVGStopElement];
-  for (const s of stops) grad.appendChild(s);
-  defs.appendChild(grad);
-
-  const glossGrad = el('radialGradient', { id: `${id}gl`, cx: '50%', cy: '42%', r: '58%' });
-  glossGrad.appendChild(el('stop', { offset: '0%', 'stop-color': '#FFFFFF', 'stop-opacity': '0.9' }));
-  glossGrad.appendChild(el('stop', { offset: '68%', 'stop-color': '#FFFFFF', 'stop-opacity': '0.22' }));
-  glossGrad.appendChild(el('stop', { offset: '100%', 'stop-color': '#FFFFFF', 'stop-opacity': '0' }));
-  defs.appendChild(glossGrad);
+  const materialId = opts.material || ch.material;
+  const materialDef = getMaterial(materialId);
+  if (!materialDef) throw new Error(`[MoodMates] Unknown material: ${materialId}`);
+  const material = materialDef.create({ id, defs, headRing, palette, silMinY, silMaxY, silMaxW });
 
   const shGrad = el('radialGradient', { id: `${id}sh`, cx: '50%', cy: '50%', r: '50%' });
   shGrad.appendChild(el('stop', { offset: '0%', 'stop-color': '#000000', 'stop-opacity': '0.9' }));
@@ -240,40 +234,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
   const featureLayer = createFeatures(feats, featureCtx);
   if (featureLayer.back) bodyG.appendChild(featureLayer.back);
 
-  const head = el('path', {
-    d: ringPath(headRing),
-    fill: `url(#${id}g)`,
-    stroke: 'none',
-    'stroke-width': '2',
-  });
-  bodyG.appendChild(head);
-
-  const glossAmt = palette.gloss != null ? palette.gloss : 0.3;
-  let gloss: SVGEllipseElement | null = null;
-  if (glossAmt > 0) {
-    const glossClip = el('clipPath', { id: `${id}bc`, clipPathUnits: 'userSpaceOnUse' });
-    glossClip.appendChild(el('path', { d: ringPath(headRing) }));
-    defs.appendChild(glossClip);
-    const glossWrap = el('g', { 'clip-path': `url(#${id}bc)`, 'pointer-events': 'none' });
-    gloss = el('ellipse', {
-      cx: r2(C - silMaxW * 0.17),
-      cy: r2(silMinY + (silMaxY - silMinY) * 0.2),
-      rx: r2(silMaxW * 0.15),
-      ry: r2((silMaxY - silMinY) * 0.1),
-      fill: `url(#${id}gl)`,
-      opacity: String(glossAmt),
-      transform: `rotate(-24 ${r2(C - silMaxW * 0.17)} ${r2(silMinY + (silMaxY - silMinY) * 0.2)})`,
-    });
-    glossWrap.appendChild(gloss);
-    bodyG.appendChild(glossWrap);
-  }
-
-  const aoGrad = el('linearGradient', { id: `${id}ao`, x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
-  aoGrad.appendChild(el('stop', { offset: '58%', 'stop-color': '#000000', 'stop-opacity': '0' }));
-  aoGrad.appendChild(el('stop', { offset: '100%', 'stop-color': '#000000', 'stop-opacity': '0.14' }));
-  defs.appendChild(aoGrad);
-  const ao = el('path', { d: ringPath(headRing), fill: `url(#${id}ao)`, 'pointer-events': 'none' });
-  bodyG.appendChild(ao);
+  for (const node of material.body()) bodyG.appendChild(node);
 
   if (featureLayer.mid) bodyG.appendChild(featureLayer.mid);
 
@@ -372,16 +333,25 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     };
   }
 
+  const faceLevel = face.level || 0;
+  const faceG = faceLevel > 0 ? el('g', {}) : null;
+  const faceHost = faceG || bodyG;
+
   const eyeL = buildEye(0);
   const eyeR = buildEye(1);
-  bodyG.appendChild(eyeL.node);
-  bodyG.appendChild(eyeR.node);
-  if (eyeL.hls) for (const h of eyeL.hls) bodyG.appendChild(h.node);
-  if (eyeR.hls) for (const h of eyeR.hls) bodyG.appendChild(h.node);
+  faceHost.appendChild(eyeL.node);
+  faceHost.appendChild(eyeR.node);
+  if (eyeL.hls) for (const h of eyeL.hls) faceHost.appendChild(h.node);
+  if (eyeR.hls) for (const h of eyeR.hls) faceHost.appendChild(h.node);
 
-  bodyG.appendChild(featureLayer.front);
+  faceHost.appendChild(featureLayer.front);
+  if (faceG) bodyG.appendChild(faceG);
 
   svg.appendChild(bodyG);
+
+  const propsLayer = ch.props.length ? el('g', { 'pointer-events': 'none' }) : null;
+  const props = propsLayer ? createProps(ch.props, propsLayer) : null;
+  if (propsLayer) svg.appendChild(propsLayer);
 
   const fxFront = el('g', { 'pointer-events': 'none' });
   svg.appendChild(fxFront);
@@ -398,11 +368,11 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
         fill: palette.zzz || '#A8A296',
         opacity: '0',
         'font-family': "'Space Grotesk', 'Noto Sans SC', sans-serif",
-        'font-weight': '700',
-        'font-style': 'italic',
+        'font-weight': ch.zzz?.weight || '700',
+        'font-style': ch.zzz?.italic === false ? 'normal' : 'italic',
         'text-anchor': 'middle',
       });
-      zn.textContent = 'z';
+      zn.textContent = ch.zzz?.glyph || 'z';
       fxFront.appendChild(zn);
       zzzNodes.push(zn);
     }
@@ -428,37 +398,13 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
       })
     : null;
 
-  let curBodyColor: string | null = null;
   let curSketch = -1;
   let prevYaw = 0;
   let prevNow = 0;
 
-  function setBodyColor(color: string): void {
-    if (color === curBodyColor) return;
-    curBodyColor = color;
-    stops[0].setAttribute('stop-color', shade(color, 0.42));
-    stops[1].setAttribute('stop-color', shade(color, 0.14));
-    stops[2].setAttribute('stop-color', color);
-    stops[3].setAttribute('stop-color', shade(color, -0.22));
-  }
-
   function applySketchChrome(on: boolean, color: string): void {
     svg.classList.toggle('is-sketch', on);
-    if (on) {
-      head.setAttribute('fill', 'none');
-      head.setAttribute('stroke', 'none');
-      head.style.stroke = `var(--sketch-ink, ${shade(color, -0.6)})`;
-      head.setAttribute('stroke-opacity', '0.85');
-      if (gloss) gloss.style.display = 'none';
-      ao.style.display = 'none';
-    } else {
-      head.setAttribute('fill', `url(#${id}g)`);
-      head.setAttribute('stroke', 'none');
-      head.style.stroke = '';
-      head.removeAttribute('stroke-opacity');
-      if (gloss) gloss.style.display = '';
-      ao.style.display = '';
-    }
+    material.setSketch(on, color);
   }
 
   function setEye(eye: EyeState, pose: EyePose, k: number, sketch: number, yaw: number): void {
@@ -488,23 +434,18 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     let ey0 = C + face.y + (base[1] - C) * face.sy + pose.y + pose.lookY;
     ey0 = clamp(ey0, silMinY + halfH, silMaxY - halfH);
 
-    const sil = silAt(ey0);
-    const cx0 = (sil[0] + sil[1]) / 2;
-    const hw = Math.max((sil[1] - sil[0]) / 2, 12);
-
     const ox = face.x + (base[0] - C) * face.sx + pose.x + pose.lookX;
-    const theta = clamp(ox / hw, -1.15, 1.15);
-    const total = theta + (yaw || 0);
-    const cn = Math.cos(total);
-    if (cn <= 0.02) {
+    const proj = projectOnBody(plane, C, silAt(ey0), ox, yaw || 0);
+    if (!proj) {
       eye.node.style.display = 'none';
       if (eye.hls) for (const h of eye.hls) h.node.style.display = 'none';
       return;
     }
+    const cn = proj.cn;
     eye.node.style.display = '';
-    const ex = cx0 + hw * Math.sin(total) * 0.985;
+    const ex = proj.x;
     const dyN = (ey0 - C) / 130;
-    const fy = Math.sqrt(1 - dyN * dyN * 0.22);
+    const fy = plane ? 1 : Math.sqrt(1 - dyN * dyN * 0.22);
 
     const tf = `translate(${r2(ex)} ${r2(ey0)})${pose.rotate ? ` rotate(${r2(pose.rotate)})` : ''} scale(${r2(sxBase * cn)} ${r2(syAll * fy)})`;
     const tfFull = `${tf} translate(${r2(-base[0])} ${r2(-base[1])})`;
@@ -669,9 +610,10 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
 
     bodyG.setAttribute(
       'transform',
-      `translate(${r2(C + b.x)} ${r2(C + b.y)}) rotate(${r2((b.rotate || 0) + spinTilt)}) scale(${r2(b.scale * spinSqX)} ${r2(b.scale)}) translate(${r2(-C)} ${r2(-C)})`,
+      `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - b.scaleY) * b.scale * (silMaxY - C))}) rotate(${r2((b.rotate || 0) + spinTilt)}) scale(${r2(b.scale * spinSqX * b.scaleX)} ${r2(b.scale * b.scaleY)}) translate(${r2(-C)} ${r2(-C)})`,
     );
-    setBodyColor(b.color);
+    if (faceG) faceG.setAttribute('transform', `rotate(${r2(-(b.rotate || 0) * faceLevel)} ${C} ${C})`);
+    material.setColor(b.color);
 
     const lift = clamp(-b.y / 52, 0, 1);
     const shOp = sketch > 0.5 ? 0 : 0.16 * (1 - 0.55 * lift);
@@ -694,6 +636,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     setEye(eyeR, pose.right, 1, sketch, yaw);
 
     featureLayer.apply(pose, sketch, yaw, now);
+    if (props) props.apply(pose.props, { body: b.color, eye: pose.left.color, sketch: sketchOn });
 
     if (lite) return;
 
@@ -701,6 +644,8 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     prevNow = now;
 
     if (zzzNodes) {
+      const zzzSize = ch.zzz?.size ?? 1;
+      const zzzOpacity = ch.zzz?.opacity ?? 0.8;
       const zOn = (b.zzz || 0) > 0;
       for (let z = 0; z < zzzNodes.length; z++) {
         const znode = zzzNodes[z] as SVGTextElement;
@@ -709,9 +654,9 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
           continue;
         }
         const zp = (now * 0.00033 + z / 3) % 1;
-        const zo = (zp < 0.18 ? zp / 0.18 : 1 - (zp - 0.18) / 0.82) * 0.8 * b.zzz;
+        const zo = (zp < 0.18 ? zp / 0.18 : 1 - (zp - 0.18) / 0.82) * zzzOpacity * b.zzz;
         znode.setAttribute('opacity', zo.toFixed(3));
-        znode.setAttribute('font-size', (12 + zp * 11).toFixed(1));
+        znode.setAttribute('font-size', ((12 + zp * 11) * zzzSize).toFixed(1));
         znode.setAttribute(
           'transform',
           `translate(${r2(186 + zp * 34 + 4 * Math.sin(zp * 9))} ${r2(52 - zp * 42)}) rotate(${r2(-10 + zp * 14)})`,

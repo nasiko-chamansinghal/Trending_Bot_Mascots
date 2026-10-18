@@ -12,3 +12,4 @@ tests/parity/__baseline__/
 tests/parity/__output__/
 .claude/
 .DS_Store
+handoff-*.md

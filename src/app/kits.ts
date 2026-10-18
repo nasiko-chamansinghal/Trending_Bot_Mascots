@@ -19,3 +19,19 @@ export const emotionBallConfig: EmotionConfigApi = {
   exportConfig: () => EmotionBall.config.exportConfig(),
   importConfig: (json) => EmotionBall.config.importConfig(json),
 };
+
+const characterConfigs = new Map<string, EmotionConfigApi>();
+
+export function moodMatesConfigFor(characterId: string): EmotionConfigApi {
+  const cached = characterConfigs.get(characterId);
+  if (cached) return cached;
+  const api: EmotionConfigApi = {
+    list: (group) => MoodMates.characters.emotionList(characterId, group) as DefLike[],
+    groups: () => MoodMates.characters.emotionGroups(characterId),
+    def: (id) => MoodMates.characters.emotionDef(characterId, id) as DefLike | null,
+    exportConfig: () => MoodMates.config.exportConfig(),
+    importConfig: (json) => MoodMates.config.importConfig(json),
+  };
+  characterConfigs.set(characterId, api);
+  return api;
+}
