@@ -1,5 +1,5 @@
 import type { CharacterRaw } from '../../types';
-import { happyWaddle, hopHopPop, shyPeek } from './clips';
+import { marbleEyes, peekabooPop } from './clips';
 import { NUBBY_BASE_ANIMS, NUBBY_EMOTIONS } from './emotions';
 import { NUBBY_EYE_SHAPES } from './eyes';
 import { NUBBY_PALETTE } from './palette';
@@ -13,7 +13,7 @@ export const nubby: CharacterRaw = {
   desc: 'A chunky stair-stepped block on two stubby legs, with two big round eyes and no mouth — it says everything with its eyes and its body',
   body: { type: 'outline', vertices: NUBBY_VERTICES, radius: NUBBY_CORNER_RADIUS },
   material: 'flat',
-  face: { x: 10.32, y: 0, sx: 1, sy: 1, eye: 1, projection: 'plane', level: 1 },
+  face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, projection: 'plane', level: 1, contain: 14 },
   palette: NUBBY_PALETTE,
   eyeStyle: {
     dx: 21.27,
@@ -28,6 +28,12 @@ export const nubby: CharacterRaw = {
   },
   eyeShapes: NUBBY_EYE_SHAPES,
   features: { blush: false },
+  gazeRange: [10, 7],
+  blink: [
+    { slot: 'blinkHalf', ms: 34 },
+    { slot: 'closed', ms: 40 },
+    { slot: 'squash', ms: 40 },
+  ],
   fxSkin: 'blockpop',
   zzz: { glyph: 'Z', italic: false, weight: '800', size: 1.9, opacity: 1 },
   props: VIDEO_PROPS,
@@ -35,6 +41,7 @@ export const nubby: CharacterRaw = {
   emotionGroups: VIDEO_GROUPS,
   baseAnims: NUBBY_BASE_ANIMS,
   emotions: NUBBY_EMOTIONS,
-  clips: { hopHopPop, happyWaddle, shyPeek },
-  signatureClips: ['hopHopPop', 'happyWaddle', 'shyPeek'],
+  clips: { peekabooPop, marbleEyes },
+  signatureClips: ['peekabooPop', 'marbleEyes'],
+  emotionMode: 'replace',
 };

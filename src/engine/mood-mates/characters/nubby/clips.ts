@@ -1,124 +1,217 @@
-import type { ClipDef, ClipFrame } from '../../types';
+import { easeInOutCubic, easeOutBack, smooth, span } from '../../motion';
+import type { ClipDef } from '../../types';
 
-const TAU = Math.PI * 2;
+const C = 120;
+const RAD = Math.PI / 180;
+const PIVOT_RIGHT: [number, number] = [198, 214.5];
+const PIVOT_LEFT: [number, number] = [41.5, 213.5];
 
-function arc(u: number): number {
-  return 4 * u * (1 - u);
+const easeIn = (u: number) => u * u * u;
+const easeOut = (u: number) => 1 - (1 - u) ** 3;
+
+function dip(t: number, start: number, length: number, depth: number): number {
+  return t > start && t < start + length ? depth * Math.sin(Math.PI * ((t - start) / length) ** 0.6) : 0;
 }
 
-function easeOut(u: number): number {
-  return 1 - (1 - u) ** 3;
-}
-
-function clamp01(u: number): number {
-  return u < 0 ? 0 : u > 1 ? 1 : u;
-}
-
-function settle(tt: number, amp: number, freq: number, damp: number): number {
-  return amp * Math.exp(-damp * tt) * Math.cos(TAU * freq * tt);
-}
-
-function flight(u: number, height: number): ClipFrame {
-  const stretch = 1 + 0.16 * Math.abs(2 * u - 1) ** 2.2;
+function tipAbout(deg: number): { dx: number; dy: number; rotate: number } {
+  const [px, py] = deg >= 0 ? PIVOT_RIGHT : PIVOT_LEFT;
+  const a = deg * RAD;
+  const ox = px - C;
+  const oy = py - C;
   return {
-    dy: -height * arc(u),
-    sy: stretch,
-    sx: 1 / stretch ** 0.75,
-    eyeSy: 1 + 0.1 * Math.abs(2 * u - 1) ** 2,
+    dx: ox - (ox * Math.cos(a) - oy * Math.sin(a)),
+    dy: oy - (ox * Math.sin(a) + oy * Math.cos(a)),
+    rotate: deg,
   };
 }
 
-function squashAt(tt: number, depth: number): ClipFrame {
-  const k = settle(tt, depth, 2.6, 5.2);
-  return { sy: 1 - k, sx: 1 + k * 0.72, eyeSy: 1 - k * 0.5 };
+const TILT = 9;
+const T_THUD = 2350;
+const MARBLE_MS = 2900;
+
+function tilt(t: number): number {
+  if (t < 160) return 0;
+  if (t < 560) return TILT * easeInOutCubic(span(t, 160, 560));
+  if (t < 1000) return TILT;
+  if (t < 1650) return TILT * (1 - 2 * easeInOutCubic(span(t, 1000, 1650)));
+  if (t < 2050) return -TILT;
+  if (t < T_THUD) return -TILT * (1 - easeIn(span(t, 2050, T_THUD)));
+  return 0;
 }
 
-export const hopHopPop: ClipDef = {
-  duration: 2000,
-  expr: [
-    { at: 0, expr: 'calm2', speed: 12 },
-    { at: 200, expr: 'wide', speed: 12 },
-    { at: 360, expr: 'happy', speed: 12 },
-    { at: 780, expr: 'wide', speed: 12 },
-    { at: 1000, expr: 'happy2', speed: 12 },
-    { at: 1500, expr: 'happy', speed: 9 },
-  ],
-  burst: [
-    { at: 640, count: 7 },
-    { at: 1240, count: 9 },
-  ],
-  sample(t, strength) {
-    const h1 = 30 + 12 * strength;
-    const h2 = h1 * 0.55;
-    if (t < 200) {
-      const u = easeOut(clamp01(t / 200));
-      return { sy: 1 - 0.2 * u, sx: 1 + 0.14 * u, eyeSy: 1 - 0.2 * u };
-    }
-    if (t < 640) {
-      const u = (t - 200) / 440;
-      return { ...flight(u, h1), rotate: 5 * Math.sin(Math.PI * u) };
-    }
-    if (t < 780) return squashAt((t - 640) / 1000, 0.22);
-    if (t < 1240) {
-      const u = (t - 780) / 460;
-      return { ...flight(u, h2), rotate: -4 * Math.sin(Math.PI * u) };
-    }
-    const tt = (t - 1240) / 1000;
-    return { ...squashAt(tt, 0.14), rotate: settle(tt, 4.5, 2.1, 3.2) };
-  },
-};
+const WALL_LEFT = -38;
+const WALL_RIGHT = 16;
+const TOUCH = -18.8;
+const GRAVITY = 2600;
+const FRICTION = 1.2;
+const BOUNCE = 0.35;
 
-export const happyWaddle: ClipDef = {
-  duration: 1900,
+interface MarbleTrack {
+  left: Float32Array;
+  right: Float32Array;
+  squish: Float32Array;
+}
+
+function simulateMarbles(): MarbleTrack {
+  const n = T_THUD + 1;
+  const left = new Float32Array(n);
+  const right = new Float32Array(n);
+  const squish = new Float32Array(n);
+  let xl = 0;
+  let xr = 0;
+  let vl = 0;
+  let vr = 0;
+  let hit = 0;
+  const dt = 0.001;
+  for (let i = 0; i < n; i++) {
+    const g = GRAVITY * Math.sin(tilt(i) * RAD);
+    vl += (g - FRICTION * vl) * dt;
+    vr += (g - FRICTION * vr) * dt;
+    xl += vl * dt;
+    xr += vr * dt;
+    if (xl < WALL_LEFT) {
+      hit = Math.max(hit, Math.abs(vl));
+      xl = WALL_LEFT;
+      vl = -vl * BOUNCE;
+    }
+    if (xr > WALL_RIGHT) {
+      hit = Math.max(hit, Math.abs(vr));
+      xr = WALL_RIGHT;
+      vr = -vr * BOUNCE;
+    }
+    if (xr - xl < TOUCH) {
+      const mid = (xl + xr) / 2;
+      xl = mid - TOUCH / 2;
+      xr = mid + TOUCH / 2;
+      const rel = vl - vr;
+      if (rel > 0) {
+        hit = Math.max(hit, rel);
+        const avg = (vl + vr) / 2;
+        vl = avg - (BOUNCE * rel) / 2;
+        vr = avg + (BOUNCE * rel) / 2;
+      }
+    }
+    hit *= Math.exp(-dt / 0.08);
+    left[i] = xl;
+    right[i] = xr;
+    squish[i] = Math.min(0.22, hit / 700);
+  }
+  return { left, right, squish };
+}
+
+const MARBLES = simulateMarbles();
+
+export const marbleEyes: ClipDef = {
+  duration: MARBLE_MS,
   expr: [
-    { at: 0, expr: 'happy', speed: 12 },
-    { at: 1600, expr: 'calm', speed: 8 },
+    { at: 0, expr: 'calm', speed: 10 },
+    { at: 160, expr: 'wide', speed: 12 },
+    { at: T_THUD - 20, expr: 'hopLand', speed: 24 },
+    { at: T_THUD + 170, expr: 'happy', speed: 12 },
+    { at: MARBLE_MS - 120, expr: 'calm', speed: 8 },
   ],
-  burst: [{ at: 1500, count: 6 }],
-  sample(t, strength) {
-    const env = clamp01(t / 160) * clamp01((1900 - t) / 420);
-    const ph = (TAU * t) / 440;
-    const lift = Math.abs(Math.sin(ph / 2));
+  sample(t) {
+    const tip = tipAbout(tilt(t));
+    const thud = dip(t, T_THUD, 300, 0.07);
+    const crouch = t < 160 ? Math.sin(Math.PI * span(t, 0, 160)) * 0.03 : 0;
+    let xl: number;
+    let xr: number;
+    let sq: number;
+    if (t <= T_THUD) {
+      const i = Math.min(T_THUD, Math.max(0, Math.round(t)));
+      xl = MARBLES.left[i] as number;
+      xr = MARBLES.right[i] as number;
+      sq = MARBLES.squish[i] as number;
+    } else {
+      const back = 1 - easeOutBack(span(t, T_THUD + 40, T_THUD + 460));
+      xl = (MARBLES.left[T_THUD] as number) * back;
+      xr = (MARBLES.right[T_THUD] as number) * back;
+      sq = 0;
+    }
+    const slope = Math.tan(tilt(t) * RAD);
     return {
-      rotate: 9 * strength * env * Math.sin(ph / 2 + 0.4),
-      dx: 3.2 * env * Math.sin(ph / 2 + 0.4),
-      dy: -3.5 * env * lift,
-      sy: 1 - 0.05 * env * (1 - lift),
-      sx: 1 + 0.035 * env * (1 - lift),
+      ...tip,
+      sx: 1 + crouch * 0.7 + thud * 0.8,
+      sy: 1 - crouch - thud,
+      eyeX: [xl, xr],
+      eyeY: [xl * slope * 0.5, xr * slope * 0.5],
+      eyeSx: 1 - sq,
+      eyeSy: 1 + sq * 0.8,
     };
   },
 };
 
-export const shyPeek: ClipDef = {
-  duration: 2100,
+const DEEP = 220;
+const PEEK = 116;
+const DUCK = 132;
+const POP_START = 2200;
+const POP_END = 2480;
+const PEEK_MS = 2900;
+
+function sinkDepth(t: number): number {
+  if (t < 200) return 0;
+  if (t < 620) return DEEP * easeIn(span(t, 200, 620));
+  if (t < 950) return DEEP;
+  if (t < 1250) return DEEP + (PEEK - DEEP) * easeOutBack(span(t, 950, 1250));
+  if (t < 2050) return PEEK + 1.5 * Math.sin(((t - 1250) / 800) * Math.PI * 2);
+  if (t < POP_START) return PEEK + (DUCK - PEEK) * easeInOutCubic(span(t, 2050, POP_START));
+  if (t < POP_END) return DUCK * (1 - easeOut(span(t, POP_START, POP_END)));
+  return 0;
+}
+
+function holeOpen(t: number): number {
+  if (t < 200) return 0.35 * smooth(span(t, 0, 200));
+  if (t < 620) return 0.35 + 0.65 * easeOut(span(t, 200, 620));
+  if (t < 2420) return 1;
+  return 1 - smooth(span(t, 2420, 2600));
+}
+
+export const peekabooPop: ClipDef = {
+  duration: PEEK_MS,
   expr: [
-    { at: 0, expr: 'shy', speed: 12 },
-    { at: 760, expr: 'wide', speed: 12 },
-    { at: 1100, expr: 'happy', speed: 10 },
-    { at: 1700, expr: 'calm', speed: 8 },
+    { at: 0, expr: 'hopLand', speed: 18 },
+    { at: 240, expr: 'closed', speed: 22 },
+    { at: 960, expr: 'wide', speed: 14 },
+    { at: 1300, expr: 'lookLeft', speed: 9 },
+    { at: 1600, expr: 'lookRight', speed: 9 },
+    { at: 1900, expr: 'blinkHalf', speed: 34 },
+    { at: 1934, expr: 'closed', speed: 34 },
+    { at: 1974, expr: 'squash', speed: 30 },
+    { at: 2014, expr: 'wide', speed: 16 },
+    { at: POP_START, expr: 'wide2', speed: 16 },
+    { at: POP_END - 10, expr: 'hopLand', speed: 24 },
+    { at: POP_END + 100, expr: 'happy', speed: 12 },
+    { at: PEEK_MS - 60, expr: 'calm', speed: 8 },
   ],
-  burst: [{ at: 800, count: 10 }],
-  sample(t, strength) {
-    if (t < 260) {
-      const u = easeOut(clamp01(t / 260));
-      return { sy: 1 - 0.3 * u, sx: 1 + 0.1 * u, eyeSy: 1 - 0.25 * u };
+  sample(t) {
+    let sx = 1;
+    let sy = 1;
+    if (t < 200) {
+      const u = easeOut(span(t, 0, 200));
+      sy = 1 - 0.1 * u;
+      sx = 1 + 0.07 * u;
+    } else if (t < 620) {
+      const u = smooth(span(t, 200, 420));
+      sy = 0.9 + 0.15 * u;
+      sx = 1.07 - 0.11 * u;
+    } else if (t < 950) {
+      sy = 1.05;
+      sx = 0.96;
+    } else if (t < POP_START) {
+      const u = smooth(span(t, 950, 1150));
+      const duck = smooth(span(t, 2050, POP_START));
+      sy = 1.05 - 0.05 * u - 0.04 * duck;
+      sx = 0.96 + 0.04 * u + 0.03 * duck;
+    } else if (t < POP_END) {
+      const u = span(t, POP_START, POP_END);
+      const stretch = Math.sin(Math.PI * Math.min(1, u * 1.1));
+      sy = 0.96 + 0.04 * u + 0.07 * stretch;
+      sx = 1.03 - 0.03 * u - 0.05 * stretch;
+    } else {
+      const land = dip(t, POP_END, 380, 0.07);
+      sy = 1 - land;
+      sx = 1 + land * 0.8;
     }
-    if (t < 760) {
-      const k = (t - 260) / 500;
-      return {
-        sy: 0.7 + 0.01 * Math.sin(k * 18),
-        sx: 1.1,
-        eyeSy: 0.75,
-        rotate: 1.2 * Math.sin(k * 11),
-      };
-    }
-    if (t < 1100) {
-      const u = (t - 760) / 340;
-      const pop = 22 + 8 * strength;
-      const stretch = 1 + 0.22 * Math.sin(Math.PI * Math.min(1, u * 1.2));
-      return { dy: -pop * arc(Math.min(1, u * 1.15)), sy: stretch, sx: 1 / stretch ** 0.75 };
-    }
-    const tt = (t - 1100) / 1000;
-    return { ...squashAt(tt, 0.16), rotate: settle(tt, 5, 1.9, 3) };
+    return { dy: sinkDepth(t), sx, sy, sink: holeOpen(t) };
   },
 };

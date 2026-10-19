@@ -2,7 +2,7 @@ export const NUBBY_PALETTE = {
   body: '#488A51',
   eye: '#F2FAF3',
   eyeHighlight: '#FFFFFF',
-  zzz: '#1C2A20',
+  zzz: '#6FBD7B',
   gloss: 0,
   states: {
     base: '#488A51',
