@@ -11,7 +11,6 @@ export default defineConfig({
         gallery: resolve(import.meta.dirname, 'index.html'),
         'mood-mates': resolve(import.meta.dirname, 'mood-mates/index.html'),
         'emotion-ball': resolve(import.meta.dirname, 'emotion-ball/index.html'),
-        'ring-editor': resolve(import.meta.dirname, 'mood-mates/tools/ring-editor.html'),
       },
     },
   },

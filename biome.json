@@ -1,14 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "files": {
-    "includes": [
-      "src/**",
-      "tests/**/*.mjs",
-      "vite.config.ts",
-      "*.json",
-      "!tests/parity/__baseline__",
-      "!tests/parity/__output__"
-    ]
+    "includes": ["src/**", "tests/**/*.mjs", "vite.config.ts", "*.json"]
   },
   "formatter": {
     "indentStyle": "space",

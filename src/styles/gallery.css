@@ -49,11 +49,6 @@ html[data-theme="dark"] {
   --gallery-wash-a: rgba(145, 109, 255, 0.16);
   --gallery-wash-b: rgba(80, 120, 200, 0.08);
   --gallery-wash-c: rgba(145, 109, 255, 0.07);
-  --mm-bubble-fill: #c6d6f5;
-  --mm-bubble-stroke: #e8eef8;
-  --mm-bubble-sheen: rgba(255, 255, 255, 0.34);
-  --mm-bubble-sw: 1.2;
-  --mm-speck: #c6d6f5;
 }
 
 html[data-theme="light"] {
@@ -92,11 +87,6 @@ html[data-theme="light"] {
   --gallery-wash-a: rgba(110, 33, 196, 0.08);
   --gallery-wash-b: rgba(145, 109, 255, 0.055);
   --gallery-wash-c: rgba(110, 33, 196, 0.04);
-  --mm-bubble-fill: #d8e4f7;
-  --mm-bubble-stroke: #c5d3ec;
-  --mm-bubble-sheen: rgba(255, 255, 255, 0.86);
-  --mm-bubble-sw: 0.9;
-  --mm-speck: #c9d6ee;
 }
 
 * {
@@ -903,31 +893,6 @@ body.mode-album .gallery {
   filter: drop-shadow(0 16px 26px var(--shadow));
 }
 
-.mm-bubble {
-  fill: var(--mm-bubble-fill, #c6d6f5);
-  stroke: var(--mm-bubble-stroke, #e8eef8);
-  stroke-width: var(--mm-bubble-sw, 1.2);
-}
-.mm-sheen {
-  fill: var(--mm-bubble-sheen, rgba(255, 255, 255, 0.34));
-}
-.mm-speck {
-  fill: var(--mm-speck, #c6d6f5);
-}
-
-svg.is-sketch .mm-bubble {
-  fill: none;
-  stroke: var(--sketch-ink);
-  stroke-width: 2.4;
-}
-svg.is-sketch .mm-sheen {
-  display: none;
-}
-svg.is-sketch .mm-speck {
-  fill: none;
-  stroke: var(--sketch-ink);
-  stroke-width: 1.1;
-}
 svg.is-sketch .mm-spark {
   fill: none;
   stroke: var(--sketch-ink);

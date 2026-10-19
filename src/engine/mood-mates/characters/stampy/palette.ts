@@ -1,9 +1,7 @@
 export const STAMPY_PALETTE = {
   body: '#A8F160',
   eye: '#FEFEFE',
-  eyeHighlight: '#FFFFFF',
   zzz: '#549C2F',
-  gloss: 0,
   states: {
     base: '#A8F160',
     lime: '#A2F255',

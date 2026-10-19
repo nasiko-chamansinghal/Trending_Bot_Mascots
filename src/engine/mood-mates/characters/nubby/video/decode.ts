@@ -156,9 +156,7 @@ export function videoEmotion(
     gaze: false,
     transition: 300,
     blinkMs: null,
-    openness: 1,
     pool: [exprAt(decoded, posterIndex)],
-    mouth: 'flat',
     body: { ...poster.body, breathe: 0 },
     eyes: { left: poster.left, right: poster.right },
     sequence: {

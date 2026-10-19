@@ -13,21 +13,9 @@ export const stampy: CharacterRaw = {
   desc: 'A little lime postage stamp with perforated edges and two tilted pill eyes — no mouth, all feeling in the eyes',
   body: { type: 'stamp', stamp: STAMPY_BODY, edgeStep: 2 },
   material: 'flat',
-  face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, projection: 'plane', level: 0, contain: 16 },
+  face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, level: 0, contain: 16 },
   palette: STAMPY_PALETTE,
-  eyeStyle: {
-    dx: 25,
-    cy: 100,
-    w: 38,
-    h: 64,
-    taper: 0.5,
-    tilt: 0,
-    bend: 0,
-    highlight: null,
-    pupil: null,
-  },
   eyeShapes: STAMPY_EYES,
-  features: { blush: false },
   gazeRange: [8, 6],
   blink: [
     { slot: 'lidDrop', ms: 34 },
@@ -42,5 +30,4 @@ export const stampy: CharacterRaw = {
   signatureClips: ['cornerPeel', 'cardFlip'],
   baseAnims: STAMPY_BASE_ANIMS,
   emotions: STAMPY_EMOTIONS,
-  emotionMode: 'replace',
 };

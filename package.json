@@ -15,10 +15,7 @@
     "typecheck": "tsc",
     "lint": "biome check",
     "build:lib": "LIB=mood-mates vite build -c vite.lib.config.ts && LIB=emotion-ball vite build -c vite.lib.config.ts",
-    "test:live": "node tests/live/live-check.mjs",
-    "parity:engine": "node tests/parity/engine-capture.mjs",
-    "parity:ui": "node tests/parity/ui-capture.mjs",
-    "parity:compare": "node tests/parity/compare.mjs"
+    "test:live": "node tests/live/live-check.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -31,8 +28,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "pixelmatch": "^8.0.0",
-    "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
   }

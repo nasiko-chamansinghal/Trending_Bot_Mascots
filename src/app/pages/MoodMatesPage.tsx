@@ -17,17 +17,15 @@ import { type CorePrefs, useGalleryCore } from '../useGalleryCore';
 
 interface Prefs extends CorePrefs {
   character: string;
-  variants: Record<string, string>;
 }
 
 const PREF_KEY = 'mm.prefs';
 const DEFAULTS: Prefs = {
   theme: 'dark',
   mode: 'wall',
-  character: 'nimbo',
+  character: 'nubby',
   sketch: false,
   tourMs: 2500,
-  variants: {},
 };
 
 const INTERVALS: DropdownOption[] = [
@@ -44,7 +42,6 @@ function sanitize(p: Prefs): Prefs {
     character: MoodMates.characters.get(p.character)
       ? p.character
       : (MoodMates.characters.defaultId() as string),
-    variants: p.variants && typeof p.variants === 'object' ? p.variants : {},
   };
 }
 
@@ -112,25 +109,12 @@ export function MoodMatesPage() {
   const heroRef = useRef<MascotEngine | null>(null);
   const initialCharacter = useRef(prefs.character).current;
 
-  const variants = MoodMates.characters.variants(prefs.character);
-  const storedVariant = prefs.variants[prefs.character] || '';
-  const variant = variants.some((v) => v.id === storedVariant) ? storedVariant : '';
-  const variantOptions: DropdownOption[] = [
-    { value: '', label: 'Default' },
-    ...variants.map((v) => ({ value: v.id, label: v.en?.name || v.name })),
-  ];
   const intervalValue = INTERVALS.some((o) => o.value === String(prefs.tourMs))
     ? String(prefs.tourMs)
     : '2500';
   const charOptions: DropdownOption[] = CHARS.map((c) => ({ value: c.id, label: `${c.name} · General` }));
   const counts: Record<string, number> = { all: config.list().length };
   for (const g of core.tabs) if (g.key !== 'all') counts[g.key] = config.list(g.key).length;
-
-  useEffect(() => {
-    if (storedVariant && !variant) {
-      updatePrefs({ variants: { ...prefsRef.current.variants, [prefsRef.current.character]: '' } });
-    }
-  }, [storedVariant, variant, prefsRef, updatePrefs]);
 
   useEffect(() => {
     if (intervalValue !== String(prefs.tourMs)) updatePrefs({ tourMs: 2500 });
@@ -153,14 +137,7 @@ export function MoodMatesPage() {
     core.toast(`Switched to ${MoodMates.characters.get(id)?.name}`, 'ok');
   };
 
-  const onVariantChange = (value: string) => {
-    updatePrefs({ variants: { ...prefsRef.current.variants, [prefsRef.current.character]: value } });
-    if (core.mainRef.current?.touring) core.stopTourUI();
-    const label = variantOptions.find((o) => o.value === value)?.label ?? '';
-    core.toast(`Body outline switched: ${label}`, 'ok');
-  };
-
-  const characterKey = `${prefs.character}|${variant}`;
+  const characterKey = prefs.character;
   const def = core.shownDef;
   const nameOf = (d: DefLike) => d.name;
 
@@ -198,8 +175,8 @@ export function MoodMatesPage() {
       <main className="page">
         <Hero
           eyebrow="MOOD MATES"
-          title="An original cast that wears its feelings"
-          sub="2 original characters × 32 expressive states · Real-time SVG · Hook up your AI with a single emotionId"
+          title="A cast that wears its feelings"
+          sub="Nubby × Stampy · 32 expressive states · Real-time SVG · Hook up your AI with a single emotionId"
           cta="Enter the gallery"
           hint="Move your mouse and it watches · Click for its signature move"
           particles={false}
@@ -278,7 +255,6 @@ export function MoodMatesPage() {
             create={(d) => (el) =>
               MoodMates.create(el, {
                 character: prefs.character,
-                variant,
                 emotion: d.id,
                 autostart: false,
                 label: `${nameOf(d)} thumbnail preview`,
@@ -307,7 +283,6 @@ export function MoodMatesPage() {
                 create={(el) =>
                   MoodMates.create(el, {
                     character: prefs.character,
-                    variant,
                     emotion: core.selectedRef.current,
                     idle: IDLE,
                     label: 'Main emotion stage',
@@ -320,10 +295,7 @@ export function MoodMatesPage() {
       </main>
 
       <footer className="site-foot">
-        <p>
-          All Mood Mates characters are original designs. Free for personal learning; for commercial use see
-          LICENSE-COMMERCIAL.md in the repository.
-        </p>
+        <p>Free for personal learning; for commercial use see LICENSE-COMMERCIAL.md in the repository.</p>
       </footer>
 
       <Drawer
@@ -348,19 +320,6 @@ export function MoodMatesPage() {
                   value={prefs.character}
                   options={charOptions}
                   onChange={switchCharacter}
-                />
-              </div>
-              <div
-                className="field"
-                id="variantField"
-                style={variants.length ? undefined : { display: 'none' }}
-              >
-                <label htmlFor="variantSelect">Body outline</label>
-                <Dropdown
-                  id="variantSelect"
-                  value={variant}
-                  options={variants.length ? variantOptions : []}
-                  onChange={onVariantChange}
                 />
               </div>
               <SketchField checked={prefs.sketch} onChange={core.onSketch} />

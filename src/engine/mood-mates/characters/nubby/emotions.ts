@@ -17,7 +17,6 @@ const look = (prop: 'lookX' | 'lookY', type: string, amp: number, period: number
 
 const emo = (o: Record<string, unknown>): Record<string, unknown> => ({
   transition: 380,
-  mouth: 'flat',
   ...o,
 });
 
@@ -293,7 +292,6 @@ export const NUBBY_EMOTIONS: Record<string, Record<string, unknown>> = {
     pool: ['happy', 'happy2'],
     poolMs: [1400, 2600],
     blinkMs: null,
-    body: { spinFx: 0, confetti: 0 },
     sequence: {
       settle: 'base',
       frames: [

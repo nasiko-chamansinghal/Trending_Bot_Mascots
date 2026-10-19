@@ -1,5 +1,3 @@
-emotion-ball/docs/
-
 .cursor/
 **/.cursor/
 
@@ -8,8 +6,6 @@ dist/
 dist-lib/
 test-results/
 playwright-report/
-tests/parity/__baseline__/
-tests/parity/__output__/
 .claude/
 .DS_Store
 handoff-*.md

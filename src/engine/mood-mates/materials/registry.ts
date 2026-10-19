@@ -9,7 +9,3 @@ export function registerMaterial(name: string, material: Material): void {
 export function getMaterial(name: string): Material | undefined {
   return MATERIALS[name];
 }
-
-export function listMaterials(): string[] {
-  return Object.keys(MATERIALS);
-}

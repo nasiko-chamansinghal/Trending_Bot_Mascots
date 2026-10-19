@@ -37,17 +37,17 @@ async function open(path, viewport = { width: 1440, height: 900 }) {
 
 const svgCount = (page, sel) => page.locator(`${sel} > svg`).count();
 
-for (const [name, path, cast] of [
-  ['root', '/', 5],
-  ['mood-mates', '/mood-mates/', 4],
-  ['emotion-ball', '/emotion-ball/', 0],
+for (const [name, path, cast, thumbs] of [
+  ['root', '/', 3, 32],
+  ['mood-mates', '/mood-mates/', 2, 41],
+  ['emotion-ball', '/emotion-ball/', 0, 32],
 ]) {
   const { context, page, errors } = await open(path);
   check(`${name}: no console or page errors on load`, errors.length === 0, errors[0] ?? '');
   check(`${name}: exactly one SVG in the stage`, (await svgCount(page, '#stage')) === 1);
   check(
-    `${name}: 32 thumbnails, one SVG each`,
-    (await page.locator('#thumbFlow .cell > .thumb > svg').count()) === 32,
+    `${name}: ${thumbs} thumbnails, one SVG each`,
+    (await page.locator('#thumbFlow .cell > .thumb > svg').count()) === thumbs,
   );
   check(
     `${name}: hero, brand mascots present`,
@@ -153,7 +153,7 @@ for (const [name, path, cast] of [
   );
   check(
     'mood-mates: thumbnails rebuilt after import',
-    (await page.locator('#thumbFlow .cell > .thumb > svg').count()) === 32,
+    (await page.locator('#thumbFlow .cell > .thumb > svg').count()) === 41,
   );
 
   await page.fill('#aiInput', '{"emotionId":"34","tips":"live test tip"}');
@@ -187,7 +187,7 @@ for (const [name, path, cast] of [
   await page.waitForTimeout(600);
   check(
     'mood-mates: cast click switches character',
-    (await page.locator('#castRow .cast.selected .cast-name').textContent()) === 'Twinkle',
+    (await page.locator('#castRow .cast.selected .cast-name').textContent()) === 'Stampy',
   );
   check('mood-mates: stage rebuilt with one SVG after switching', (await svgCount(page, '#stage')) === 1);
   check('mood-mates: no errors during interaction', errors.length === 0, errors[0] ?? '');
@@ -232,22 +232,6 @@ for (const [name, path, cast] of [
   check(
     'mobile viewport: stage and thumbnails present',
     (await svgCount(page, '#stage')) === 1 && (await page.locator('#thumbFlow .cell').count()) === 32,
-  );
-  await context.close();
-}
-
-{
-  const { context, page } = await open('/mood-mates/tools/ring-editor.html');
-  const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  check(
-    'ring editor: body path rendered',
-    ((await page.locator('#bodyPath').getAttribute('d')) ?? '').startsWith('M'),
-  );
-  check(
-    'ring editor: 20 eye slots and 9 mouth slots',
-    (await page.locator('#eyeGrid .slot-cell').count()) === 20 &&
-      (await page.locator('#mouthGrid .slot-cell').count()) === 9,
   );
   await context.close();
 }

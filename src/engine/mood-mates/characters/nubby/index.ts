@@ -13,21 +13,9 @@ export const nubby: CharacterRaw = {
   desc: 'A chunky stair-stepped block on two stubby legs, with two big round eyes and no mouth — it says everything with its eyes and its body',
   body: { type: 'outline', vertices: NUBBY_VERTICES, radius: NUBBY_CORNER_RADIUS },
   material: 'flat',
-  face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, projection: 'plane', level: 1, contain: 14 },
+  face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, level: 1, contain: 14 },
   palette: NUBBY_PALETTE,
-  eyeStyle: {
-    dx: 21.27,
-    cy: 82.55,
-    w: 21.25,
-    h: 20.72,
-    taper: 0.5,
-    tilt: 0,
-    bend: 0,
-    highlight: null,
-    pupil: null,
-  },
   eyeShapes: NUBBY_EYE_SHAPES,
-  features: { blush: false },
   gazeRange: [10, 7],
   blink: [
     { slot: 'blinkHalf', ms: 34 },
@@ -43,5 +31,4 @@ export const nubby: CharacterRaw = {
   emotions: NUBBY_EMOTIONS,
   clips: { peekabooPop, marbleEyes },
   signatureClips: ['peekabooPop', 'marbleEyes'],
-  emotionMode: 'replace',
 };

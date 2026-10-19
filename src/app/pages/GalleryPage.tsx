@@ -52,8 +52,6 @@ const CHARS: CharInfo[] = [
 const INDUSTRY: Record<string, string> = { general: 'General', learn: 'Learning only' };
 const BASE_SHAPES: Record<string, string> = {
   ball: 'Round',
-  nimbo: 'Cloud',
-  twinkle: 'Star',
   nubby: 'Block',
   stampy: 'Stamp',
 };
@@ -77,9 +75,7 @@ function configOf(id: string): EmotionConfigApi {
 }
 
 function charVariants(id: string): Array<{ id: string; name: string }> {
-  return id === 'ball'
-    ? BALL_VARIANTS
-    : MoodMates.characters.variants(id).map((v) => ({ id: v.id, name: v.en?.name || v.name }));
+  return id === 'ball' ? BALL_VARIANTS : [];
 }
 
 function createInst(el: HTMLElement, opts: InstOptions): MascotEngine {
@@ -87,7 +83,7 @@ function createInst(el: HTMLElement, opts: InstOptions): MascotEngine {
   if (character === 'ball') {
     return EmotionBall.create(el, variant ? { ...rest, shape: variant } : rest);
   }
-  return MoodMates.create(el, { ...rest, character, variant });
+  return MoodMates.create(el, { ...rest, character });
 }
 
 function sanitize(p: Prefs): Prefs {
@@ -239,7 +235,7 @@ export function GalleryPage() {
       <main className="page">
         <Hero
           title="Three expressive pals, one shared stage"
-          sub="Ball × Nimbo × Twinkle · 32 expressive states · Real-time SVG"
+          sub="Ball × Nubby × Stampy · 32 expressive states · Real-time SVG"
           cta="Enter the gallery"
           particles
           engineRef={heroRef}
@@ -402,10 +398,8 @@ export function GalleryPage() {
 
       <footer className="site-foot">
         <p>
-          Nimbo &amp; Twinkle are original, dual-licensed characters (free for personal learning; commercial
-          licensing via mood-mates/LICENSE-COMMERCIAL.md). The Ball visual design is learning-only (no
-          commercial use); its expression engine and emotion data are commercially licensable via
-          LICENSE-COMMERCIAL.md.
+          The Ball visual design is learning-only (no commercial use); its expression engine and emotion data
+          are commercially licensable via LICENSE-COMMERCIAL.md.
         </p>
         <p className="foot-links">
           <a href="mood-mates/index.html">Mood Mates site</a>

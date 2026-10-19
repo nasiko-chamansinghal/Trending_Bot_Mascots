@@ -17,9 +17,6 @@ import { getMaterial } from './materials';
 import { type BallHandle, createBall } from './render';
 import type {
   AnimSpec,
-  BeatFrame,
-  CelebrateBeat,
-  CharacterEyeStyle,
   CharacterRaw,
   ClipDef,
   EmotionGroup,
@@ -41,30 +38,12 @@ const STATE_KEYS = ['base', 'dim', 'soft', 'blush', 'angry', 'alert', 'off'];
 
 function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
   if (raw._resolved) return raw._resolved;
-  const eyeStyle = Object.assign(
-    { dx: 30, cy: 96, w: 26, h: 34, taper: 0.5, tilt: 0, bend: 0, highlight: null, pupil: null },
-    raw.eyeStyle || {},
-  ) as CharacterEyeStyle;
-  const family = GEO.buildEyeFamily(eyeStyle);
-  if (raw.eyeShapes) {
-    for (const esk in raw.eyeShapes) {
-      family[esk] = GEO.buildCustomEyePair(raw.eyeShapes[esk] as GEO.EyeShapeSpec, eyeStyle);
-    }
+  const family: Record<string, EyePair> = {};
+  for (const slot in raw.eyeShapes) {
+    family[slot] = GEO.buildEyePair(raw.eyeShapes[slot] as GEO.CutParams);
   }
-  const mouthBase = {
-    w: (raw.features && typeof raw.features.mouth === 'object' && raw.features.mouth.w) || 26,
-  };
-  const mouthShapes: Record<string, Ring> = {};
-  for (const slot of GEO.mouthSlots) {
-    mouthShapes[slot] = GEO.buildMouth(slot, mouthBase);
-  }
-  if (raw.mouthShapes) {
-    for (const msk in raw.mouthShapes) {
-      mouthShapes[msk] = GEO.buildCustomMouth(Object.assign({ w: mouthBase.w }, raw.mouthShapes[msk]));
-    }
-  }
-  const palette = Object.assign({ eye: '#233038', eyeHighlight: '#FFFFFF' }, raw.palette || {}) as Palette;
-  palette.states = Object.assign({}, raw.palette?.states);
+  if (!family.calm) throw new Error('[MoodMates] Character needs a "calm" eye shape');
+  const palette: Palette = { ...raw.palette, states: { ...raw.palette.states } };
   for (const k of STATE_KEYS) {
     if (!palette.states[k]) palette.states[k] = palette.body;
   }
@@ -72,49 +51,28 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
   const resolved: ResolvedCharacter = {
     id: raw.id,
     name: raw.name,
-    en: raw.en || null,
     industry: raw.industry || 'general',
     desc: raw.desc || '',
     bodyRing: GEO.buildBody(raw.body),
-    face: Object.assign({ x: 0, y: 0, sx: 1, sy: 1, eye: 1 }, raw.face || {}),
+    face: Object.assign({ x: 0, y: 0, sx: 1, sy: 1, eye: 1, contain: 14 }, raw.face || {}),
     palette,
-    eyeStyle,
     eyeFamily: family,
-    mouthShapes,
-    defaultEyeRing: family.calm as EyePair,
-    features: raw.features || {},
-    fxSkin: raw.fxSkin || 'cloudpuff',
-    material: raw.material || 'gloss',
+    defaultEyeRing: family.calm,
+    fxSkin: raw.fxSkin || 'spark',
+    material: raw.material || 'flat',
     zzz: raw.zzz || null,
     props: raw.props || [],
     baseAnims: raw.baseAnims || [],
     clips: raw.clips || {},
     signatureClips: raw.signatureClips || [],
-    blink: raw.blink?.length ? raw.blink : null,
+    blink: raw.blink,
     backFace: raw.backFace || null,
     gazeRange: raw.gazeRange || [24, 15],
-    emotionMode: raw.emotionMode || 'merge',
-    celebrateBeat: raw.celebrateBeat || null,
     emotions: raw.emotions || null,
     raw,
   };
   raw._resolved = resolved;
   return resolved;
-}
-
-function resolveVariant(raw: CharacterRaw, vid?: string): ResolvedCharacter {
-  const base = resolveCharacter(raw);
-  if (!vid || !raw.variants?.[vid]) return base;
-  raw._variantCache = raw._variantCache || {};
-  if (!raw._variantCache[vid]) {
-    const v = raw.variants[vid];
-    raw._variantCache[vid] = Object.assign({}, base, {
-      variant: vid,
-      bodyRing: v?.body ? GEO.buildBody(v.body) : base.bodyRing,
-      material: v?.material || base.material,
-    });
-  }
-  return raw._variantCache[vid] as ResolvedCharacter;
 }
 
 export interface RegisterResult {
@@ -123,10 +81,9 @@ export interface RegisterResult {
   errors?: string[];
 }
 
-export interface VariantInfo {
-  id: string;
-  name: string;
-  en: { name?: string } | null;
+function ownDesc(characterId: string, raw: EmotionRaw): EmotionRaw {
+  const desc = characterMap.get(characterId)?.emotions?.[raw.id]?.desc;
+  return typeof desc === 'string' ? { ...raw, desc } : raw;
 }
 
 export const characters = {
@@ -137,10 +94,9 @@ export const characters = {
     if (!raw.body?.type) {
       return { ok: false, id: raw.id, errors: ['Character is missing body.type (body generator)'] };
     }
-    const unknownMaterials = [raw.material, ...Object.values(raw.variants || {}).map((v) => v.material)]
-      .filter((m): m is string => !!m && !getMaterial(m))
-      .map((m) => `Unknown material: ${m}`);
-    if (unknownMaterials.length) return { ok: false, id: raw.id, errors: unknownMaterials };
+    if (raw.material && !getMaterial(raw.material)) {
+      return { ok: false, id: raw.id, errors: [`Unknown material: ${raw.material}`] };
+    }
     const groupKeys = (raw.emotionGroups || []).map((g) => g.key);
     const extraErrors = (raw.extraEmotions || []).flatMap((e) => {
       const errs = validate(e, groupKeys);
@@ -150,9 +106,6 @@ export const characters = {
     if (extraErrors.length) return { ok: false, id: raw.id, errors: extraErrors };
     try {
       resolveCharacter(raw);
-      if (raw.variants) {
-        for (const vk in raw.variants) resolveVariant(raw, vk);
-      }
     } catch (e) {
       return { ok: false, id: raw.id, errors: [(e as Error).message] };
     }
@@ -160,18 +113,9 @@ export const characters = {
     characterMap.set(raw.id, raw);
     return { ok: true, id: raw.id };
   },
-  get(id: string, variant?: string): ResolvedCharacter | null {
+  get(id: string): ResolvedCharacter | null {
     const raw = characterMap.get(id);
-    return raw ? resolveVariant(raw, variant) : null;
-  },
-  variants(id: string): VariantInfo[] {
-    const raw = characterMap.get(id);
-    if (!raw?.variants) return [];
-    const variants = raw.variants;
-    return Object.keys(variants).map((k) => {
-      const v = variants[k] as NonNullable<CharacterRaw['variants']>[string];
-      return { id: k, name: v.name || k, en: v.en || null };
-    });
+    return raw ? resolveCharacter(raw) : null;
   },
   list(): ResolvedCharacter[] {
     return charOrder.map((id) => resolveCharacter(characterMap.get(id) as CharacterRaw));
@@ -181,7 +125,10 @@ export const characters = {
   },
   emotionList(id: string, group?: string | null): EmotionRaw[] {
     const extras = characterMap.get(id)?.extraEmotions || [];
-    return config.list(group).concat(extras.filter((e) => !group || e.group === group));
+    return config
+      .list(group)
+      .map((raw) => ownDesc(id, raw))
+      .concat(extras.filter((e) => !group || e.group === group));
   },
   emotionGroups(id: string): EmotionGroup[] {
     const extra = characterMap.get(id)?.emotionGroups || [];
@@ -189,9 +136,9 @@ export const characters = {
     return base.concat(extra.filter((g) => !base.some((b) => b.key === g.key)));
   },
   emotionDef(id: string, emotionId: string): EmotionRaw | null {
-    return (
-      config.getRaw(emotionId) || characterMap.get(id)?.extraEmotions?.find((e) => e.id === emotionId) || null
-    );
+    const raw = config.getRaw(emotionId);
+    if (raw) return ownDesc(id, raw);
+    return characterMap.get(id)?.extraEmotions?.find((e) => e.id === emotionId) || null;
   },
 };
 
@@ -202,11 +149,8 @@ const DEFAULT_BODY = {
   rotate: 0,
   color: '@base',
   breathe: 0.01,
-  spinFx: 0,
-  confetti: 0,
   sketch: 0,
   zzz: 0,
-  orbit: 0,
   scaleX: 1,
   scaleY: 1,
 };
@@ -221,23 +165,11 @@ const DEFAULT_EYE = {
   lookX: 0,
   lookY: 0,
 };
-const DEFAULT_FACE = {
-  blush: 0,
-  browVis: 0,
-  browTilt: 0,
-  browRaise: 0,
-  mouthX: 0,
-  mouthY: 0,
-  mouthSX: 1,
-  mouthSY: 1,
-};
-
 function defaultPose(): Pose {
   return {
     body: Object.assign({}, DEFAULT_BODY),
     left: Object.assign({}, DEFAULT_EYE),
     right: Object.assign({}, DEFAULT_EYE),
-    face: Object.assign({}, DEFAULT_FACE),
     props: {},
   };
 }
@@ -246,7 +178,6 @@ function clonePose(p: Pose): Pose {
     body: Object.assign({}, p.body),
     left: Object.assign({}, p.left),
     right: Object.assign({}, p.right),
-    face: Object.assign({}, p.face),
     props: Object.assign({}, p.props),
   };
 }
@@ -254,7 +185,6 @@ function clonePose(p: Pose): Pose {
 function applySpec(pose: Pose, spec: PoseSpec | undefined): Pose {
   if (!spec) return pose;
   if (spec.body) Object.assign(pose.body, spec.body);
-  if (spec.face) Object.assign(pose.face, spec.face);
   if (spec.props) Object.assign(pose.props, spec.props);
   const e = spec.eyes;
   if (e) {
@@ -268,7 +198,7 @@ function applySpec(pose: Pose, spec: PoseSpec | undefined): Pose {
   return pose;
 }
 
-const POSE_PARTS = ['body', 'left', 'right', 'face'] as const;
+const POSE_PARTS = ['body', 'left', 'right'] as const;
 
 function propRest(key: string, other: number): number {
   return key.endsWith('O') ? 0 : other;
@@ -313,23 +243,6 @@ interface PoseFrame {
   exprSpeed?: number;
 }
 
-function sampleFrameList(frames: PoseFrame[], t: number, linear = false): Pose | null {
-  if (!frames.length) return null;
-  const first = frames[0] as PoseFrame;
-  if (t <= first.at) return clonePose(first.pose);
-  const last = frames[frames.length - 1] as PoseFrame;
-  if (t >= last.at) return clonePose(last.pose);
-  for (let i = 0; i < frames.length - 1; i++) {
-    const a = frames[i] as PoseFrame;
-    const b = frames[i + 1] as PoseFrame;
-    if (t >= a.at && t < b.at) {
-      const u = (t - a.at) / (b.at - a.at);
-      return lerpPose(a.pose, b.pose, linear ? u : easeInOutCubic(u));
-    }
-  }
-  return clonePose(last.pose);
-}
-
 type AnimFn = (a: AnimSpec, t: number, eng?: EmotionEngine) => number;
 
 const ANIM_TYPES: Record<string, AnimFn> = {
@@ -372,13 +285,11 @@ function applyAnim(pose: Pose, a: AnimSpec, t: number, eng: EmotionEngine): void
     ? [pose.left, pose.right]
     : a.target === 'body'
       ? [pose.body]
-      : a.target === 'face'
-        ? [pose.face]
-        : a.target === 'left'
-          ? [pose.left]
-          : a.target === 'right'
-            ? [pose.right]
-            : []) as unknown as Array<Record<string, unknown>>;
+      : a.target === 'left'
+        ? [pose.left]
+        : a.target === 'right'
+          ? [pose.right]
+          : []) as unknown as Array<Record<string, unknown>>;
   for (let i = 0; i < targets.length; i++) {
     const tg = targets[i] as Record<string, number>;
     if (a.prop === 'scale') {
@@ -404,9 +315,6 @@ interface EmotionDef {
   poolMs: [number, number];
   poolSpeed: number;
   blinkMs: [number, number] | null;
-  openness: number;
-  antics: boolean;
-  mouth: string;
   base: Pose;
   anims: AnimSpec[];
   life: AnimSpec[];
@@ -445,9 +353,6 @@ function validate(raw: EmotionRaw, extraGroups: string[] = []): string[] {
         if (typeof s !== 'string') errs.push(`pool[${i}] must be an eye slot name string`);
       });
   }
-  if (raw.mouth != null && typeof raw.mouth !== 'string') {
-    errs.push('mouth must be a mouth slot name string');
-  }
   if (raw.anims != null) {
     if (!Array.isArray(raw.anims)) errs.push('anims must be an array');
     else
@@ -470,23 +375,6 @@ function register(raw: EmotionRaw): RegisterResult {
   return { ok: true, id: raw.id };
 }
 
-function mergeRaw(base: EmotionRaw, over: Record<string, unknown> | null | undefined): EmotionRaw {
-  if (!over) return base;
-  const o = over as Partial<EmotionRaw>;
-  const out: EmotionRaw = Object.assign({}, base, o);
-  if (base.body || o.body) out.body = Object.assign({}, base.body, o.body);
-  if (base.face || o.face) out.face = Object.assign({}, base.face, o.face);
-  if (base.eyes || o.eyes) {
-    out.eyes = {};
-    for (const k of ['both', 'left', 'right'] as const) {
-      if (base.eyes?.[k] || o.eyes?.[k]) {
-        (out.eyes as NonNullable<PoseSpec['eyes']>)[k] = Object.assign({}, base.eyes?.[k], o.eyes?.[k]);
-      }
-    }
-  }
-  return out;
-}
-
 function resolveColor(v: string, ch: ResolvedCharacter): string {
   if (typeof v !== 'string' || v.charAt(0) !== '@') return v;
   const key = v.slice(1);
@@ -502,10 +390,9 @@ function resolvePoseColors(pose: Pose, ch: ResolvedCharacter): Pose {
 
 function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
   const over = ch.emotions?.[rawIn.id];
-  const raw =
-    ch.emotionMode === 'replace' && over
-      ? ({ id: rawIn.id, name: rawIn.name, group: rawIn.group, desc: rawIn.desc, ...over } as EmotionRaw)
-      : mergeRaw(rawIn, over);
+  const raw = over
+    ? ({ id: rawIn.id, name: rawIn.name, group: rawIn.group, desc: rawIn.desc, ...over } as EmotionRaw)
+    : rawIn;
   const base = resolvePoseColors(applySpec(defaultPose(), raw), ch);
   let pool = (raw.pool || ['calm', 'calm2']).filter((s) => ch.eyeFamily[s]);
   if (!pool.length) pool = ['calm'];
@@ -520,9 +407,6 @@ function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
     poolMs: raw.poolMs || [9000, 16000],
     poolSpeed: raw.poolSpeed || 6,
     blinkMs: raw.blinkMs !== undefined ? raw.blinkMs : [6000, 14000],
-    openness: raw.openness != null ? raw.openness : 1,
-    antics: !!raw.antics,
-    mouth: raw.mouth && ch.mouthShapes[raw.mouth] ? raw.mouth : 'flat',
     base,
     anims: [...(raw.bare ? [] : ch.baseAnims), ...(raw.anims || [])].map((a) => Object.assign({}, a)),
     life: raw.bare ? ch.baseAnims.map((a) => Object.assign({}, a)) : [],
@@ -622,7 +506,6 @@ export interface IdleConfig {
 
 export interface EngineOptions {
   character?: string;
-  variant?: string;
   emotion?: string;
   material?: string;
   idle?: boolean | Partial<IdleConfig>;
@@ -656,13 +539,6 @@ interface ActiveClip {
   start: number;
   strength: number;
   exprIdx: number;
-  burstIdx: number;
-}
-
-interface ClickSeq {
-  start: number;
-  frames: PoseFrame[];
-  fade: number;
 }
 
 interface SeqState {
@@ -695,17 +571,8 @@ export class EmotionEngine {
   private exprSlot = 'calm';
   private poolPos = 0;
   private poolNext = 0;
-  private mouthSrc: Ring;
-  private mouthDst: Ring;
-  private mouthCur: Ring;
-  private mouthSpring: Spring;
-  private mouthSlot = 'flat';
-  private mouthHoldUntil = 0;
-  private openSpring: Spring;
-  private blinkQ: Array<{ at: number; v: number }> = [];
   private ringBlinkQ: Array<{ at: number; slot: string; speed: number }> = [];
   private blinkNext = Number.POSITIVE_INFINITY;
-  private anticNext = 0;
   private bounceAt = -1;
   private def: EmotionDef | null = null;
   private lastPose: Pose | null = null;
@@ -714,7 +581,6 @@ export class EmotionEngine {
   private transDur = 0;
   private emoStart = 0;
   private seq: SeqState | null = null;
-  private clickSeq: ClickSeq | null = null;
   private clip: ActiveClip | null = null;
   private lastClip = '';
   private seqExprIdx = 0;
@@ -732,7 +598,7 @@ export class EmotionEngine {
     if (!el) throw new Error('MoodMates.create: container element not found');
 
     const chId = opts.character || (characters.defaultId() as string);
-    const ch = characters.get(chId, opts.variant);
+    const ch = characters.get(chId);
     if (!ch) throw new Error('MoodMates.create: no character registered (register a character first)');
     this.character = ch;
 
@@ -750,14 +616,6 @@ export class EmotionEngine {
     this.ringDst = [calm[0], calm[1]];
     this.ringCur = this.ringDst;
     this.ringSpring = spring(1);
-
-    const flat = ch.mouthShapes.flat as Ring;
-    this.mouthSrc = flat;
-    this.mouthDst = flat;
-    this.mouthCur = flat;
-    this.mouthSpring = spring(1);
-
-    this.openSpring = spring(1);
 
     this.fallbackId = opts.fallbackId || FALLBACK_ID;
     this.lastActivity = performance.now();
@@ -832,7 +690,6 @@ export class EmotionEngine {
       if (!def) return false;
     }
     const now = performance.now();
-    this.clickSeq = null;
     const prevId = this.def ? this.def.id : null;
     this.prevPose = this.lastPose ? clonePose(this.lastPose) : null;
     this.def = def;
@@ -855,24 +712,12 @@ export class EmotionEngine {
 
     this.poolPos = 0;
     this.ringBlinkQ = [];
-    this.mouthHoldUntil = 0;
     this.setExpr(def.pool[0] as string, def.poolSpeed >= 10 ? 10 : 8);
-    this.setMouth(def.mouth, 8);
     this.poolNext = now + rand(def.poolMs[0], def.poolMs[1]);
     if (prevId !== null && prevId !== def.id && def.blinkMs) this.blinkNow(now);
     this.blinkNext = def.blinkMs ? now + rand(def.blinkMs[0], def.blinkMs[1]) : Number.POSITIVE_INFINITY;
-    this.anticNext = now + rand(2500, 5000);
 
     this.emit('change', { id: def.id, def, auto: !!o.auto });
-    if (this.active) {
-      const fx = def.base.body;
-      let signed = false;
-      if (fx.spinFx > 0) {
-        signed = this.signature(fx.spinFx >= 1 ? 1 : 0.7);
-        if (!signed) this.spin(fx.spinFx >= 1 ? 2 : 1);
-      }
-      if (fx.confetti > 0 && !(signed && this.ball.signatureComplete)) this.burst(20);
-    }
     if (!this.active) this.renderStatic();
     return true;
   }
@@ -966,7 +811,6 @@ export class EmotionEngine {
       start: performance.now(),
       strength: strength == null ? 1 : strength,
       exprIdx: 0,
-      burstIdx: 0,
     };
     return true;
   }
@@ -980,64 +824,12 @@ export class EmotionEngine {
   }
 
   signature(strength?: number): boolean {
-    if (this.playSignatureClip(strength)) return true;
-    const ok = this.ball.signature ? !!this.ball.signature(strength) : false;
-    if (ok && this.ball.signatureMouth) {
-      this.mouthHoldUntil = performance.now() + (this.ball.signatureMouthMs || 1400);
-      this.setMouth(this.ball.signatureMouth, 10);
-    }
-    return ok;
+    return this.playSignatureClip(strength);
   }
 
   celebrate(strength?: number): this {
-    const s = strength == null ? 1 : strength;
-    this.playCelebrateBeat();
-    const signed = this.signature(s);
-    if (signed && (this.ball.signatureComplete || this.clip)) return this;
-    const r = Math.random();
-    if (r < 0.5) this.spin(1);
-    else if (r < 0.85) this.bounce();
-    this.burst(Math.round(10 + 8 * s));
+    if (!this.signature(strength == null ? 1 : strength)) this.spin(1);
     return this;
-  }
-
-  private playCelebrateBeat(): void {
-    const beat: CelebrateBeat | null | undefined = this.character?.celebrateBeat;
-    if (!beat?.frames?.length) return;
-    const ch = this.character;
-    const frames = beat.frames
-      .map((f: BeatFrame) => ({ at: f.at || 0, pose: resolvePoseColors(applySpec(defaultPose(), f), ch) }))
-      .sort((x, y) => x.at - y.at);
-    const now = performance.now();
-    this.clickSeq = { start: now, frames, fade: beat.fade != null ? beat.fade : 280 };
-    const expr = beat.expr && ch.eyeFamily[beat.expr] ? beat.expr : 'happy';
-    const mouth = beat.mouth && ch.mouthShapes[beat.mouth] ? beat.mouth : 'grin';
-    this.setExpr(expr, 10);
-    this.setMouth(mouth, 10);
-    this.mouthHoldUntil = now + (frames[frames.length - 1] as PoseFrame).at + this.clickSeq.fade;
-  }
-
-  private applyClickBeat(basePose: Pose, now: number): Pose | null {
-    const seq = this.clickSeq;
-    if (!seq) return null;
-    const t = now - seq.start;
-    const frames = seq.frames;
-    const last = frames[frames.length - 1] as PoseFrame;
-    const fade = seq.fade;
-    if (t >= last.at + fade) {
-      this.clickSeq = null;
-      if (this.def) {
-        this.setMouth(this.def.mouth, 8);
-        this.setExpr((this.def.pool[this.poolPos] || this.def.pool[0]) as string, 8);
-      }
-      return null;
-    }
-    const beat = (t >= last.at ? last.pose : sampleFrameList(frames, t)) as Pose;
-    const out = t >= last.at ? lerpPose(beat, basePose, easeInOutCubic((t - last.at) / fade)) : beat;
-    out.left.ring = basePose.left.ring;
-    out.right.ring = basePose.right.ring;
-    out.face.mouthRing = basePose.face.mouthRing;
-    return out;
   }
 
   bounce(): this {
@@ -1066,41 +858,15 @@ export class EmotionEngine {
     }
   }
 
-  private setMouth(slot: string, _speed?: number): void {
-    if (slot === this.mouthSlot && this.mouthSpring.x >= 0.999) return;
-    const ring = this.character.mouthShapes[slot];
-    if (!ring) return;
-    const s = clamp(this.mouthSpring.x, 0, 1);
-    this.mouthSrc = lerpRing(this.mouthSrc, this.mouthDst, s);
-    this.mouthDst = ring;
-    this.mouthSpring.x = 0;
-    this.mouthSpring.v = 0;
-    this.mouthSpring.t = 1;
-    this.mouthSlot = slot;
-  }
-
   private blinkNow(t: number): void {
-    const steps = this.character.blink;
-    if (steps) {
-      if (this.ringBlinkQ.length) return;
-      const back = this.exprSlot;
-      let at = t;
-      for (const s of steps) {
-        this.ringBlinkQ.push({ at, slot: s.slot, speed: 34 });
-        at += s.ms;
-      }
-      this.ringBlinkQ.push({ at, slot: back, speed: 14 });
-      return;
+    if (this.ringBlinkQ.length) return;
+    const back = this.exprSlot;
+    let at = t;
+    for (const s of this.character.blink) {
+      this.ringBlinkQ.push({ at, slot: s.slot, speed: 34 });
+      at += s.ms;
     }
-    this.blinkQ.push(
-      { at: t, v: 0.05 },
-      { at: t + 70, v: 0.05 },
-      { at: t + 150, v: 1.08 },
-      { at: t + 300, v: 1 },
-    );
-    if (Math.random() < 0.14) {
-      this.blinkQ.push({ at: t + 370, v: 0.05 }, { at: t + 480, v: 1 });
-    }
+    this.ringBlinkQ.push({ at, slot: back, speed: 14 });
   }
 
   registerEmotion(raw: EmotionRaw): RegisterResult {
@@ -1122,10 +888,6 @@ export class EmotionEngine {
     this.transDur = 0;
     this.ringSpring.x = 1;
     this.ringSpring.v = 0;
-    this.mouthSpring.x = 1;
-    this.mouthSpring.v = 0;
-    this.openSpring.x = this.def ? this.def.openness : 1;
-    this.openSpring.v = 0;
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
@@ -1212,35 +974,11 @@ export class EmotionEngine {
       const step = this.ringBlinkQ.shift() as { slot: string; speed: number };
       this.setExpr(step.slot, step.speed);
     }
-    let openKey: number | null = null;
-    while (this.blinkQ.length && now >= (this.blinkQ[0] as { at: number; v: number }).at) {
-      openKey = (this.blinkQ[0] as { at: number; v: number }).v;
-      this.blinkQ.shift();
-    }
-    this.openSpring.t = openKey != null ? openKey : this.blinkQ.length ? this.openSpring.t : def.openness;
-
-    if (this.active && def.antics && now >= this.anticNext) {
-      if (!this.spinState && this.bounceAt < 0) {
-        const pick = Math.random();
-        if (pick < 0.45) {
-          if (!this.signature(0.55)) this.spin(1);
-        } else if (pick < 0.8) this.bounce();
-        else this.blinkNow(now);
-      }
-      this.anticNext = now + rand(9000, 18000);
-    }
-
-    if (this.mouthHoldUntil && now >= this.mouthHoldUntil) {
-      this.mouthHoldUntil = 0;
-      this.setMouth(def.mouth, 8);
-    }
 
     const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
     const j = dt / steps;
     for (let si = 0; si < steps; si++) {
       springStep(this.ringSpring, this.ringSpeed, 1, j);
-      springStep(this.mouthSpring, 9, 1, j);
-      springStep(this.openSpring, 26, 1, j);
       if (this.spinState) {
         springStep(this.spinState, 6.2, 1, j);
         if (Math.abs(this.spinState.t - this.spinState.x) < 0.01 && Math.abs(this.spinState.v) < 0.05) {
@@ -1279,14 +1017,6 @@ export class EmotionEngine {
     pose.left.ring = this.ringCur[0];
     pose.right.ring = this.ringCur[1];
 
-    if (this.mouthSpring.x < 0.999 || Math.abs(this.mouthSpring.v) > 0.001) {
-      const ms = clamp(this.mouthSpring.x, 0, 1.25);
-      this.mouthCur = lerpRing(this.mouthSrc, this.mouthDst, ms);
-    } else if (this.mouthCur !== this.mouthDst) {
-      this.mouthCur = this.mouthDst;
-    }
-    pose.face.mouthRing = this.mouthCur;
-
     const k = 1 - Math.exp(-5.66 * dt);
     const gazeOn = def.gaze !== false || (def.raw.bare === true && (!this.seq || this.seq.done));
     const gx = gazeOn ? this.gaze.tx : 0;
@@ -1297,8 +1027,6 @@ export class EmotionEngine {
     pose.right.lookX += this.gaze.x;
     pose.left.lookY += this.gaze.y;
     pose.right.lookY += this.gaze.y;
-    pose.face.mouthX += this.gaze.x * 0.35;
-    pose.face.mouthY += this.gaze.y * 0.28;
 
     if (gazeOn) {
       const w = now / 1000;
@@ -1313,8 +1041,6 @@ export class EmotionEngine {
       pose.left.scaleY *= this.eyeScale;
       pose.right.scaleX *= this.eyeScale;
       pose.right.scaleY *= this.eyeScale;
-      pose.face.mouthSX *= this.eyeScale;
-      pose.face.mouthSY *= this.eyeScale;
     }
 
     if (this.theme) {
@@ -1324,9 +1050,8 @@ export class EmotionEngine {
       if (pose.right.color === chEye) pose.right.color = this.theme.eyes;
     }
 
-    const openS = clamp(this.openSpring.x, 0.02, 1.5);
-    pose.left.open = clamp(pose.left.open, 0, 1.3) * openS;
-    pose.right.open = clamp(pose.right.open, 0, 1.3) * openS;
+    pose.left.open = clamp(pose.left.open, 0, 1.3);
+    pose.right.open = clamp(pose.right.open, 0, 1.3);
     pose.left.scaleX = Math.max(pose.left.scaleX, 0.05);
     pose.left.scaleY = Math.max(pose.left.scaleY, 0.05);
     pose.right.scaleX = Math.max(pose.right.scaleX, 0.05);
@@ -1334,15 +1059,9 @@ export class EmotionEngine {
 
     const tt = now - this.transStart;
     if (this.transDur > 0 && tt < this.transDur && this.prevPose) {
-      const mouthRing = pose.face.mouthRing;
       pose = lerpPose(this.prevPose, pose, easeInOutCubic(tt / this.transDur));
-      pose.face.mouthRing = mouthRing;
       pose.left.ring = this.ringCur[0];
       pose.right.ring = this.ringCur[1];
-    }
-    if (this.clickSeq) {
-      const mixed = this.applyClickBeat(pose, now);
-      if (mixed) pose = mixed;
     }
     if (this.clip) this.applyClip(pose, now);
     pose.body.sketch = this.style.sketch ? 1 : 0;
@@ -1358,11 +1077,6 @@ export class EmotionEngine {
       const e = exprs[clip.exprIdx] as { expr: string; speed?: number };
       this.setExpr(e.expr, e.speed || 10);
       clip.exprIdx++;
-    }
-    const bursts = def.burst || [];
-    while (clip.burstIdx < bursts.length && (bursts[clip.burstIdx] as { at: number }).at <= t) {
-      this.burst((bursts[clip.burstIdx] as { count: number }).count);
-      clip.burstIdx++;
     }
     if (t >= def.duration) {
       this.clip = null;
