@@ -1,6 +1,7 @@
 import { nimbo } from './characters/nimbo';
 import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
+import { stampy } from './characters/stampy';
 import { twinkle } from './characters/twinkle';
 import { characters, config, create, EmotionEngine, version } from './engine';
 import { createFeatures, type FeatureCtx } from './features';
@@ -15,6 +16,7 @@ registerSkin('blockpop', blockpop);
 characters.register(nimbo);
 characters.register(twinkle);
 characters.register(nubby);
+characters.register(stampy);
 
 export const MoodMates = {
   create,

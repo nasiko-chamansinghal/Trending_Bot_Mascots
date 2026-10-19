@@ -15,6 +15,9 @@ export interface BodyPose {
   scaleX: number;
   scaleY: number;
   yaw?: number;
+  peel?: number;
+  flip?: number;
+  sink?: number;
 }
 
 export interface EyePose {
@@ -103,6 +106,7 @@ export interface FaceLayout {
   eye: number;
   projection?: 'sphere' | 'plane';
   level?: number;
+  contain?: number;
 }
 
 export interface Micro {
@@ -185,6 +189,21 @@ export interface ClipFrame {
   sy?: number;
   eyeSx?: number;
   eyeSy?: number;
+  peel?: number;
+  flip?: number;
+  sink?: number;
+  eyeX?: [number, number];
+  eyeY?: [number, number];
+}
+
+export interface BackFace {
+  lighten: number;
+  text?: string;
+}
+
+export interface BlinkStep {
+  slot: string;
+  ms: number;
 }
 
 export interface ClipDef {
@@ -250,6 +269,10 @@ export interface CharacterRaw {
   baseAnims?: AnimSpec[];
   clips?: Record<string, ClipDef>;
   signatureClips?: string[];
+  blink?: BlinkStep[];
+  backFace?: BackFace;
+  gazeRange?: [number, number];
+  emotionMode?: 'merge' | 'replace';
   celebrateBeat?: CelebrateBeat | null;
   emotions?: Record<string, Record<string, unknown>> | null;
   variants?: Record<string, VariantRaw>;
@@ -278,6 +301,10 @@ export interface ResolvedCharacter {
   baseAnims: AnimSpec[];
   clips: Record<string, ClipDef>;
   signatureClips: string[];
+  blink: BlinkStep[] | null;
+  backFace: BackFace | null;
+  gazeRange: [number, number];
+  emotionMode: 'merge' | 'replace';
   celebrateBeat: CelebrateBeat | null;
   emotions: Record<string, Record<string, unknown>> | null;
   raw: CharacterRaw;

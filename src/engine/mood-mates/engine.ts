@@ -90,6 +90,10 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
     baseAnims: raw.baseAnims || [],
     clips: raw.clips || {},
     signatureClips: raw.signatureClips || [],
+    blink: raw.blink?.length ? raw.blink : null,
+    backFace: raw.backFace || null,
+    gazeRange: raw.gazeRange || [24, 15],
+    emotionMode: raw.emotionMode || 'merge',
     celebrateBeat: raw.celebrateBeat || null,
     emotions: raw.emotions || null,
     raw,
@@ -497,7 +501,11 @@ function resolvePoseColors(pose: Pose, ch: ResolvedCharacter): Pose {
 }
 
 function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
-  const raw = mergeRaw(rawIn, ch.emotions?.[rawIn.id]);
+  const over = ch.emotions?.[rawIn.id];
+  const raw =
+    ch.emotionMode === 'replace' && over
+      ? ({ id: rawIn.id, name: rawIn.name, group: rawIn.group, desc: rawIn.desc, ...over } as EmotionRaw)
+      : mergeRaw(rawIn, over);
   const base = resolvePoseColors(applySpec(defaultPose(), raw), ch);
   let pool = (raw.pool || ['calm', 'calm2']).filter((s) => ch.eyeFamily[s]);
   if (!pool.length) pool = ['calm'];
@@ -695,6 +703,7 @@ export class EmotionEngine {
   private mouthHoldUntil = 0;
   private openSpring: Spring;
   private blinkQ: Array<{ at: number; v: number }> = [];
+  private ringBlinkQ: Array<{ at: number; slot: string; speed: number }> = [];
   private blinkNext = Number.POSITIVE_INFINITY;
   private anticNext = 0;
   private bounceAt = -1;
@@ -845,6 +854,7 @@ export class EmotionEngine {
     if (!o.auto) this.lastActivity = now;
 
     this.poolPos = 0;
+    this.ringBlinkQ = [];
     this.mouthHoldUntil = 0;
     this.setExpr(def.pool[0] as string, def.poolSpeed >= 10 ? 10 : 8);
     this.setMouth(def.mouth, 8);
@@ -918,8 +928,8 @@ export class EmotionEngine {
   }
 
   setGaze(nx: number, ny: number): this {
-    this.gaze.tx = clamp(nx, -1, 1) * 24;
-    this.gaze.ty = clamp(ny, -1, 1) * 15;
+    this.gaze.tx = clamp(nx, -1, 1) * this.character.gazeRange[0];
+    this.gaze.ty = clamp(ny, -1, 1) * this.character.gazeRange[1];
     return this;
   }
 
@@ -1070,6 +1080,18 @@ export class EmotionEngine {
   }
 
   private blinkNow(t: number): void {
+    const steps = this.character.blink;
+    if (steps) {
+      if (this.ringBlinkQ.length) return;
+      const back = this.exprSlot;
+      let at = t;
+      for (const s of steps) {
+        this.ringBlinkQ.push({ at, slot: s.slot, speed: 34 });
+        at += s.ms;
+      }
+      this.ringBlinkQ.push({ at, slot: back, speed: 14 });
+      return;
+    }
     this.blinkQ.push(
       { at: t, v: 0.05 },
       { at: t + 70, v: 0.05 },
@@ -1175,7 +1197,9 @@ export class EmotionEngine {
     if (this.active && now >= this.poolNext) {
       if (def.pool.length > 1) {
         this.poolPos = (this.poolPos + 1 + Math.floor(rand(0, def.pool.length - 1))) % def.pool.length;
-        this.setExpr(def.pool[this.poolPos] as string, def.poolSpeed);
+        const pending = this.ringBlinkQ[this.ringBlinkQ.length - 1];
+        if (pending) pending.slot = def.pool[this.poolPos] as string;
+        else this.setExpr(def.pool[this.poolPos] as string, def.poolSpeed);
       }
       this.poolNext = now + rand(def.poolMs[0], def.poolMs[1]);
     }
@@ -1183,6 +1207,10 @@ export class EmotionEngine {
     if (this.active && def.blinkMs && now >= this.blinkNext) {
       this.blinkNow(now);
       this.blinkNext = now + rand(def.blinkMs[0], def.blinkMs[1]);
+    }
+    while (this.ringBlinkQ.length && now >= (this.ringBlinkQ[0] as { at: number }).at) {
+      const step = this.ringBlinkQ.shift() as { slot: string; speed: number };
+      this.setExpr(step.slot, step.speed);
     }
     let openKey: number | null = null;
     while (this.blinkQ.length && now >= (this.blinkQ[0] as { at: number; v: number }).at) {
@@ -1351,6 +1379,24 @@ export class EmotionEngine {
       eye.scaleX *= f.eyeSx == null ? 1 : f.eyeSx;
       eye.scaleY *= f.eyeSy == null ? 1 : f.eyeSy;
     }
+    if (f.eyeX || f.eyeY) {
+      const hold = 1 - clamp(Math.min(t / 180, (def.duration - t) / 240), 0, 1);
+      for (const eye of [pose.left, pose.right]) {
+        eye.lookX *= hold;
+        eye.lookY *= hold;
+      }
+    }
+    if (f.eyeX) {
+      pose.left.x += f.eyeX[0];
+      pose.right.x += f.eyeX[1];
+    }
+    if (f.eyeY) {
+      pose.left.y += f.eyeY[0];
+      pose.right.y += f.eyeY[1];
+    }
+    if (f.peel != null) pose.body.peel = f.peel;
+    if (f.flip != null) pose.body.flip = f.flip;
+    if (f.sink != null) pose.body.sink = f.sink;
   }
 
   private fireSeqExpr(t: number): void {

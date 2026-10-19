@@ -55,6 +55,7 @@ const BASE_SHAPES: Record<string, string> = {
   nimbo: 'Cloud',
   twinkle: 'Star',
   nubby: 'Block',
+  stampy: 'Stamp',
 };
 const BALL_VARIANTS = [
   { id: 'wedge', name: 'Wedge' },

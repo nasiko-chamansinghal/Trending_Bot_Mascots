@@ -4,7 +4,7 @@ import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
 import { projectOnBody } from './projection';
 import { createProps } from './props';
-import type { EyePose, HighlightCfg, Pose, ResolvedCharacter } from './types';
+import type { BodyPose, EyePose, HighlightCfg, Pose, ResolvedCharacter } from './types';
 import { centroid, clamp, el, r2, ringPath, shade } from './util';
 
 const C = 120;
@@ -164,6 +164,34 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     }
     silRows.push([lo, hi]);
     if (hi - lo > silMaxW) silMaxW = hi - lo;
+  }
+  const silCols: Array<[number, number]> = [];
+  let silMinX = 1e9;
+  if (face.contain != null) {
+    let silMaxX = -1e9;
+    for (const p of headRing) {
+      if (p[0] < silMinX) silMinX = p[0];
+      if (p[0] > silMaxX) silMaxX = p[0];
+    }
+    for (let x = silMinX; x <= silMaxX + SIL_STEP; x += SIL_STEP) {
+      let top = Number.POSITIVE_INFINITY;
+      let bot = Number.NEGATIVE_INFINITY;
+      for (let e = 0; e < headRing.length; e++) {
+        const a = headRing[e] as Point;
+        const b = headRing[(e + 1) % headRing.length] as Point;
+        if ((a[0] <= x && b[0] >= x) || (b[0] <= x && a[0] >= x)) {
+          const t = b[0] === a[0] ? 0 : (x - a[0]) / (b[0] - a[0]);
+          const y = a[1] + (b[1] - a[1]) * t;
+          if (y < top) top = y;
+          if (y > bot) bot = y;
+        }
+      }
+      silCols.push(top > bot ? [C - 4, C + 4] : [top, bot]);
+    }
+  }
+  function silColAt(x: number): [number, number] {
+    const i = Math.round((x - silMinX) / SIL_STEP);
+    return silCols[clamp(i, 0, silCols.length - 1)] as [number, number];
   }
   function silAt(y: number): [number, number] {
     const r = Math.round((clamp(y, silMinY, silMaxY) - silMinY) / SIL_STEP);
@@ -443,7 +471,33 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     }
     const cn = proj.cn;
     eye.node.style.display = '';
-    const ex = proj.x;
+    let ex = proj.x;
+    if (face.contain != null && plane && eye.bbox) {
+      const m = face.contain;
+      const sxA = Math.abs(sxBase * cn);
+      const top = (eye.bbox.minY - base[1]) * syAll;
+      const bottom = (eye.bbox.maxY - base[1]) * syAll;
+      const left = (eye.bbox.minX - base[0]) * sxA;
+      const right = (eye.bbox.maxX - base[0]) * sxA;
+      for (let pass = 0; pass < 2; pass++) {
+        let lo = Number.NEGATIVE_INFINITY;
+        let hi = Number.POSITIVE_INFINITY;
+        for (let y = ey0 + top; y <= ey0 + bottom + SIL_STEP; y += SIL_STEP) {
+          const row = silAt(Math.min(y, ey0 + bottom));
+          if (row[0] > lo) lo = row[0];
+          if (row[1] < hi) hi = row[1];
+        }
+        ex = clamp(ex, lo + m - left, hi - m - right);
+        let ceil = Number.NEGATIVE_INFINITY;
+        let floor = Number.POSITIVE_INFINITY;
+        for (let x = ex + left; x <= ex + right + SIL_STEP; x += SIL_STEP) {
+          const col = silColAt(Math.min(x, ex + right));
+          if (col[0] > ceil) ceil = col[0];
+          if (col[1] < floor) floor = col[1];
+        }
+        ey0 = clamp(ey0, ceil + m - top, floor - m - bottom);
+      }
+    }
     const dyN = (ey0 - C) / 130;
     const fy = plane ? 1 : Math.sqrt(1 - dyN * dyN * 0.22);
 
@@ -595,6 +649,149 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     }
   }
 
+  let peelState: {
+    flap: SVGPathElement;
+    shade: SVGPathElement;
+    clip: SVGPathElement;
+    g: SVGGElement;
+  } | null = null;
+  let backState: { g: SVGGElement; card: SVGPathElement; text: SVGTextElement } | null = null;
+  let sinkState: { g: SVGGElement; hole: SVGEllipseElement; clip: SVGRectElement } | null = null;
+
+  function applyPeel(amount: number, color: string, bodyTf: string): void {
+    if (amount <= 0.001) {
+      if (peelState) {
+        bodyG.removeAttribute('clip-path');
+        peelState.g.style.display = 'none';
+      }
+      return;
+    }
+    if (!peelState) {
+      const cp = el('clipPath', { id: `${id}pc`, clipPathUnits: 'userSpaceOnUse' });
+      const clip = el('path', {});
+      cp.appendChild(clip);
+      defs.appendChild(cp);
+      const g = el('g', { 'pointer-events': 'none' });
+      const shadeP = el('path', { fill: '#000000', opacity: '0.2' });
+      const flap = el('path', { 'stroke-width': '1.2', 'stroke-linejoin': 'round' });
+      g.appendChild(shadeP);
+      g.appendChild(flap);
+      bodyG.after(g);
+      peelState = { flap, shade: shadeP, clip, g };
+    }
+    let cx = 0;
+    let cy = 0;
+    let corner = headRing[0] as Point;
+    for (const p of headRing) {
+      cx += p[0] / headRing.length;
+      cy += p[1] / headRing.length;
+      if (p[1] - p[0] > corner[1] - corner[0]) corner = p;
+    }
+    const len = Math.hypot(corner[0] - cx, corner[1] - cy);
+    const ux = (corner[0] - cx) / len;
+    const uy = (corner[1] - cy) / len;
+    const d = clamp(amount, 0, 1) * 0.36 * len;
+    const lx = corner[0] - ux * d;
+    const ly = corner[1] - uy * d;
+    const side = (p: Point) => (p[0] - lx) * ux + (p[1] - ly) * uy;
+    const vx = -uy;
+    const vy = ux;
+    peelState.clip.setAttribute(
+      'd',
+      `M${r2(lx + vx * 400)} ${r2(ly + vy * 400)}L${r2(lx - vx * 400)} ${r2(ly - vy * 400)}L${r2(lx - vx * 400 - ux * 800)} ${r2(ly - vy * 400 - uy * 800)}L${r2(lx + vx * 400 - ux * 800)} ${r2(ly + vy * 400 - uy * 800)}Z`,
+    );
+    const cut: Point[] = [];
+    for (let i = 0; i < headRing.length; i++) {
+      const a = headRing[i] as Point;
+      const bb = headRing[(i + 1) % headRing.length] as Point;
+      const sa = side(a);
+      const sb = side(bb);
+      if (sa >= 0) cut.push(a);
+      if (sa >= 0 !== sb >= 0) {
+        const t = sa / (sa - sb);
+        cut.push([a[0] + (bb[0] - a[0]) * t, a[1] + (bb[1] - a[1]) * t]);
+      }
+    }
+    const flapRing = cut.map((p) => {
+      const sd = side(p);
+      return [p[0] - 2 * sd * ux, p[1] - 2 * sd * uy] as Point;
+    });
+    const dFlap = ringPath(flapRing);
+    peelState.flap.setAttribute('d', dFlap);
+    peelState.flap.setAttribute('fill', shade(color, 0.55));
+    peelState.flap.setAttribute('stroke', shade(color, -0.18));
+    peelState.shade.setAttribute('d', dFlap);
+    peelState.shade.setAttribute('transform', 'translate(1.6 2.6)');
+    peelState.g.setAttribute('transform', bodyTf);
+    peelState.g.style.display = '';
+    bodyG.setAttribute('clip-path', `url(#${id}pc)`);
+  }
+
+  function applyBack(on: boolean, color: string): void {
+    if (!on) {
+      if (backState) backState.g.style.display = 'none';
+      return;
+    }
+    if (!backState) {
+      const g = el('g', { 'pointer-events': 'none' });
+      const card = el('path', { d: ringPath(headRing) });
+      const text = el('text', {
+        x: C,
+        y: C,
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central',
+        'font-family': "'Space Grotesk', 'Noto Sans SC', sans-serif",
+        'font-weight': '800',
+        'font-size': '64',
+      });
+      text.textContent = ch.backFace?.text ?? '';
+      g.appendChild(card);
+      g.appendChild(text);
+      bodyG.appendChild(g);
+      backState = { g, card, text };
+    }
+    backState.card.setAttribute('fill', shade(color, ch.backFace?.lighten ?? 0.5));
+    backState.text.setAttribute('fill', shade(color, -0.45));
+    backState.g.style.display = '';
+  }
+
+  function applySink(amount: number, b: BodyPose): void {
+    if (amount <= 0.001) {
+      if (sinkState) {
+        sinkState.g.removeAttribute('clip-path');
+        sinkState.hole.style.display = 'none';
+      }
+      return;
+    }
+    if (!sinkState) {
+      const cp = el('clipPath', { id: `${id}sk`, clipPathUnits: 'userSpaceOnUse' });
+      const clip = el('rect', { x: -400, y: -1000, width: 1040, height: r2(1000 + silMaxY) });
+      cp.appendChild(clip);
+      defs.appendChild(cp);
+      const hole = el('ellipse', { cy: r2(silMaxY), 'pointer-events': 'none' });
+      const g = el('g', {});
+      bodyG.before(hole);
+      bodyG.before(g);
+      g.appendChild(bodyG);
+      sinkState = { g, hole, clip };
+    }
+    const k = clamp(amount, 0, 1);
+    const hole = sinkState.hole;
+    hole.style.display = '';
+    hole.setAttribute('cx', String(r2(C + b.x)));
+    hole.setAttribute('rx', String(r2(silMaxW * 0.56 * k)));
+    hole.setAttribute('ry', String(r2(9 * k)));
+    if ((b.sketch || 0) > 0.5) {
+      hole.setAttribute('fill', 'none');
+      hole.setAttribute('stroke', `var(--sketch-ink, ${b.color})`);
+      hole.setAttribute('stroke-width', '1.6');
+    } else {
+      hole.setAttribute('fill', shade(b.color, -0.62));
+      hole.removeAttribute('stroke');
+    }
+    sinkState.g.setAttribute('clip-path', `url(#${id}sk)`);
+  }
+
   function applyPose(pose: Pose): void {
     const b = pose.body;
     const now = performance.now();
@@ -608,15 +805,16 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
       spinSqX = 0.88 + 0.12 * Math.abs(Math.cos(yaw0));
     }
 
-    bodyG.setAttribute(
-      'transform',
-      `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - b.scaleY) * b.scale * (silMaxY - C))}) rotate(${r2((b.rotate || 0) + spinTilt)}) scale(${r2(b.scale * spinSqX * b.scaleX)} ${r2(b.scale * b.scaleY)}) translate(${r2(-C)} ${r2(-C)})`,
-    );
+    const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - b.scaleY) * b.scale * (silMaxY - C))}) rotate(${r2((b.rotate || 0) + spinTilt)}) scale(${r2(b.scale * spinSqX * b.scaleX)} ${r2(b.scale * b.scaleY)}) translate(${r2(-C)} ${r2(-C)})`;
+    bodyG.setAttribute('transform', bodyTf);
     if (faceG) faceG.setAttribute('transform', `rotate(${r2(-(b.rotate || 0) * faceLevel)} ${C} ${C})`);
     material.setColor(b.color);
+    if (b.peel != null || peelState) applyPeel(b.peel || 0, b.color, bodyTf);
+    if (b.flip != null || backState) applyBack((b.flip || 0) >= 0.5, b.color);
+    if (b.sink != null || sinkState) applySink(b.sink || 0, b);
 
     const lift = clamp(-b.y / 52, 0, 1);
-    const shOp = sketch > 0.5 ? 0 : 0.16 * (1 - 0.55 * lift);
+    const shOp = sketch > 0.5 ? 0 : 0.16 * (1 - 0.55 * lift) * (1 - clamp(b.sink || 0, 0, 1));
     shadow.setAttribute('opacity', shOp.toFixed(3));
     if (shOp > 0.001) {
       shadow.setAttribute(

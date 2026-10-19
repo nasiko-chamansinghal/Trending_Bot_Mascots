@@ -1,7 +1,8 @@
 import { lerp, lerpColor } from '../../../../shared/math';
+import { easeInOutCubic } from '../../../motion';
 import type { EmotionRaw, EyePose, SequenceFrameSpec } from '../../../types';
 import { NUBBY_PALETTE } from '../palette';
-import { type BodyFrame, easeInOutCubic, fitFactor, scaleAboutFeet } from './layout';
+import { type BodyFrame, fitFactor, scaleAboutFeet } from './layout';
 
 type EyeKey = [number, number, number, number, number];
 type Key = [
