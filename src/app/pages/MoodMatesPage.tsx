@@ -176,7 +176,7 @@ export function MoodMatesPage() {
         <Hero
           eyebrow="MOOD MATES"
           title="A cast that wears its feelings"
-          sub="Nubby × Stampy · 32 expressive states · Real-time SVG · Hook up your AI with a single emotionId"
+          sub="Nubby × Stampy × Pumpkin · 32 expressive states · Real-time SVG · Hook up your AI with a single emotionId"
           cta="Enter the gallery"
           hint="Move your mouse and it watches · Click for its signature move"
           particles={false}

@@ -2,6 +2,7 @@ import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
 import { createProps } from './props';
+import { createSolidBall } from './solid/render';
 import type { BodyPose, EyePose, Pose, ResolvedCharacter } from './types';
 import { centroid, clamp, el, r2, ringPath, shade } from './util';
 
@@ -58,6 +59,7 @@ function ringBBox(ring: Ring): BBox {
 }
 
 export function createBall(container: HTMLElement, opts: BallOptions): BallHandle {
+  if (opts.character.solid) return createSolidBall(container, opts);
   const id = `mm${uid++}`;
   const lite = !!opts.lite;
   const ch = opts.character;

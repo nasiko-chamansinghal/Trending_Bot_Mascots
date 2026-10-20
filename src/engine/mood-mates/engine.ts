@@ -42,6 +42,8 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
   for (const slot in raw.eyeShapes) {
     family[slot] = GEO.buildEyePair(raw.eyeShapes[slot] as GEO.CutParams);
   }
+  for (const slot in raw.eyeRings || {})
+    family[slot] = (raw.eyeRings as Record<string, EyePair>)[slot] as EyePair;
   if (!family.calm) throw new Error('[MoodMates] Character needs a "calm" eye shape');
   const palette: Palette = { ...raw.palette, states: { ...raw.palette.states } };
   for (const k of STATE_KEYS) {
@@ -69,6 +71,9 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
     backFace: raw.backFace || null,
     gazeRange: raw.gazeRange || [24, 15],
     emotions: raw.emotions || null,
+    solid: raw.solid || null,
+    blinkStyle: raw.blinkStyle || 'ring',
+    poseDefaults: raw.poseDefaults || null,
     raw,
   };
   raw._resolved = resolved;
@@ -318,6 +323,9 @@ interface EmotionDef {
   base: Pose;
   anims: AnimSpec[];
   life: AnimSpec[];
+  openness: number;
+  antics: boolean;
+  follow: number;
   sequence: {
     frames: PoseFrame[];
     settle: SequenceSpec['settle'];
@@ -393,7 +401,7 @@ function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
   const raw = over
     ? ({ id: rawIn.id, name: rawIn.name, group: rawIn.group, desc: rawIn.desc, ...over } as EmotionRaw)
     : rawIn;
-  const base = resolvePoseColors(applySpec(defaultPose(), raw), ch);
+  const base = resolvePoseColors(applySpec(applySpec(defaultPose(), ch.poseDefaults || undefined), raw), ch);
   let pool = (raw.pool || ['calm', 'calm2']).filter((s) => ch.eyeFamily[s]);
   if (!pool.length) pool = ['calm'];
   const def: EmotionDef = {
@@ -410,6 +418,9 @@ function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
     base,
     anims: [...(raw.bare ? [] : ch.baseAnims), ...(raw.anims || [])].map((a) => Object.assign({}, a)),
     life: raw.bare ? ch.baseAnims.map((a) => Object.assign({}, a)) : [],
+    openness: raw.openness != null ? raw.openness : 1,
+    antics: !!raw.antics,
+    follow: raw.follow || 0,
     sequence: null,
     raw,
   };
@@ -572,6 +583,9 @@ export class EmotionEngine {
   private poolPos = 0;
   private poolNext = 0;
   private ringBlinkQ: Array<{ at: number; slot: string; speed: number }> = [];
+  private openQ: Array<{ at: number; v: number }> = [];
+  private openSpring: Spring = spring(1);
+  private anticNext = Number.POSITIVE_INFINITY;
   private blinkNext = Number.POSITIVE_INFINITY;
   private bounceAt = -1;
   private def: EmotionDef | null = null;
@@ -692,6 +706,11 @@ export class EmotionEngine {
     const now = performance.now();
     const prevId = this.def ? this.def.id : null;
     this.prevPose = this.lastPose ? clonePose(this.lastPose) : null;
+    const prevTurn = this.prevPose?.body.turn;
+    if (this.prevPose && prevTurn != null) {
+      const target = def.base.body.turn || 0;
+      this.prevPose.body.turn = target + Math.atan2(Math.sin(prevTurn - target), Math.cos(prevTurn - target));
+    }
     this.def = def;
     this.emoStart = now;
     this.transStart = now;
@@ -712,12 +731,19 @@ export class EmotionEngine {
 
     this.poolPos = 0;
     this.ringBlinkQ = [];
+    this.openQ = [];
     this.setExpr(def.pool[0] as string, def.poolSpeed >= 10 ? 10 : 8);
     this.poolNext = now + rand(def.poolMs[0], def.poolMs[1]);
     if (prevId !== null && prevId !== def.id && def.blinkMs) this.blinkNow(now);
     this.blinkNext = def.blinkMs ? now + rand(def.blinkMs[0], def.blinkMs[1]) : Number.POSITIVE_INFINITY;
+    this.anticNext = def.antics ? now + rand(2500, 5000) : Number.POSITIVE_INFINITY;
 
     this.emit('change', { id: def.id, def, auto: !!o.auto });
+    if (this.active) {
+      const fx = def.base.body;
+      if ((fx.ribbons || 0) > 0) this.spin((fx.ribbons as number) >= 1 ? 2 : 1);
+      if ((fx.confetti || 0) > 0) this.burst(20);
+    }
     if (!this.active) this.renderStatic();
     return true;
   }
@@ -859,6 +885,16 @@ export class EmotionEngine {
   }
 
   private blinkNow(t: number): void {
+    if (this.character.blinkStyle === 'open') {
+      this.openQ.push(
+        { at: t, v: 0.05 },
+        { at: t + 70, v: 0.05 },
+        { at: t + 150, v: 1.08 },
+        { at: t + 300, v: 1 },
+      );
+      if (Math.random() < 0.14) this.openQ.push({ at: t + 370, v: 0.05 }, { at: t + 480, v: 1 });
+      return;
+    }
     if (this.ringBlinkQ.length) return;
     const back = this.exprSlot;
     let at = t;
@@ -888,6 +924,8 @@ export class EmotionEngine {
     this.transDur = 0;
     this.ringSpring.x = 1;
     this.ringSpring.v = 0;
+    this.openSpring.x = this.def ? this.def.openness : 1;
+    this.openSpring.v = 0;
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
@@ -974,11 +1012,30 @@ export class EmotionEngine {
       const step = this.ringBlinkQ.shift() as { slot: string; speed: number };
       this.setExpr(step.slot, step.speed);
     }
+    const openStyle = this.character.blinkStyle === 'open';
+    if (openStyle) {
+      let openKey: number | null = null;
+      while (this.openQ.length && now >= (this.openQ[0] as { at: number }).at) {
+        openKey = (this.openQ.shift() as { v: number }).v;
+      }
+      this.openSpring.t = openKey != null ? openKey : this.openQ.length ? this.openSpring.t : def.openness;
+    }
+
+    if (this.active && def.antics && now >= this.anticNext) {
+      if (!this.spinState && this.bounceAt < 0) {
+        const pick = Math.random();
+        if (pick < 0.45) this.spin(1);
+        else if (pick < 0.8) this.bounce();
+        else this.blinkNow(now);
+      }
+      this.anticNext = now + rand(9000, 18000);
+    }
 
     const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
     const j = dt / steps;
     for (let si = 0; si < steps; si++) {
       springStep(this.ringSpring, this.ringSpeed, 1, j);
+      if (openStyle) springStep(this.openSpring, 26, 1, j);
       if (this.spinState) {
         springStep(this.spinState, 6.2, 1, j);
         if (Math.abs(this.spinState.t - this.spinState.x) < 0.01 && Math.abs(this.spinState.v) < 0.05) {
@@ -1001,7 +1058,7 @@ export class EmotionEngine {
         }
         const seg = BOUNCE_SEGS[Math.min(bi, BOUNCE_SEGS.length - 1)] as { h: number; d: number };
         const bn = (be - acc) / seg.d;
-        pose.body.y += -4 * seg.h * bn * (1 - bn);
+        pose.body.y += -4 * seg.h * bn * (1 - bn) * (this.character.raw.bounceScale ?? 1);
       }
     }
 
@@ -1027,6 +1084,7 @@ export class EmotionEngine {
     pose.right.lookX += this.gaze.x;
     pose.left.lookY += this.gaze.y;
     pose.right.lookY += this.gaze.y;
+    if (def.follow) pose.body.x += ((pose.left.lookX + pose.right.lookX) / 2) * def.follow;
 
     if (gazeOn) {
       const w = now / 1000;
@@ -1050,8 +1108,9 @@ export class EmotionEngine {
       if (pose.right.color === chEye) pose.right.color = this.theme.eyes;
     }
 
-    pose.left.open = clamp(pose.left.open, 0, 1.3);
-    pose.right.open = clamp(pose.right.open, 0, 1.3);
+    const openS = openStyle ? clamp(this.openSpring.x, 0.02, 1.5) : 1;
+    pose.left.open = clamp(pose.left.open, 0, 1.3) * openS;
+    pose.right.open = clamp(pose.right.open, 0, 1.3) * openS;
     pose.left.scaleX = Math.max(pose.left.scaleX, 0.05);
     pose.left.scaleY = Math.max(pose.left.scaleY, 0.05);
     pose.right.scaleX = Math.max(pose.right.scaleX, 0.05);
@@ -1108,6 +1167,8 @@ export class EmotionEngine {
       pose.left.y += f.eyeY[0];
       pose.right.y += f.eyeY[1];
     }
+    if (f.turn) pose.body.turn = (pose.body.turn || 0) + f.turn;
+    if (f.pitch) pose.body.pitch = (pose.body.pitch || 0) + f.pitch;
     if (f.peel != null) pose.body.peel = f.peel;
     if (f.flip != null) pose.body.flip = f.flip;
     if (f.sink != null) pose.body.sink = f.sink;

@@ -1,4 +1,5 @@
 import type { BodyDescriptor, CutParams, EyePair, Ring } from './geometry';
+import type { SolidSpec } from './solid/spec';
 
 export interface BodyPose {
   x: number;
@@ -15,6 +16,11 @@ export interface BodyPose {
   peel?: number;
   flip?: number;
   sink?: number;
+  turn?: number;
+  pitch?: number;
+  ribbons?: number;
+  confetti?: number;
+  orbit?: number;
 }
 
 export interface EyePose {
@@ -90,6 +96,8 @@ export interface ClipFrame {
   sink?: number;
   eyeX?: [number, number];
   eyeY?: [number, number];
+  turn?: number;
+  pitch?: number;
 }
 
 export interface BackFace {
@@ -125,6 +133,11 @@ export interface CharacterRaw {
   face?: Partial<FaceLayout>;
   palette: Palette;
   eyeShapes: Record<string, CutParams>;
+  eyeRings?: Record<string, EyePair>;
+  solid?: SolidSpec;
+  blinkStyle?: 'ring' | 'open';
+  poseDefaults?: PoseSpec;
+  bounceScale?: number;
   fxSkin?: string;
   material?: string;
   zzz?: ZzzStyle;
@@ -162,6 +175,9 @@ export interface ResolvedCharacter {
   backFace: BackFace | null;
   gazeRange: [number, number];
   emotions: Record<string, Record<string, unknown>> | null;
+  solid: SolidSpec | null;
+  blinkStyle: 'ring' | 'open';
+  poseDefaults: PoseSpec | null;
   raw: CharacterRaw;
 }
 
@@ -212,4 +228,7 @@ export interface EmotionRaw extends PoseSpec {
   anims?: AnimSpec[];
   sequence?: SequenceSpec;
   bare?: boolean;
+  openness?: number;
+  antics?: boolean;
+  follow?: number;
 }

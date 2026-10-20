@@ -38,8 +38,8 @@ async function open(path, viewport = { width: 1440, height: 900 }) {
 const svgCount = (page, sel) => page.locator(`${sel} > svg`).count();
 
 for (const [name, path, cast, thumbs] of [
-  ['root', '/', 3, 32],
-  ['mood-mates', '/mood-mates/', 2, 41],
+  ['root', '/', 4, 32],
+  ['mood-mates', '/mood-mates/', 3, 41],
   ['emotion-ball', '/emotion-ball/', 0, 32],
 ]) {
   const { context, page, errors } = await open(path);

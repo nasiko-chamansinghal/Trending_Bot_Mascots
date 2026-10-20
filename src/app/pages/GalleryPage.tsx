@@ -54,6 +54,7 @@ const BASE_SHAPES: Record<string, string> = {
   ball: 'Round',
   nubby: 'Block',
   stampy: 'Stamp',
+  pumpkin: 'Pumpkin',
 };
 const BALL_VARIANTS = [
   { id: 'wedge', name: 'Wedge' },
@@ -235,7 +236,7 @@ export function GalleryPage() {
       <main className="page">
         <Hero
           title="Three expressive pals, one shared stage"
-          sub="Ball × Nubby × Stampy · 32 expressive states · Real-time SVG"
+          sub="Ball × Nubby × Stampy × Pumpkin · 32 expressive states · Real-time SVG"
           cta="Enter the gallery"
           particles
           engineRef={heroRef}
