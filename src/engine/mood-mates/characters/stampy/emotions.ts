@@ -1,4 +1,4 @@
-import type { AnimSpec } from '../../types';
+import type { AnimSpec, EmotionRaw } from '../../types';
 
 export const STAMPY_BASE_ANIMS: AnimSpec[] = [
   { target: 'body', prop: 'scaleY', type: 'sine', amp: 0.012, period: 3600 },
@@ -395,4 +395,35 @@ export const STAMPY_EMOTIONS: Record<string, Record<string, unknown>> = {
       ],
     },
   }),
+};
+
+export const STAMPY_JOY: EmotionRaw = {
+  id: '56',
+  name: 'Joy',
+  group: 'emotion',
+  desc: 'The pill eyes squish, then bend into happy ∩ arches as it bounces with joy: little hops, a sway and happy glances',
+  transition: 380,
+  pool: ['joy'],
+  blinkMs: null,
+  sequence: {
+    settle: 'hold',
+    loopFrom: 570,
+    frames: [
+      { at: 0, expr: 'calm', body: { y: 0, scaleX: 1, scaleY: 1, rotate: 0 } },
+      { at: 120, expr: 'squash', exprSpeed: 26, body: { y: 2, scaleX: 1.06, scaleY: 0.92 } },
+      { at: 250, expr: 'joy', exprSpeed: 13, body: { y: -9, scaleX: 0.96, scaleY: 1.06 } },
+      { at: 430, expr: 'joyLand', exprSpeed: 18, body: { y: 0, scaleX: 1.05, scaleY: 0.94 } },
+      { at: 570, expr: 'joy', exprSpeed: 12, body: { y: 0, scaleX: 1, scaleY: 1, rotate: 0 } },
+      { at: 810, expr: 'joyUp', exprSpeed: 14, body: { y: -8, scaleX: 0.97, scaleY: 1.04, rotate: -1 } },
+      { at: 1050, expr: 'joyLand', exprSpeed: 18, body: { y: 0, scaleX: 1.045, scaleY: 0.95, rotate: 0 } },
+      { at: 1210, expr: 'joy', exprSpeed: 12, body: { y: 0, scaleX: 1, scaleY: 1 } },
+      { at: 1490, expr: 'joyLeft', exprSpeed: 9, body: { y: -2, rotate: -4 } },
+      { at: 1800, expr: 'joy', exprSpeed: 10, body: { y: 0, rotate: 0 } },
+      { at: 2040, expr: 'joyUp', exprSpeed: 14, body: { y: -8, scaleX: 0.97, scaleY: 1.04, rotate: 1 } },
+      { at: 2280, expr: 'joyLand', exprSpeed: 18, body: { y: 0, scaleX: 1.045, scaleY: 0.95, rotate: 0 } },
+      { at: 2440, expr: 'joy', exprSpeed: 12, body: { y: 0, scaleX: 1, scaleY: 1 } },
+      { at: 2720, expr: 'joyRight', exprSpeed: 9, body: { y: -2, rotate: 4 } },
+      { at: 3060, expr: 'joy', exprSpeed: 10, body: { y: 0, scaleX: 1, scaleY: 1, rotate: 0 } },
+    ],
+  },
 };

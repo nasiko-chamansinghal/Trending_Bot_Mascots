@@ -1,4 +1,4 @@
-import type { CutEye, CutParams } from '../../geometry';
+import type { CutEye, CutParams, Point } from '../../geometry';
 import { BODY_ROT, SIDE } from './shape';
 
 const S = SIDE;
@@ -22,6 +22,8 @@ interface Look {
   slant?: number;
   slantR?: number;
   arc?: { x: number; y: number; r: number };
+  outline?: Point[];
+  tilt?: number;
 }
 
 interface PairLook extends Look {
@@ -44,7 +46,8 @@ function eye(side: Side, o: Look): CutEye {
     x -= AXIS[0] * dh;
     y -= AXIS[1] * dh;
   }
-  const e: CutEye = { x, y, w, h, rTop: o.rTop != null ? o.rTop * S : r, rBot: r, tilt: TILT };
+  const e: CutEye = { x, y, w, h, rTop: o.rTop != null ? o.rTop * S : r, rBot: r, tilt: o.tilt ?? TILT };
+  if (o.outline) e.outline = o.outline;
   const k = h / 2 - w / 2;
   const lid = side === 'right' && o.lidR != null ? o.lidR : o.lid;
   if (lid != null) {
@@ -71,6 +74,66 @@ function pair(o: PairLook): CutParams {
     right: eye('right', { ...shared, ...right }),
   };
 }
+
+const JOY_OUTLINE: Point[] = [
+  [0.0, -0.4999],
+  [0.0757, -0.4903],
+  [0.1485, -0.4686],
+  [0.2167, -0.4341],
+  [0.2769, -0.3868],
+  [0.3288, -0.3308],
+  [0.3748, -0.2695],
+  [0.4129, -0.2032],
+  [0.4432, -0.133],
+  [0.4669, -0.0604],
+  [0.4856, 0.0136],
+  [0.4965, 0.0892],
+  [0.5, 0.1657],
+  [0.4971, 0.2422],
+  [0.4784, 0.3162],
+  [0.4438, 0.3843],
+  [0.3947, 0.4428],
+  [0.3273, 0.4777],
+  [0.2519, 0.4849],
+  [0.1826, 0.4556],
+  [0.1255, 0.4055],
+  [0.0866, 0.3399],
+  [0.0616, 0.2679],
+  [0.0464, 0.1931],
+  [0.0, 0.1399],
+  [-0.0464, 0.1931],
+  [-0.0616, 0.2679],
+  [-0.0866, 0.3399],
+  [-0.1255, 0.4055],
+  [-0.1826, 0.4556],
+  [-0.2519, 0.4849],
+  [-0.3273, 0.4777],
+  [-0.3947, 0.4428],
+  [-0.4438, 0.3843],
+  [-0.4784, 0.3162],
+  [-0.4971, 0.2422],
+  [-0.5, 0.1657],
+  [-0.4965, 0.0892],
+  [-0.4856, 0.0136],
+  [-0.4669, -0.0604],
+  [-0.4432, -0.133],
+  [-0.4129, -0.2032],
+  [-0.3748, -0.2695],
+  [-0.3288, -0.3308],
+  [-0.2769, -0.3868],
+  [-0.2167, -0.4341],
+  [-0.1485, -0.4686],
+  [-0.0757, -0.4903],
+];
+
+const JOY = {
+  outline: JOY_OUTLINE,
+  tilt: 0,
+  w: 0.256,
+  h: 0.199,
+  left: { dx: -0.015, dy: -0.031 },
+  right: { dx: 0.015, dy: 0.031 },
+};
 
 const SLIT = { w: 0.226, h: 0.026, r: 0.013, dx: 0.004, dy: 0.02 };
 const DASH = { w: 0.215, h: 0.031, r: 0.0155, dx: 0.004, dy: 0.045 };
@@ -108,4 +171,21 @@ export const STAMPY_EYES: Record<string, CutParams> = {
   closed: pair(SLIT),
   closed2: pair(DASH),
   squash: pair({ w: 0.227, h: 0.205, r: 0.066 }),
+  joy: pair(JOY),
+  joyUp: pair({
+    ...JOY,
+    w: 0.246,
+    h: 0.218,
+    left: { dx: -0.015, dy: -0.045 },
+    right: { dx: 0.015, dy: 0.017 },
+  }),
+  joyLand: pair({
+    ...JOY,
+    w: 0.268,
+    h: 0.18,
+    left: { dx: -0.015, dy: -0.021 },
+    right: { dx: 0.015, dy: 0.041 },
+  }),
+  joyLeft: pair({ ...JOY, left: { dx: -0.045, dy: -0.035 }, right: { dx: -0.015, dy: 0.027 } }),
+  joyRight: pair({ ...JOY, left: { dx: 0.015, dy: -0.035 }, right: { dx: 0.045, dy: 0.027 } }),
 };

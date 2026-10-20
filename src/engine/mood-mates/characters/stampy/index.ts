@@ -1,6 +1,6 @@
 import type { CharacterRaw } from '../../types';
 import { cardFlip, cornerPeel } from './clips';
-import { STAMPY_BASE_ANIMS, STAMPY_EMOTIONS } from './emotions';
+import { STAMPY_BASE_ANIMS, STAMPY_EMOTIONS, STAMPY_JOY } from './emotions';
 import { STAMPY_EYES } from './eyes';
 import { STAMPY_PALETTE } from './palette';
 import { STAMPY_BODY } from './shape';
@@ -23,7 +23,7 @@ export const stampy: CharacterRaw = {
     { slot: 'squash', ms: 40 },
   ],
   props: [...STATE_PROPS],
-  extraEmotions: STAMPY_STATES,
+  extraEmotions: [...STAMPY_STATES, STAMPY_JOY],
   emotionGroups: STATE_GROUPS,
   backFace: { lighten: 0.55, text: '$' },
   clips: { cornerPeel, cardFlip },

@@ -27,6 +27,7 @@ export interface CutEye {
   ellipse?: boolean;
   floor?: CutLid;
   cap?: CutArc;
+  outline?: Point[];
 }
 
 export interface CutParams {
@@ -243,12 +244,18 @@ export function cutRing(eye: CutEye, rot: number, ox: number, oy: number): Ring 
   const tc = Math.cos(tilt);
   const ts = Math.sin(tilt);
   const lidSlope = eye.lid ? Math.tan(((eye.lid.angle || 0) * Math.PI) / 180) : 0;
+  if (eye.outline && eye.outline.length !== EYE_N) {
+    throw new Error(`[MoodMates] eye outline needs exactly ${EYE_N} points`);
+  }
   const pts: Point[] = [];
   for (let k = 0; k < EYE_N; k++) {
     const phi = -Math.PI / 2 + (TAU * k) / EYE_N;
-    const [lx, ly] = eye.ellipse
-      ? ellipsePoint(phi, eye.w, eye.h, eye.lid != null)
-      : roundedRectPoint(phi, eye.w, eye.h, eye.lid ? 0 : eye.rTop, eye.rBot);
+    const traced = eye.outline?.[k];
+    const [lx, ly] = traced
+      ? [traced[0] * eye.w, traced[1] * eye.h]
+      : eye.ellipse
+        ? ellipsePoint(phi, eye.w, eye.h, eye.lid != null)
+        : roundedRectPoint(phi, eye.w, eye.h, eye.lid ? 0 : eye.rTop, eye.rBot);
     const x = lx * tc - ly * ts;
     let y = lx * ts + ly * tc;
     if (eye.lid) {
