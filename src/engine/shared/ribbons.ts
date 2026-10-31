@@ -19,6 +19,8 @@ interface TrailOrbit {
   follow: number;
   carry: number;
   arc: number;
+  cy?: number;
+  rise?: number;
 }
 
 interface Trail {
@@ -28,6 +30,7 @@ interface Trail {
   ret: number;
   hist: OrbitPoint[];
   orbitMode: boolean;
+  style: AuraStyle | null;
   hue: number;
   hueSpan: number;
   hueVel: number;
@@ -55,8 +58,135 @@ export interface RibbonHost {
   width?: number;
 }
 
+export interface AuraStyle {
+  count: number;
+  every: number;
+  rest?: number;
+  rad: [number, number];
+  step: number;
+  tilt: [number, number];
+  roll: [number, number];
+  speed: [number, number];
+  arc: [number, number];
+  width: [number, number];
+  starts?: Array<[number, number]>;
+  lift?: number[];
+  rise?: number;
+  grow?: number;
+  brake?: number;
+  life?: number;
+  hues?: number[];
+  span?: number;
+  spacing?: number;
+}
+
+const ORBIT: AuraStyle = {
+  count: 2,
+  every: 700,
+  rad: [1, 1],
+  step: 16,
+  tilt: [0.1, 0.22],
+  roll: [-0.12, 0.12],
+  speed: [1.7, 2.3],
+  arc: [2.4, 3.2],
+  width: [5.5, 7],
+};
+
+const HALF = Math.PI / 2;
+
+export const AURAS: Record<string, AuraStyle> = {
+  orbit: ORBIT,
+  rainbow: {
+    spacing: 0.05,
+    count: 5,
+    every: 70,
+    rest: 3300,
+    rad: [1.02, 1.02],
+    step: 5.4,
+    tilt: [1.72, 1.72],
+    roll: [0, 0],
+    speed: [7.2, 7.2],
+    arc: [3.3, 3.3],
+    width: [4.6, 4.6],
+    starts: [[-HALF - 0.12, 1]],
+    brake: 2.2,
+    life: 2.1,
+    hues: [272, 212, 140, 50, 6],
+    span: 14,
+  },
+  halo: {
+    spacing: 0.05,
+    count: 2,
+    every: 260,
+    rad: [0.46, 0.5],
+    step: 0,
+    tilt: [0.3, 0.36],
+    roll: [-0.06, 0.06],
+    speed: [1.1, 1.35],
+    arc: [2.5, 2.9],
+    width: [3.6, 4.2],
+    starts: [
+      [0, 1],
+      [Math.PI, 1],
+    ],
+    lift: [-1.2],
+  },
+  swirl: {
+    spacing: 0.05,
+    count: 3,
+    every: 420,
+    rad: [0.94, 1],
+    step: 0,
+    tilt: [0.3, 0.42],
+    roll: [-0.16, 0.16],
+    speed: [2.3, 2.8],
+    arc: [2, 2.6],
+    width: [4.4, 5.4],
+    lift: [0.55],
+    rise: -0.62,
+    grow: -0.14,
+    life: 2,
+  },
+  waves: {
+    spacing: 0.05,
+    count: 4,
+    every: 300,
+    rad: [0.88, 0.88],
+    step: 0,
+    tilt: [HALF, HALF],
+    roll: [0, 0],
+    speed: [1.05, 1.05],
+    arc: [1.1, 1.1],
+    width: [3.4, 3.8],
+    starts: [
+      [HALF - 0.55, 1],
+      [-HALF + 0.55, -1],
+    ],
+    grow: 0.42,
+    life: 1.05,
+  },
+  scan: {
+    spacing: 0.05,
+    count: 3,
+    every: 230,
+    rad: [1, 1.04],
+    step: 0,
+    tilt: [0.12, 0.2],
+    roll: [-0.05, 0.05],
+    speed: [3.4, 4],
+    arc: [1.7, 2.2],
+    width: [3.6, 4.4],
+    lift: [-0.36, 0.02, 0.4],
+    life: 1.3,
+  },
+};
+
 export interface Ribbons {
-  update: (dt: number, now: number, yaw: number, orbitWant: boolean) => void;
+  update: (dt: number, now: number, yaw: number, aura: boolean | AuraStyle | null) => void;
+}
+
+function pick(range: [number, number]): number {
+  return range[0] === range[1] ? range[0] : rand(range[0], range[1]);
 }
 
 export function createRibbons(host: RibbonHost): Ribbons {
@@ -98,13 +228,20 @@ export function createRibbons(host: RibbonHost): Ribbons {
     const sa = Math.sin(o.roll);
     return {
       x: CX + hx * ca - hy * sa,
-      y: CY + hx * sa + hy * ca,
+      y: CY + (o.cy ?? 0) + hx * sa + hy * ca,
       z: Math.cos(lam) * Math.cos(o.tilt),
       l: lam,
     };
   }
 
-  function createTrail(cfg: { o: TrailOrbit; r: number; hue: number; orbit?: boolean }): void {
+  function createTrail(cfg: {
+    o: TrailOrbit;
+    r: number;
+    hue: number;
+    orbit?: boolean;
+    style?: AuraStyle;
+    span?: number;
+  }): void {
     if (trails.length > 8) return;
     const gradEl = el('linearGradient', { id: `${id}tg${host.nextUid()}`, gradientUnits: 'userSpaceOnUse' });
     const stops: SVGStopElement[] = [];
@@ -126,9 +263,10 @@ export function createRibbons(host: RibbonHost): Ribbons {
       ret: 0,
       hist: [],
       orbitMode: !!cfg.orbit,
+      style: cfg.style ?? null,
       hue: cfg.hue,
-      hueSpan: rand(45, 95) * (Math.random() < 0.5 ? 1 : -1),
-      hueVel: rand(18, 42) * (Math.random() < 0.5 ? 1 : -1),
+      hueSpan: cfg.span ?? rand(45, 95) * (Math.random() < 0.5 ? 1 : -1),
+      hueVel: cfg.span != null ? 0 : rand(18, 42) * (Math.random() < 0.5 ? 1 : -1),
       gradEl,
       stops,
       back,
@@ -158,22 +296,29 @@ export function createRibbons(host: RibbonHost): Ribbons {
     spawnIdx++;
   }
 
-  function spawnOrbit(idx: number): void {
+  function spawnAura(st: AuraStyle, idx: number): void {
+    const start = st.starts ? (st.starts[idx % st.starts.length] as [number, number]) : null;
+    const lam = start ? start[0] : rand(0, TAU);
+    const dir = start ? start[1] : Math.random() < 0.5 ? -1 : 1;
     createTrail({
       orbit: true,
+      style: st,
       o: {
-        lam: rand(0, TAU),
-        lamVel: (Math.random() < 0.5 ? -1 : 1) * rand(1.7, 2.3),
-        tilt: rand(0.1, 0.22),
-        roll: rand(-0.12, 0.12),
-        rad: orbitRadius + idx * 16,
-        radVel: 0,
+        lam,
+        lamVel: dir * pick(st.speed),
+        tilt: pick(st.tilt),
+        roll: pick(st.roll),
+        rad: orbitRadius * pick(st.rad) + idx * st.step,
+        radVel: (st.grow ?? 0) * orbitRadius,
         follow: 0.8,
         carry: 0,
-        arc: rand(2.4, 3.2),
+        arc: pick(st.arc),
+        cy: (st.lift ? (st.lift[idx % st.lift.length] as number) : 0) * orbitRadius,
+        rise: (st.rise ?? 0) * orbitRadius,
       },
-      r: rand(5.5, 7),
-      hue: rand(0, 360),
+      r: pick(st.width),
+      hue: st.hues ? (st.hues[idx % st.hues.length] as number) : rand(0, 360),
+      span: st.span,
     });
   }
 
@@ -241,7 +386,8 @@ export function createRibbons(host: RibbonHost): Ribbons {
     trails.splice(idx, 1);
   }
 
-  function update(dt: number, now: number, yaw: number, orbitWant: boolean): void {
+  function update(dt: number, now: number, yaw: number, aura: boolean | AuraStyle | null): void {
+    const want = aura === true ? ORBIT : aura || null;
     let dYaw = yaw - prevYaw;
     if (!Number.isFinite(dYaw) || Math.abs(dYaw) > 1.2) dYaw = 0;
     prevYaw = yaw;
@@ -263,17 +409,22 @@ export function createRibbons(host: RibbonHost): Ribbons {
       }
     }
 
-    if (orbitWant && now >= orbitNextAt) {
+    if (want && now >= orbitNextAt) {
       let orbitCount = 0;
-      for (let oc = 0; oc < trails.length; oc++) if ((trails[oc] as Trail).orbitMode) orbitCount++;
-      if (orbitCount < 2) spawnOrbit(orbitCount);
-      orbitNextAt = now + 700;
+      for (let oc = 0; oc < trails.length; oc++) if ((trails[oc] as Trail).style === want) orbitCount++;
+      if (orbitCount < want.count) {
+        spawnAura(want, orbitCount);
+        orbitNextAt = now + (orbitCount === want.count - 1 && want.rest != null ? want.rest : want.every);
+      } else orbitNextAt = now + want.every;
     }
 
     for (let ti = trails.length - 1; ti >= 0; ti--) {
       const rb = trails[ti] as Trail;
       rb.life += dt;
-      const retract = rb.orbitMode ? !orbitWant : !fast || rb.life > 5;
+      const st = rb.style;
+      const retract = rb.orbitMode
+        ? !st || st !== want || (st.life != null && rb.life > st.life)
+        : !fast || rb.life > 5;
       rb.ret = clamp(rb.ret + (retract ? dt / 0.5 : -dt / 0.35), 0, 1);
       if (retract && rb.ret >= 1) {
         removeTrail(ti);
@@ -282,6 +433,8 @@ export function createRibbons(host: RibbonHost): Ribbons {
       const o = rb.o;
       if (rb.orbitMode) {
         o.lam += o.lamVel * dt + dYaw * o.follow;
+        if (rb.style?.brake) o.lamVel *= Math.exp(-rb.style.brake * dt);
+        if (o.rise) o.cy = (o.cy ?? 0) + o.rise * dt;
       } else if (fast) {
         o.carry = vel * o.follow;
         o.lam += dYaw * o.follow + o.lamVel * dt;
@@ -293,11 +446,17 @@ export function createRibbons(host: RibbonHost): Ribbons {
       o.rad += o.radVel * dt;
 
       const hist = rb.hist;
-      const lastL = hist.length ? (hist[hist.length - 1] as OrbitPoint).l : o.lam - 0.001 * dir;
-      const dl = o.lam - lastL;
-      const steps = Math.min(Math.ceil(Math.abs(dl) / 0.09), 24);
-      for (let st = 1; st <= steps; st++) hist.push(orbitPoint(o, lastL + (dl * st) / steps));
-      if (!hist.length) hist.push(orbitPoint(o, o.lam));
+      const gap = rb.style?.spacing;
+      const anchor = gap && hist.length >= 2 ? (hist[hist.length - 2] as OrbitPoint) : null;
+      if (anchor && Math.abs(o.lam - anchor.l) < (gap as number)) {
+        hist[hist.length - 1] = orbitPoint(o, o.lam);
+      } else {
+        const lastL = hist.length ? (hist[hist.length - 1] as OrbitPoint).l : o.lam - 0.001 * dir;
+        const dl = o.lam - lastL;
+        const steps = Math.min(Math.ceil(Math.abs(dl) / 0.09), 24);
+        for (let st = 1; st <= steps; st++) hist.push(orbitPoint(o, lastL + (dl * st) / steps));
+        if (!hist.length) hist.push(orbitPoint(o, o.lam));
+      }
 
       const span = o.arc * (1 - rb.ret * rb.ret * (3 - 2 * rb.ret));
       while (hist.length > 2 && Math.abs(o.lam - (hist[0] as OrbitPoint).l) > span) hist.shift();
