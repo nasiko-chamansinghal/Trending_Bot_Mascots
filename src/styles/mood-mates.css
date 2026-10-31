@@ -669,7 +669,8 @@ body.mode-album .cell {
 }
 
 .cell-label {
-  height: 32px;
+  flex: 1;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -677,10 +678,17 @@ body.mode-album .cell {
   border-top: 1px solid var(--line);
   background: var(--card-2);
   font-size: 12px;
+  line-height: 1.25;
   color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  padding: 0 6px;
+  text-align: center;
+  padding: 5px 8px;
+}
+.cell-label > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cell-label > .cid {
+  flex: none;
 }
 .cell.selected .cell-label {
   color: var(--text);
