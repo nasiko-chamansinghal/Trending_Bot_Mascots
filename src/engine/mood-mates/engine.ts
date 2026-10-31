@@ -1169,6 +1169,7 @@ export class EmotionEngine {
     }
     if (f.turn) pose.body.turn = (pose.body.turn || 0) + f.turn;
     if (f.pitch) pose.body.pitch = (pose.body.pitch || 0) + f.pitch;
+    if (f.yaw) pose.body.yaw = (pose.body.yaw || 0) + f.yaw;
     if (f.peel != null) pose.body.peel = f.peel;
     if (f.flip != null) pose.body.flip = f.flip;
     if (f.sink != null) pose.body.sink = f.sink;

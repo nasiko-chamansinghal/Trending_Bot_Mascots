@@ -21,6 +21,7 @@ export interface BodyPose {
   ribbons?: number;
   confetti?: number;
   orbit?: number;
+  aura?: string;
 }
 
 export interface EyePose {
@@ -98,6 +99,7 @@ export interface ClipFrame {
   eyeY?: [number, number];
   turn?: number;
   pitch?: number;
+  yaw?: number;
 }
 
 export interface BackFace {
