@@ -27,6 +27,17 @@ const BODY_COLORS: Record<string, string> = {
 
 const SCALED = new Set(['x', 'y', 'lookX', 'lookY']);
 
+const AURA: Record<string, string> = {
+  '05': 'swirl',
+  '10': 'rainbow',
+  '19': 'halo',
+  '31': 'waves',
+  '35': 'waves',
+  '37': 'halo',
+  '39': 'swirl',
+  '40': 'scan',
+};
+
 function scalePart<T extends object>(part: T | undefined): T | undefined {
   if (!part) return part;
   const out: Record<string, unknown> = {};
@@ -62,6 +73,8 @@ function port(e: BallEmotion): Record<string, unknown> {
     pool: (e.pool || [0, 8]).map((i) => `g${i}`),
     ...scalePose(e),
   };
+  const aura = AURA[e.id];
+  if (aura) out.body = { ...(out.body as object | undefined), aura };
   if (e.gaze === false) out.gaze = false;
   if (e.poolMs) out.poolMs = e.poolMs;
   if (e.poolSpeed != null) out.poolSpeed = e.poolSpeed;
