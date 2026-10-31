@@ -3,18 +3,12 @@ export type Vec2 = [number, number];
 export type Mat3 = [number, number, number, number, number, number, number, number, number];
 
 export interface BodyShape {
-  aspect: number;
-  squareness: number;
   ribs: number;
-  groove: number;
-  grooveSharp: number;
-  grooveTop: number;
-  grooveBottom: number;
-  topDip: number;
-  topDipWidth: number;
-  bottomDip: number;
-  bottomDipWidth: number;
-  taper: number;
+  sharp: number[];
+  radius: number[];
+  skirt: number[];
+  join: number;
+  depth: number[];
 }
 
 export interface StemShape {
@@ -22,7 +16,7 @@ export interface StemShape {
   c1: Vec3;
   c2: Vec3;
   tip: Vec3;
-  radius: Vec3;
+  radius: Array<[number, number, number]>;
 }
 
 export interface SolidAngles {
@@ -33,11 +27,20 @@ export interface SolidAngles {
 
 export interface StemProjection {
   outline: Vec2[];
+  root: Vec2[];
   cap: { cx: number; cy: number; rx: number; ry: number; angle: number } | null;
   front: boolean;
 }
 
 export const TAU = Math.PI * 2;
+const STEM_ROOT = 0.16;
+const FACING_SLACK = 0.02;
+const SHEET_JUMP = 0.12;
+const NEWTON_STEPS = 3;
+const NEWTON_H = 1e-5;
+const HIDE_FACING = 0.02;
+const STICKER_LO = 0.45;
+const STICKER_HI = 0.8;
 
 export function rotation({ yaw, pitch, roll }: SolidAngles): Mat3 {
   const cy = Math.cos(yaw);
@@ -70,73 +73,149 @@ export function apply(m: Mat3, p: Vec3): Vec3 {
   ];
 }
 
-function spow(v: number, e: number): number {
-  return Math.sign(v) * Math.abs(v) ** e;
+function cubic(a: number, b: number, c: number, d: number, t: number): number {
+  return b + 0.5 * t * (c - a + t * (2 * a - 5 * b + 4 * c - d + t * (3 * (b - c) + d - a)));
 }
 
-export function lobe(s: BodyShape, theta: number, phi: number): number {
-  const ct = Math.cos(theta);
-  const depth = s.groove * (1 + s.grooveTop * Math.max(0, ct) ** 2 + s.grooveBottom * Math.max(0, -ct) ** 2);
-  return 1 - depth * (1 - Math.abs(Math.sin((s.ribs * phi) / 2))) ** s.grooveSharp;
+function profile(knots: number[], theta: number): number {
+  const n = knots.length;
+  const u = (theta / Math.PI) * (n - 1);
+  const i = Math.min(n - 2, Math.max(0, Math.floor(u)));
+  const at = (k: number): number => knots[Math.min(n - 1, Math.max(0, k))] as number;
+  return cubic(at(i - 1), at(i), at(i + 1), at(i + 2), u - i);
 }
 
 export function bodyPoint(s: BodyShape, theta: number, phi: number): Vec3 {
   const st = Math.sin(theta);
-  const ct = Math.cos(theta);
-  const h = spow(st, s.squareness) * (1 + s.taper * ct) * lobe(s, theta, phi);
-  const y =
-    s.aspect *
-    (spow(ct, s.squareness) -
-      s.topDip * Math.exp(-((theta / s.topDipWidth) ** 2)) +
-      s.bottomDip * Math.exp(-(((Math.PI - theta) / s.bottomDipWidth) ** 2)));
-  return [h * Math.sin(phi), y, h * Math.cos(phi)];
+  const rib = (1 - Math.abs(Math.sin((s.ribs * phi) / 2))) ** profile(s.sharp, theta);
+  const dome = profile(s.radius, theta);
+  const skirt = profile(s.skirt, theta);
+  const base = (dome ** s.join + skirt ** s.join) ** (1 / s.join);
+  const r = base * (1 - profile(s.depth, theta) * rib);
+  return [r * st * Math.sin(phi), r * Math.cos(theta), r * st * Math.cos(phi)];
 }
 
-export interface BodyMesh {
-  points: Vec3[];
+export interface LimbGrid {
+  nt: number;
+  np: number;
+  p: Float64Array;
+  n: Float64Array;
 }
 
-export function bodyMesh(s: BodyShape, lat = 64, lon = 7 * 48): BodyMesh {
-  const points: Vec3[] = [];
-  for (let i = 1; i < lat; i++) {
-    const theta = (Math.PI * i) / lat;
-    for (let j = 0; j < lon; j++) points.push(bodyPoint(s, theta, (TAU * j) / lon - Math.PI));
+export function limbGrid(s: BodyShape, nt = 120, np = s.ribs * 56): LimbGrid {
+  const p = new Float64Array((nt + 1) * np * 3);
+  const n = new Float64Array((nt + 1) * np * 3);
+  const e = 1e-4;
+  for (let i = 0; i <= nt; i++) {
+    const theta = 1e-3 + ((Math.PI - 2e-3) * i) / nt;
+    for (let j = 0; j < np; j++) {
+      const phi = (TAU * j) / np - Math.PI;
+      const c = bodyPoint(s, theta, phi);
+      const a0 = bodyPoint(s, theta - e, phi);
+      const a1 = bodyPoint(s, theta + e, phi);
+      const b0 = bodyPoint(s, theta, phi - e);
+      const b1 = bodyPoint(s, theta, phi + e);
+      const tx = a1[0] - a0[0];
+      const ty = a1[1] - a0[1];
+      const tz = a1[2] - a0[2];
+      const ux = b1[0] - b0[0];
+      const uy = b1[1] - b0[1];
+      const uz = b1[2] - b0[2];
+      let nx = ty * uz - tz * uy;
+      let ny = tz * ux - tx * uz;
+      let nz = tx * uy - ty * ux;
+      const l = Math.hypot(nx, ny, nz) || 1;
+      const sign = nx * c[0] + ny * c[1] + nz * c[2] < 0 ? -1 : 1;
+      nx = (nx / l) * sign;
+      ny = (ny / l) * sign;
+      nz = (nz / l) * sign;
+      const k = (i * np + j) * 3;
+      p[k] = c[0];
+      p[k + 1] = c[1];
+      p[k + 2] = c[2];
+      n[k] = nx;
+      n[k + 1] = ny;
+      n[k + 2] = nz;
+    }
   }
-  points.push(bodyPoint(s, 1e-4, 0), bodyPoint(s, Math.PI - 1e-4, 0));
-  return { points };
+  return { nt, np, p, n };
 }
 
-export function silhouette(mesh: BodyMesh, m: Mat3, bins = 360): Vec2[] {
+export function outline(grid: LimbGrid, m: Mat3, bins = 720): Vec2[] {
+  const { nt, np, p, n } = grid;
+  const count = (nt + 1) * np;
+  const g = new Float64Array(count);
+  for (let k = 0; k < count; k++) g[k] = n[k * 3] * m[6] + n[k * 3 + 1] * m[7] + n[k * 3 + 2] * m[8];
   const best = new Float64Array(bins).fill(-1);
   const bx = new Float64Array(bins);
   const by = new Float64Array(bins);
-  for (const p of mesh.points) {
-    const x = m[0] * p[0] + m[1] * p[1] + m[2] * p[2];
-    const y = -(m[3] * p[0] + m[4] * p[1] + m[5] * p[2]);
+  const put = (x0: number, y0: number, z0: number): void => {
+    const x = m[0] * x0 + m[1] * y0 + m[2] * z0;
+    const y = -(m[3] * x0 + m[4] * y0 + m[5] * z0);
     const r = x * x + y * y;
-    const k = Math.min(bins - 1, Math.floor(((Math.atan2(y, x) + Math.PI) / TAU) * bins));
-    if (r > (best[k] as number)) {
-      best[k] = r;
-      bx[k] = x;
-      by[k] = y;
+    const bin = Math.min(bins - 1, Math.floor(((Math.atan2(y, x) + Math.PI) / TAU) * bins));
+    if (r > (best[bin] as number)) {
+      best[bin] = r;
+      bx[bin] = x;
+      by[bin] = y;
+    }
+  };
+  const hits: number[] = [];
+  const cross = (a: number, b: number): void => {
+    const ga = g[a] as number;
+    const gb = g[b] as number;
+    if (ga > 0 === gb > 0) return;
+    const t = ga / (ga - gb);
+    for (let c = 0; c < 3; c++)
+      hits.push((p[a * 3 + c] as number) + ((p[b * 3 + c] as number) - (p[a * 3 + c] as number)) * t);
+  };
+  const step = (Math.PI / bins) * 0.5;
+  for (let i = 0; i < nt; i++) {
+    for (let j = 0; j < np; j++) {
+      const k00 = i * np + j;
+      const k01 = i * np + ((j + 1) % np);
+      const k10 = k00 + np;
+      const k11 = k01 + np;
+      hits.length = 0;
+      cross(k00, k01);
+      cross(k01, k11);
+      cross(k11, k10);
+      cross(k10, k00);
+      for (let h = 0; h + 5 < hits.length; h += 6) {
+        const ax = hits[h] as number;
+        const ay = hits[h + 1] as number;
+        const az = hits[h + 2] as number;
+        const dx = (hits[h + 3] as number) - ax;
+        const dy = (hits[h + 4] as number) - ay;
+        const dz = (hits[h + 5] as number) - az;
+        const n = Math.max(1, Math.ceil(Math.hypot(dx, dy, dz) / step));
+        for (let q = 0; q <= n; q++) put(ax + (dx * q) / n, ay + (dy * q) / n, az + (dz * q) / n);
+      }
     }
   }
-  const out: Vec2[] = [];
+  const ang: number[] = [];
+  const rad: number[] = [];
   for (let k = 0; k < bins; k++) {
-    if ((best[k] as number) >= 0) {
-      out.push([bx[k] as number, by[k] as number]);
-      continue;
-    }
-    let a = k - 1;
-    while (a >= 0 && (best[a] as number) < 0) a--;
-    let b = k + 1;
-    while (b < bins && (best[b] as number) < 0) b++;
-    if (a < 0 || b >= bins) continue;
-    const t = (k - a) / (b - a);
-    out.push([
-      (bx[a] as number) + ((bx[b] as number) - (bx[a] as number)) * t,
-      (by[a] as number) + ((by[b] as number) - (by[a] as number)) * t,
-    ]);
+    if ((best[k] as number) < 0) continue;
+    ang.push(Math.atan2(by[k] as number, bx[k] as number));
+    rad.push(Math.sqrt(best[k] as number));
+  }
+  const count2 = ang.length;
+  const out: Vec2[] = [];
+  if (!count2) return out;
+  let j = 0;
+  for (let k = 0; k < bins; k++) {
+    const psi = -Math.PI + ((k + 0.5) * TAU) / bins;
+    while (j < count2 && (ang[j] as number) < psi) j++;
+    const ia = (j - 1 + count2) % count2;
+    const ib = j % count2;
+    let a0 = ang[ia] as number;
+    let a1 = ang[ib] as number;
+    if (j === 0) a0 -= TAU;
+    if (j === count2) a1 += TAU;
+    const t = a1 - a0 > 1e-9 ? (psi - a0) / (a1 - a0) : 0;
+    const r = (rad[ia] as number) + ((rad[ib] as number) - (rad[ia] as number)) * t;
+    out.push([r * Math.cos(psi), r * Math.sin(psi)]);
   }
   return out;
 }
@@ -154,9 +233,32 @@ function bezier(s: StemShape, t: number): Vec3 {
   ];
 }
 
-function stemRadius(s: StemShape, t: number): number {
-  const [r0, r1, r2] = s.radius;
-  return r0 * (1 - t) * (1 - t) + 2 * r1 * t * (1 - t) + r2 * t * t;
+function stemRadius(s: StemShape, t: number, side: 1 | 2): number {
+  const k = s.radius;
+  const n = k.length;
+  let i = 0;
+  while (i < n - 2 && t > ((k[i + 1] as number[])[0] as number)) i++;
+  const at = (j: number): [number, number] => {
+    const e = k[Math.min(n - 1, Math.max(0, j))] as number[];
+    return [e[0] as number, e[side] as number];
+  };
+  const slope = (j: number): number => {
+    const a = at(j - 1);
+    const b = at(j + 1);
+    return (b[1] - a[1]) / (b[0] - a[0]);
+  };
+  const [t0, r0] = at(i);
+  const [t1, r1] = at(i + 1);
+  const h = t1 - t0;
+  const u = Math.min(1, Math.max(0, (t - t0) / h));
+  const u2 = u * u;
+  const u3 = u2 * u;
+  return (
+    (2 * u3 - 3 * u2 + 1) * r0 +
+    (u3 - 2 * u2 + u) * h * slope(i) +
+    (-2 * u3 + 3 * u2) * r1 +
+    (u3 - u2) * h * slope(i + 1)
+  );
 }
 
 export function projectStem(s: StemShape, m: Mat3, steps = 24): StemProjection {
@@ -173,11 +275,28 @@ export function projectStem(s: StemShape, m: Mat3, steps = 24): StemProjection {
     dx /= len;
     dy /= len;
     const p = pts[i] as Vec3;
-    const r = stemRadius(s, i / steps);
-    left.push([p[0] - dy * r, -p[1] + dx * r]);
-    right.push([p[0] + dy * r, -p[1] - dx * r]);
+    const rl = stemRadius(s, i / steps, 1);
+    const rr = stemRadius(s, i / steps, 2);
+    left.push([p[0] - dy * rl, -p[1] + dx * rl]);
+    right.push([p[0] + dy * rr, -p[1] - dx * rr]);
   }
   const outline = [...left, ...right.reverse()];
+  const b0 = pts[0] as Vec3;
+  const b1 = pts[1] as Vec3;
+  const dl = Math.hypot(b1[0] - b0[0], b1[1] - b0[1], b1[2] - b0[2]) || 1;
+  const sink = STEM_ROOT / dl;
+  const l0 = left[0] as Vec2;
+  const r0 = right[right.length - 1] as Vec2;
+  const ox = (b0[0] - b1[0]) * sink;
+  const oy = -(b0[1] - b1[1]) * sink;
+  const root: Vec2[] = [
+    left[2] as Vec2,
+    l0,
+    [l0[0] + ox, l0[1] + oy],
+    [r0[0] + ox, r0[1] + oy],
+    r0,
+    right[right.length - 3] as Vec2,
+  ];
   const tip = pts[steps] as Vec3;
   const prev = pts[steps - 1] as Vec3;
   const tx = tip[0] - prev[0];
@@ -185,7 +304,7 @@ export function projectStem(s: StemShape, m: Mat3, steps = 24): StemProjection {
   const tz = tip[2] - prev[2];
   const tl = Math.hypot(tx, ty, tz) || 1;
   const facing = tz / tl;
-  const rTip = stemRadius(s, 1);
+  const rTip = (stemRadius(s, 1, 1) + stemRadius(s, 1, 2)) / 2;
   const cap =
     facing > 0.05
       ? {
@@ -198,58 +317,53 @@ export function projectStem(s: StemShape, m: Mat3, steps = 24): StemProjection {
       : null;
   const base = apply(m, s.base);
   const up = apply(m, [0, 1, 0]);
-  return { outline, cap, front: base[2] > 0 && up[2] > 0.25 };
+  return { outline, root, cap, front: base[2] > 0 && up[2] > 0.25 };
 }
 
-export interface DepthMap {
+export interface DecalMap {
   n: number;
   extent: number;
-  z: Float32Array;
-  nx: Float32Array;
-  ny: Float32Array;
-  nz: Float32Array;
+  th: Float32Array;
+  ph: Float32Array;
+  rest: Mat3;
 }
 
-export function buildDepthMap(
+export function buildDecalMap(
   s: BodyShape,
   rest: Mat3,
   n = 256,
   extent = 1.3,
-  lat = 72,
-  lon = 7 * 40,
-): DepthMap {
+  lat = 96,
+  lon = s.ribs * 48,
+): DecalMap {
   const size = n * n;
   const z = new Float32Array(size).fill(Number.NEGATIVE_INFINITY);
-  const nx = new Float32Array(size);
-  const ny = new Float32Array(size);
-  const nz = new Float32Array(size);
+  const th = new Float32Array(size).fill(Number.NaN);
+  const ph = new Float32Array(size).fill(Number.NaN);
   const grid: Vec3[] = [];
+  const par: Vec2[] = [];
   for (let i = 0; i <= lat; i++) {
     const theta = Math.min(Math.PI - 1e-4, Math.max(1e-4, (Math.PI * i) / lat));
-    for (let j = 0; j <= lon; j++) grid.push(apply(rest, bodyPoint(s, theta, (TAU * j) / lon - Math.PI)));
+    for (let j = 0; j <= lon; j++) {
+      const phi = (TAU * j) / lon - Math.PI;
+      grid.push(apply(rest, bodyPoint(s, theta, phi)));
+      par.push([theta, phi]);
+    }
   }
   const cell = (2 * extent) / n;
-  const tri = (a: Vec3, b: Vec3, c: Vec3): void => {
+  const tri = (ia: number, ib: number, ic: number): void => {
+    const a = grid[ia] as Vec3;
+    const b = grid[ib] as Vec3;
+    const c = grid[ic] as Vec3;
     const ux = b[0] - a[0];
     const uy = b[1] - a[1];
-    const uz = b[2] - a[2];
     const vx = c[0] - a[0];
     const vy = c[1] - a[1];
-    const vz = c[2] - a[2];
-    let qx = uy * vz - uz * vy;
-    let qy = uz * vx - ux * vz;
-    let qz = ux * vy - uy * vx;
-    const ql = Math.hypot(qx, qy, qz) || 1;
-    if (qz < 0) {
-      qx = -qx;
-      qy = -qy;
-      qz = -qz;
-    }
-    qx /= ql;
-    qy /= ql;
-    qz /= ql;
     const det = ux * vy - uy * vx;
     if (Math.abs(det) < 1e-12) return;
+    const pa = par[ia] as Vec2;
+    const pb = par[ib] as Vec2;
+    const pc = par[ic] as Vec2;
     const c0 = Math.max(0, Math.floor((Math.min(a[0], b[0], c[0]) + extent) / cell));
     const c1 = Math.min(n - 1, Math.ceil((Math.max(a[0], b[0], c[0]) + extent) / cell));
     const r0 = Math.max(0, Math.floor((extent - Math.max(a[1], b[1], c[1])) / cell));
@@ -263,13 +377,12 @@ export function buildDepthMap(
         const l1 = (wx * vy - wy * vx) / det;
         const l2 = (ux * wy - uy * wx) / det;
         if (l1 < -1e-6 || l2 < -1e-6 || l1 + l2 > 1 + 1e-6) continue;
-        const pz = a[2] + l1 * uz + l2 * vz;
+        const pz = a[2] + l1 * (b[2] - a[2]) + l2 * (c[2] - a[2]);
         const k = r * n + col;
         if (pz > (z[k] as number)) {
           z[k] = pz;
-          nx[k] = qx;
-          ny[k] = qy;
-          nz[k] = qz;
+          th[k] = pa[0] + l1 * (pb[0] - pa[0]) + l2 * (pc[0] - pa[0]);
+          ph[k] = pa[1] + l1 * (pb[1] - pa[1]) + l2 * (pc[1] - pa[1]);
         }
       }
     }
@@ -277,18 +390,14 @@ export function buildDepthMap(
   const w = lon + 1;
   for (let i = 0; i < lat; i++) {
     for (let j = 0; j < lon; j++) {
-      const a = grid[i * w + j] as Vec3;
-      const b = grid[i * w + j + 1] as Vec3;
-      const c = grid[(i + 1) * w + j] as Vec3;
-      const d = grid[(i + 1) * w + j + 1] as Vec3;
-      tri(a, b, c);
-      tri(b, d, c);
+      tri(i * w + j, i * w + j + 1, (i + 1) * w + j);
+      tri(i * w + j + 1, (i + 1) * w + j + 1, (i + 1) * w + j);
     }
   }
-  return { n, extent, z, nx, ny, nz };
+  return { n, extent, th, ph, rest };
 }
 
-export function surfaceAt(map: DepthMap, x: number, yUp: number): { p: Vec3; nrm: Vec3 } | null {
+function paramAt(map: DecalMap, x: number, yUp: number): Vec2 | null {
   const { n, extent } = map;
   const cell = (2 * extent) / n;
   const fc = (x + extent) / cell - 0.5;
@@ -300,79 +409,229 @@ export function surfaceAt(map: DepthMap, x: number, yUp: number): { p: Vec3; nrm
   const ty = fr - r0;
   const ks = [r0 * n + c0, r0 * n + c0 + 1, (r0 + 1) * n + c0, (r0 + 1) * n + c0 + 1];
   const ws = [(1 - tx) * (1 - ty), tx * (1 - ty), (1 - tx) * ty, tx * ty];
-  let zz = 0;
-  let ax = 0;
-  let ay = 0;
-  let az = 0;
+  let a = 0;
+  let b = 0;
   let wsum = 0;
+  let lo = Number.POSITIVE_INFINITY;
+  let hi = Number.NEGATIVE_INFINITY;
+  let near = -1;
   for (let i = 0; i < 4; i++) {
     const k = ks[i] as number;
-    const zk = map.z[k] as number;
-    if (!Number.isFinite(zk)) continue;
+    const t = map.th[k] as number;
+    if (Number.isNaN(t)) continue;
     const wi = ws[i] as number;
-    zz += zk * wi;
-    ax += (map.nx[k] as number) * wi;
-    ay += (map.ny[k] as number) * wi;
-    az += (map.nz[k] as number) * wi;
+    a += t * wi;
+    b += (map.ph[k] as number) * wi;
     wsum += wi;
+    lo = Math.min(lo, t);
+    hi = Math.max(hi, t);
+    if (near < 0 || wi > (ws[near] as number)) near = i;
   }
   if (wsum < 0.5) return null;
-  zz /= wsum;
-  const l = Math.hypot(ax, ay, az) || 1;
-  return { p: [x, yUp, zz], nrm: [ax / l, ay / l, az / l] };
+  if (hi - lo > SHEET_JUMP) {
+    const k = ks[near] as number;
+    return [map.th[k] as number, map.ph[k] as number];
+  }
+  return [a / wsum, b / wsum];
 }
 
-export function projectDecal(map: DepthMap, ring: Vec2[], m: Mat3, edge = 0.06): Vec2[] | null {
+function surface(s: BodyShape, theta: number, phi: number): { nz: Vec3 } {
+  const e = 1e-4;
+  const c = bodyPoint(s, theta, phi);
+  const a0 = bodyPoint(s, theta - e, phi);
+  const a1 = bodyPoint(s, theta + e, phi);
+  const b0 = bodyPoint(s, theta, phi - e);
+  const b1 = bodyPoint(s, theta, phi + e);
+  const tx = a1[0] - a0[0];
+  const ty = a1[1] - a0[1];
+  const tz = a1[2] - a0[2];
+  const ux = b1[0] - b0[0];
+  const uy = b1[1] - b0[1];
+  const uz = b1[2] - b0[2];
+  const nx = ty * uz - tz * uy;
+  const ny = tz * ux - tx * uz;
+  const nz = tx * uy - ty * ux;
+  const l = (nx * c[0] + ny * c[1] + nz * c[2] < 0 ? -1 : 1) / (Math.hypot(nx, ny, nz) || 1);
+  return { nz: [nx * l, ny * l, nz * l] };
+}
+
+function restXY(s: BodyShape, rest: Mat3, theta: number, phi: number): Vec2 {
+  const p = bodyPoint(s, theta, phi);
+  return [rest[0] * p[0] + rest[1] * p[1] + rest[2] * p[2], rest[3] * p[0] + rest[4] * p[1] + rest[5] * p[2]];
+}
+
+function refine(s: BodyShape, rest: Mat3, guess: Vec2, x: number, yUp: number): Vec2 {
+  let [t, f] = guess;
+  let cur = restXY(s, rest, t, f);
+  let err = Math.hypot(cur[0] - x, cur[1] - yUp);
+  for (let k = 0; k < NEWTON_STEPS && err > 1e-7; k++) {
+    const a = restXY(s, rest, t + NEWTON_H, f);
+    const b = restXY(s, rest, t, f + NEWTON_H);
+    const j00 = (a[0] - cur[0]) / NEWTON_H;
+    const j10 = (a[1] - cur[1]) / NEWTON_H;
+    const j01 = (b[0] - cur[0]) / NEWTON_H;
+    const j11 = (b[1] - cur[1]) / NEWTON_H;
+    const det = j00 * j11 - j01 * j10;
+    if (Math.abs(det) < 1e-9) break;
+    const ex = x - cur[0];
+    const ey = yUp - cur[1];
+    const nt = t + (j11 * ex - j01 * ey) / det;
+    const nf = f + (j00 * ey - j10 * ex) / det;
+    const next = restXY(s, rest, nt, nf);
+    const nerr = Math.hypot(next[0] - x, next[1] - yUp);
+    if (!(nerr < err)) break;
+    t = nt;
+    f = nf;
+    cur = next;
+    err = nerr;
+  }
+  return [t, f];
+}
+
+export function skinOf(s: BodyShape): BodyShape {
+  return { ...s, depth: [0, 0] };
+}
+
+function smoothstep(lo: number, hi: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - lo) / (hi - lo)));
+  return t * t * (3 - 2 * t);
+}
+
+function screenJacobian(mm: Mat3, pc: Vec3, pt: Vec3, pf: Vec3): [number, number, number, number] {
+  const a = apply(mm, pc);
+  const b = apply(mm, pt);
+  const c = apply(mm, pf);
+  return [
+    (b[0] - a[0]) / NEWTON_H,
+    (c[0] - a[0]) / NEWTON_H,
+    (b[1] - a[1]) / NEWTON_H,
+    (c[1] - a[1]) / NEWTON_H,
+  ];
+}
+
+function wrapPoints(
+  s: BodyShape,
+  map: DecalMap,
+  ring: Vec2[],
+  m: Mat3,
+  edge: number,
+  center: Vec2,
+): Vec2[] | null {
   const n = ring.length;
-  const vis = new Array<boolean>(n);
-  const scr = new Array<Vec2>(n);
-  let any = false;
-  const at = (x: number, yDown: number): { s: Vec2; v: boolean } | null => {
-    const hit = surfaceAt(map, x, -yDown);
-    if (!hit) return null;
-    const q = apply(m, hit.p);
-    const nn = apply(m, hit.nrm);
-    return { s: [q[0], -q[1]], v: nn[2] > edge };
-  };
+  let cx = 0;
+  let cy = 0;
+  for (const p of ring) {
+    cx += p[0];
+    cy += p[1];
+  }
+  cx /= n;
+  cy /= n;
+  const params = new Array<Vec2>(n);
   for (let i = 0; i < n; i++) {
     const r = ring[i] as Vec2;
-    const h = at(r[0], r[1]);
-    vis[i] = !!h && h.v;
-    scr[i] = h ? h.s : [0, 0];
-    if (vis[i]) any = true;
-  }
-  if (!any) return null;
-  const visIdx: number[] = [];
-  for (let i = 0; i < n; i++) if (vis[i]) visIdx.push(i);
-  const out: Vec2[] = [];
-  for (let i = 0; i < n; i++) {
-    if (vis[i]) {
-      out.push(scr[i] as Vec2);
-      continue;
-    }
-    let best = visIdx[0] as number;
-    let bd = n;
-    for (const j of visIdx) {
-      const d = Math.min(Math.abs(j - i), n - Math.abs(j - i));
-      if (d < bd) {
-        bd = d;
-        best = j;
+    let hit = paramAt(map, r[0], -r[1]);
+    if (!hit) {
+      let lo = 0;
+      let hi = 1;
+      hit = center;
+      for (let k = 0; k < 14; k++) {
+        const t = (lo + hi) / 2;
+        const h = paramAt(map, cx + (r[0] - cx) * t, -(cy + (r[1] - cy) * t));
+        if (h) {
+          lo = t;
+          hit = h;
+        } else hi = t;
       }
     }
-    const a = ring[best] as Vec2;
-    const b = ring[i] as Vec2;
+    params[i] = refine(s, map.rest, hit, r[0], -r[1]);
+  }
+  const at = (q: Vec2): { s: Vec2; v: boolean } => {
+    const p = apply(m, bodyPoint(s, q[0], q[1]));
+    const nrm = surface(s, q[0], q[1]).nz;
+    const limit = Math.min(edge, apply(map.rest, nrm)[2] - FACING_SLACK);
+    return { s: [p[0], -p[1]], v: apply(m, nrm)[2] > limit };
+  };
+  const res = params.map(at);
+  const visIdx: number[] = [];
+  for (let i = 0; i < n; i++) if ((res[i] as { v: boolean }).v) visIdx.push(i);
+  if (!visIdx.length) return null;
+  const cVis = at(center).v;
+  const out: Vec2[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const ri = res[i] as { s: Vec2; v: boolean };
+    if (ri.v) {
+      out[i] = ri.s;
+      continue;
+    }
+    let a = center;
+    if (!cVis) {
+      let best = visIdx[0] as number;
+      let bd = n;
+      for (const j of visIdx) {
+        const d = Math.min(Math.abs(j - i), n - Math.abs(j - i));
+        if (d < bd) {
+          bd = d;
+          best = j;
+        }
+      }
+      a = params[best] as Vec2;
+    }
+    const b = params[i] as Vec2;
     let lo = 0;
     let hi = 1;
-    let last = scr[best] as Vec2;
+    let last = at(a).s;
     for (let k = 0; k < 14; k++) {
       const t = (lo + hi) / 2;
-      const h = at(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
-      if (h?.v) {
+      const h = at([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      if (h.v) {
         lo = t;
         last = h.s;
       } else hi = t;
     }
-    out.push(last);
+    out[i] = last;
+  }
+  return out;
+}
+
+export function projectEye(s: BodyShape, map: DecalMap, ring: Vec2[], m: Mat3, edge = 0.06): Vec2[] | null {
+  const n = ring.length;
+  let cx = 0;
+  let cy = 0;
+  for (const p of ring) {
+    cx += p[0];
+    cy += p[1];
+  }
+  cx /= n;
+  cy /= n;
+  const guess = paramAt(map, cx, -cy);
+  if (!guess) return null;
+  const center = refine(s, map.rest, guess, cx, -cy);
+  const nrm = surface(s, center[0], center[1]).nz;
+  const facing = apply(m, nrm)[2];
+  if (facing <= HIDE_FACING) return null;
+  const restFacing = apply(map.rest, nrm)[2];
+  const pc = bodyPoint(s, center[0], center[1]);
+  const pt = bodyPoint(s, center[0] + NEWTON_H, center[1]);
+  const pf = bodyPoint(s, center[0], center[1] + NEWTON_H);
+  const [r00, r01, r10, r11] = screenJacobian(map.rest, pc, pt, pf);
+  const det = r00 * r11 - r01 * r10;
+  const w =
+    Math.abs(det) < 1e-9 ? 1 : smoothstep(STICKER_LO, STICKER_HI, facing / Math.max(restFacing, 1e-3));
+  const wrapped = w > 0 ? wrapPoints(s, map, ring, m, edge, center) : null;
+  if (w >= 1 || Math.abs(det) < 1e-9) return wrapped;
+  const [n00, n01, n10, n11] = screenJacobian(m, pc, pt, pf);
+  const now = apply(m, pc);
+  const out: Vec2[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = ring[i] as Vec2;
+    const dx = r[0] - cx;
+    const dy = -(r[1] - cy);
+    const u = (r11 * dx - r01 * dy) / det;
+    const v = (r00 * dy - r10 * dx) / det;
+    const ax = now[0] + n00 * u + n01 * v;
+    const ay = now[1] + n10 * u + n11 * v;
+    const q = wrapped ? (wrapped[i] as Vec2) : null;
+    out[i] = q ? [q[0] * w + ax * (1 - w), q[1] * w - ay * (1 - w)] : [ax, -ay];
   }
   return out;
 }

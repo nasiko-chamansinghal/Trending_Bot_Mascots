@@ -1,61 +1,74 @@
-import { createRibbons } from '../../shared/ribbons';
+import { AURAS, createRibbons } from '../../shared/ribbons';
 import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
 import type { BallHandle, BallOptions } from '../render';
 import type { EyePose, Pose } from '../types';
-import { centroid, clamp, el, r2 } from '../util';
+import { centroid, clamp, el, r2, ringPath } from '../util';
 import {
-  bodyMesh,
-  buildDepthMap,
-  type DepthMap,
+  type BodyShape,
+  buildDecalMap,
+  type DecalMap,
+  type LimbGrid,
+  limbGrid,
   type Mat3,
-  projectDecal,
+  outline,
+  projectEye,
   projectStem,
   rotation,
-  silhouette,
+  skinOf,
+  TAU,
   type Vec2,
 } from './model';
 import type { SolidSpec } from './spec';
 
 const C = 120;
+const LIMB_KNEE = 0.7;
+const LIMB_MAX = 0.94;
+const RADIUS_BINS = 720;
 let uid = 0;
 
+function radiusAt(table: Float64Array, angle: number): number {
+  const f = ((angle + Math.PI) / TAU) * RADIUS_BINS - 0.5;
+  const i = Math.floor(f);
+  const t = f - i;
+  const a = table[(i + RADIUS_BINS) % RADIUS_BINS] as number;
+  const b = table[(i + 1) % RADIUS_BINS] as number;
+  return a + (b - a) * t;
+}
+
+function softLimb(d: number): number {
+  const a = Math.abs(d);
+  if (a <= LIMB_KNEE) return d;
+  const span = LIMB_MAX - LIMB_KNEE;
+  return Math.sign(d) * (LIMB_KNEE + span * Math.tanh((a - LIMB_KNEE) / span));
+}
+
 interface Prepared {
-  mesh: ReturnType<typeof bodyMesh>;
-  map: DepthMap;
-  restT: Mat3;
+  grid: LimbGrid;
+  skin: BodyShape;
+  map: DecalMap;
+  restRadius: Float64Array;
   restBottom: number;
 }
 
 const prepared = new WeakMap<SolidSpec, Prepared>();
 
-function transpose(m: Mat3): Mat3 {
-  return [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]];
-}
-
-function mul(a: Mat3, b: Mat3): Mat3 {
-  const o = new Array(9).fill(0) as Mat3;
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      o[r * 3 + c] = a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
-    }
-  }
-  return o;
-}
-
 function prepare(spec: SolidSpec): Prepared {
   const hit = prepared.get(spec);
   if (hit) return hit;
   const rest = rotation(spec.rest);
-  const mesh = bodyMesh(spec.body, 48, spec.body.ribs * 36);
-  const restSil = silhouette(mesh, rest, 360);
+  const grid = limbGrid(spec.body);
+  const skin = skinOf(spec.body);
+  const restSil = outline(grid, rest, RADIUS_BINS);
   let bottom = Number.NEGATIVE_INFINITY;
   for (const p of restSil) bottom = Math.max(bottom, spec.center[1] + p[1] * spec.scale * spec.stretch[1]);
+  const restRadius = new Float64Array(restSil.map((p) => Math.hypot(p[0], p[1])));
   const out: Prepared = {
-    mesh,
-    map: buildDepthMap(spec.body, rest, 256, 1.3),
-    restT: transpose(rest),
+    grid,
+    skin,
+    map: buildDecalMap(skin, rest),
+    restRadius,
     restBottom: bottom,
   };
   prepared.set(spec, out);
@@ -63,7 +76,7 @@ function prepare(spec: SolidSpec): Prepared {
 }
 
 export function solidRestOutline(spec: SolidSpec, count = 120): Point[] {
-  const sil = silhouette(prepare(spec).mesh, rotation(spec.rest), count);
+  const sil = outline(prepare(spec).grid, rotation(spec.rest), count);
   return sil.map(
     (p) =>
       [
@@ -136,17 +149,23 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   svg.appendChild(fxBack);
 
   const bodyG = el('g', { class: 'mm-body' });
+  const stemRoot = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const stemBack = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const body = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
   const stemFront = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const cap = el('ellipse', { fill: spec.capColor, stroke: 'none' }) as SVGEllipseElement;
+  bodyG.appendChild(stemRoot);
   bodyG.appendChild(stemBack);
   bodyG.appendChild(body);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
   svg.appendChild(bodyG);
 
-  const eyeG = el('g', {});
+  const clip = el('clipPath', { id: `${id}clip` });
+  const clipBody = el('path', {}) as SVGPathElement;
+  clip.appendChild(clipBody);
+  defs.appendChild(clip);
+  const eyeG = el('g', { 'clip-path': `url(#${id}clip)` });
   const eyes: [EyeNode, EyeNode] = [0, 1].map(() => {
     const node = el('path', { fill: palette.eye, stroke: 'none', 'stroke-width': '1.6' }) as SVGPathElement;
     eyeG.appendChild(node);
@@ -212,11 +231,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     lastKey = key;
     const m = rotation({ yaw: spec.rest.yaw + yaw, pitch: spec.rest.pitch + pitch, roll: spec.rest.roll });
     lastM = m;
-    const sil = silhouette(prep.mesh, m, 360).map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
-    body.setAttribute('d', polyPath(sil));
+    const sil = outline(prep.grid, m, 1080).map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
+    const bodyD = polyPath(sil);
+    body.setAttribute('d', bodyD);
+    clipBody.setAttribute('d', bodyD);
     const st = projectStem(spec.stem, m);
-    const outline = st.outline.map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
-    const d = polyPath(outline);
+    const toScreen = (p: Vec2): Vec2 => [CX + p[0] * KX, CY + p[1] * KY];
+    const stemOutline = st.outline.map(toScreen);
+    stemRoot.setAttribute('d', polyPath(st.root.map(toScreen)));
+    const d = polyPath(stemOutline);
     stemFront.setAttribute('d', st.front ? d : 'M0 0Z');
     stemBack.setAttribute('d', st.front ? 'M0 0Z' : d);
     if (st.cap) {
@@ -252,7 +275,12 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       const p = ring[i] as Point;
       const dx = (p[0] - c[0]) * sx;
       const dy = (p[1] - c[1]) * sy;
-      out[i] = [(ox + dx * ca - dy * sa - CX) / KX, (oy + dx * sa + dy * ca - CY) / KY];
+      const x = (ox + dx * ca - dy * sa - CX) / KX;
+      const y = (oy + dx * sa + dy * ca - CY) / KY;
+      const r = Math.hypot(x, y);
+      const rim = radiusAt(prep.restRadius, Math.atan2(y, x));
+      const k = r > 1e-6 ? (rim * softLimb(r / rim)) / r : 1;
+      out[i] = [x * k, y * k];
     }
     return out;
   }
@@ -260,13 +288,13 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   function setEye(
     eye: EyeNode,
     pose: EyePose,
-    rel: Mat3,
+    m: Mat3,
     sketch: number,
     bodyTf: string,
     sqx: number,
     sqy: number,
   ): void {
-    const pts = projectDecal(prep.map, eyeRing(pose), rel, spec.edge);
+    const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge);
     if (!pts) {
       eye.node.style.display = 'none';
       return;
@@ -281,7 +309,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
     mx /= scr.length;
     my /= scr.length;
-    const d = polyPath(scr);
+    const d = ringPath(scr);
     if (d !== eye.lastD) {
       eye.node.setAttribute('d', d);
       eye.lastD = d;
@@ -308,7 +336,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const sketch = b.sketch || 0;
     const spinYaw = b.yaw || 0;
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
-    const rel = mul(m, prep.restT);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
@@ -318,18 +345,21 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     if (sketchOn !== curSketch > 0.5) {
       curSketch = sketchOn ? 1 : 0;
       svg.classList.toggle('is-sketch', sketchOn);
+      stemRoot.style.display = sketchOn ? 'none' : '';
       for (const node of [body, stemBack, stemFront, cap]) {
         node.style.stroke = sketchOn ? `var(--sketch-ink, ${b.color})` : '';
         node.style.strokeWidth = sketchOn ? '1.6' : '';
       }
     }
     body.setAttribute('fill', sketchOn ? 'none' : b.color);
+    stemRoot.setAttribute('fill', spec.stemColor);
     stemBack.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
     stemFront.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
 
-    setEye(eyes[0], pose.left, rel, sketch, bodyTf, sqx, sqy);
-    setEye(eyes[1], pose.right, rel, sketch, bodyTf, sqx, sqy);
+    clipBody.setAttribute('transform', bodyTf);
+    setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
+    setEye(eyes[1], pose.right, m, sketch, bodyTf, sqx, sqy);
 
     const lift = clamp(-b.y / 52, 0, 1);
     const shOp = sketchOn ? 0 : 0.16 * (1 - 0.55 * lift);
@@ -366,7 +396,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       }
     }
 
-    if (ribbons) ribbons.update(dt, now, spinYaw, (b.orbit || 0) > 0);
+    if (ribbons) ribbons.update(dt, now, spinYaw, b.aura ? (AURAS[b.aura] ?? null) : (b.orbit || 0) > 0);
     if (fx) fx.update(dt, now, { yaw: 0, dYaw: 0, vel: 0 });
   }
 
