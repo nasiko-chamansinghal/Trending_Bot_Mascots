@@ -1,6 +1,7 @@
 import { easeInOutCubic } from '../../motion';
 import type { EmotionRaw, SequenceFrameSpec } from '../../types';
 import SHOW from './data/show.json';
+import { ENTER_SPEED, TRACE_SPEED } from './speeds';
 
 type Row = [number, number, number, number, number, number, number, number, string | null];
 
@@ -53,7 +54,7 @@ export function replay(
   start: number,
   parts: Part[],
 ): EmotionRaw {
-  const out: Out[] = [{ at: 0, row: ROWS[start] as Row, expr: exprAt(start), exprSpeed: 100 }];
+  const out: Out[] = [{ at: 0, row: ROWS[start] as Row, expr: exprAt(start), exprSpeed: ENTER_SPEED }];
   let t = 0;
   let last = ROWS[start] as Row;
   for (const part of parts) {
@@ -63,7 +64,7 @@ export function replay(
         t += FRAME;
         const row = nearTurn(ROWS[i] as Row, last);
         const e = dir > 0 ? (ROWS[i] as Row)[8] : exprAt(i);
-        out.push({ at: t, row, ...(e ? { expr: e, exprSpeed: 100 } : {}) });
+        out.push({ at: t, row, ...(e ? { expr: e, exprSpeed: TRACE_SPEED } : {}) });
         last = row;
       }
     } else if ('hold' in part) {
@@ -106,7 +107,7 @@ export function replay(
 export const PUMPKIN_SHOW: EmotionRaw[] = [
   replay(
     {
-      id: '50',
+      id: '42',
       name: 'Curious Peek',
       desc: 'Tips its whole head sideways and peers down-left with shrunken pill eyes, then gathers itself back up',
     },
@@ -115,7 +116,7 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   ),
   replay(
     {
-      id: '51',
+      id: '43',
       name: 'Wow Look-Up',
       desc: 'Pops tall, the pills spin outward and inflate into round eyes, and the whole head tips back to look up',
     },
@@ -131,7 +132,7 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   ),
   replay(
     {
-      id: '52',
+      id: '44',
       name: 'Giggle',
       desc: 'Looking up with round eyes, it giggles in six quick squashes that speed up, feet planted',
     },
@@ -143,7 +144,7 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   ),
   replay(
     {
-      id: '53',
+      id: '45',
       name: 'Big Stretch',
       desc: 'Stretches up to its tallest, head tipped far back, then sinks back down',
     },
@@ -152,7 +153,7 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   ),
   replay(
     {
-      id: '54',
+      id: '46',
       name: 'Jump Spin',
       desc: 'Crouches and turns away, leaps and spins a full turn with its eyes sweeping round the back, lands with a squash and settles',
     },
@@ -167,7 +168,7 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   ),
   replay(
     {
-      id: '55',
+      id: '47',
       name: 'Pumpkin Show',
       desc: 'The whole Pumpkin Bot routine: peek, pop, giggle, stretch, jump spin and settle, frame for frame',
     },
@@ -175,34 +176,3 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
     [{ from: 0, to: 353 }],
   ),
 ];
-
-export function showDelta(from: number, to: number): { duration: number; at: (t: number) => Row } {
-  const base = ROWS[0] as Row;
-  const duration = ((to - from) * 1000) / SHOW.fps;
-  const rows: Row[] = [];
-  let last = ROWS[from] as Row;
-  for (let i = from; i <= to; i++) {
-    const r = nearTurn(ROWS[i] as Row, last);
-    rows.push(r);
-    last = r;
-  }
-  return {
-    duration,
-    at(t: number): Row {
-      const f = Math.min(rows.length - 1, Math.max(0, (t / 1000) * SHOW.fps));
-      const i = Math.floor(f);
-      const r = mix(rows[i] as Row, rows[Math.min(rows.length - 1, i + 1)] as Row, f - i);
-      return [
-        r[0],
-        r[1] - base[1],
-        r[2] - base[2],
-        r[3] - base[3],
-        r[4] / base[4],
-        r[5] / base[5],
-        r[6] - base[6],
-        r[7] - base[7],
-        null,
-      ];
-    },
-  };
-}

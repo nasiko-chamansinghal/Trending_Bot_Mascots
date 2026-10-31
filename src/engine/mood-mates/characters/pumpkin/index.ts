@@ -1,6 +1,6 @@
 import { solidRestOutline } from '../../solid/render';
 import type { CharacterRaw } from '../../types';
-import { joyFoldBoing, jumpSpin } from './clips';
+import { boop, giggle, happyHop, heartEyes, jelly, joyFoldBoing, pirouette, wink } from './clips';
 import { GROK_MOTION, PUMPKIN_GROK_EMOTIONS } from './emotions';
 import { PUMPKIN_RINGS } from './eyes';
 import { PUMPKIN_PALETTE } from './palette';
@@ -28,6 +28,6 @@ export const pumpkin: CharacterRaw = {
   emotions: PUMPKIN_GROK_EMOTIONS,
   extraEmotions: [...PUMPKIN_SHOW, ...PUMPKIN_HAPPY],
   emotionGroups: PUMPKIN_GROUPS,
-  clips: { jumpSpin, joyFoldBoing },
-  signatureClips: ['jumpSpin', 'joyFoldBoing'],
+  clips: { boop, heartEyes, wink, jelly, pirouette, giggle, happyHop, joyFoldBoing },
+  signatureClips: ['boop', 'heartEyes', 'wink', 'jelly', 'pirouette', 'giggle', 'happyHop', 'joyFoldBoing'],
 };
