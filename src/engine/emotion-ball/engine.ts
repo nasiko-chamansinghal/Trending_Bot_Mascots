@@ -1,3 +1,5 @@
+import { Effects } from '../shared/effects';
+import { easeOutQuint, Inertia, wrapDegrees } from '../shared/inertia';
 import {
   BOUNCE_SEGS,
   BOUNCE_TOTAL,
@@ -9,6 +11,8 @@ import {
   spring,
   springStep,
 } from '../shared/math';
+import { MOTIONS } from '../shared/motions';
+import { makeTheme, type Theme } from '../shared/theme';
 import { clamp, type Ring, rand } from '../shared/util';
 import { type BallHandle, createBall } from './ball';
 import { EMOTION_GROUPS, EMOTION_SEED } from './emotions';
@@ -95,6 +99,7 @@ function lerpPose(a: Pose, b: Pose, t: number): Pose {
 type AnimFn = (a: AnimSpec, t: number, eng?: EmotionEngine) => number;
 
 const ANIM_TYPES: Record<string, AnimFn> = {
+  ...MOTIONS,
   sine: (a, t) => (a.amp as number) * Math.sin((TAU * t) / (a.period || 2000) + (a.phase || 0)),
   pulse: (a, t) => (a.amp as number) * 0.5 * (1 - Math.cos((TAU * t) / (a.period || 1000) + (a.phase || 0))),
   jitter: (a, t, eng) => {
@@ -175,7 +180,7 @@ export interface EmotionDef {
   antics: boolean;
   base: Pose;
   anims: AnimSpec[];
-  sequence: { frames: PoseFrame[]; settle: SequenceSpec['settle'] } | null;
+  sequence: { frames: PoseFrame[]; settle: SequenceSpec['settle']; linear: boolean } | null;
   raw: EmotionRaw;
 }
 
@@ -234,7 +239,11 @@ function normalize(raw: EmotionRaw): EmotionDef {
     const frames = raw.sequence.frames
       .map((f) => ({ at: f.at || 0, pose: applySpec(clonePose(base), f) }))
       .sort((x, y) => x.at - y.at);
-    def.sequence = { frames, settle: raw.sequence.settle || 'base' };
+    def.sequence = {
+      frames,
+      settle: raw.sequence.settle || 'base',
+      linear: raw.sequence.interp === 'linear',
+    };
   }
   return def;
 }
@@ -323,6 +332,8 @@ export interface IdleConfig {
   sleepId: string;
 }
 
+const THEME_FADE_MS = 360;
+
 export interface EngineOptions {
   emotion?: string;
   shape?: string;
@@ -331,7 +342,7 @@ export interface EngineOptions {
   lite?: boolean;
   autostart?: boolean;
   color?: string;
-  eyeColor?: string;
+  eyeColor?: string | null;
   eyeScale?: number;
   fallbackId?: string;
 }
@@ -355,16 +366,18 @@ type EventName = keyof EventPayloads;
 interface SeqState {
   frames: PoseFrame[];
   settle: SequenceSpec['settle'];
+  linear: boolean;
   done: boolean;
 }
 
 export class EmotionEngine {
   ball: BallHandle;
+  private effects: Effects;
   seed: number;
   private events: Record<string, Array<(payload: never) => void>> = {};
   private gaze = { x: 0, y: 0, tx: 0, ty: 0 };
   private style = { sketch: 0 };
-  private theme: { body: string; eyes: string } | null;
+  private theme: Theme | null;
   private eyeScale: number;
   private lastTick = 0;
   private spinState: Spring | null = null;
@@ -384,6 +397,8 @@ export class EmotionEngine {
   private def: EmotionDef | null = null;
   private lastPose: Pose | null = null;
   private prevPose: Pose | null = null;
+  private inertia = new Inertia();
+  private themeFade: { at: number; body: string; eyes: string } | null = null;
   private transStart = 0;
   private transDur = 0;
   private emoStart = 0;
@@ -404,8 +419,9 @@ export class EmotionEngine {
       ...opts,
       lite: opts.lite != null ? opts.lite : opts.autostart === false,
     });
+    this.effects = new Effects(this.ball.svg, 'ball');
     this.seed = Math.random() * 100;
-    this.theme = opts.color ? { body: opts.color, eyes: opts.eyeColor || '#FFFFFF' } : null;
+    this.theme = makeTheme(opts.color, opts.eyeColor);
     this.eyeScale = opts.eyeScale || 1;
 
     const first = EXPR[0] as [Ring, Ring];
@@ -477,12 +493,23 @@ export class EmotionEngine {
     const now = performance.now();
     const prevId = this.def ? this.def.id : null;
     this.prevPose = this.lastPose ? clonePose(this.lastPose) : null;
+    this.inertia.begin(this.lastPose);
+    if (this.prevPose) {
+      const restRotate = def.base.body.rotate || 0;
+      this.prevPose.body.rotate = restRotate + wrapDegrees(this.prevPose.body.rotate - restRotate);
+    }
     this.def = def;
+    this.effects.play(def.raw.effect, now);
     this.emoStart = now;
     this.transStart = now;
     this.transDur = this.prevPose ? def.transition : 0;
     this.seq = def.sequence
-      ? { frames: def.sequence.frames, settle: def.sequence.settle, done: false }
+      ? {
+          frames: def.sequence.frames,
+          settle: def.sequence.settle,
+          linear: def.sequence.linear,
+          done: false,
+        }
       : null;
     if (!o.auto) this.lastActivity = now;
 
@@ -571,6 +598,15 @@ export class EmotionEngine {
     return this;
   }
 
+  setColor(body: string | null, eyes?: string | null, instant = false): this {
+    const from = this.lastPose;
+    this.theme = makeTheme(body, eyes);
+    this.themeFade =
+      !instant && from ? { at: performance.now(), body: from.body.color, eyes: from.left.color } : null;
+    if (!this.active) this.renderStatic();
+    return this;
+  }
+
   spin(turns?: number, dir?: number): this {
     if (this.spinState) return this;
     const d = dir || (Math.random() < 0.5 ? -1 : 1);
@@ -640,6 +676,7 @@ export class EmotionEngine {
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
+    this.effects.still(this.lastPose?.body.color ?? '#FFFFFF', this.lastPose?.body.scale ?? 1);
     this.seq = seq;
   }
 
@@ -647,6 +684,7 @@ export class EmotionEngine {
     this.stopTour();
     this.setActive(false);
     this.events = {};
+    this.effects.destroy();
     this.ball.destroy();
   }
 
@@ -655,7 +693,9 @@ export class EmotionEngine {
     this.lastTick = now;
     if (this.idle && !this.isTouring) this.checkIdle(now);
     const pose = this.compose(now, 0);
+    this.inertia.apply(pose, now);
     this.ball.applyPose(pose);
+    this.effects.frame(now, pose.body.color, pose.body.scale);
     this.lastPose = pose;
   }
 
@@ -798,9 +838,20 @@ export class EmotionEngine {
     }
 
     if (this.theme) {
-      pose.body.color = this.theme.body;
-      if (pose.left.color === DEFAULT_EYE.color) pose.left.color = this.theme.eyes;
-      if (pose.right.color === DEFAULT_EYE.color) pose.right.color = this.theme.eyes;
+      if (this.theme.body) pose.body.color = this.theme.body;
+      const eyeTint = this.theme.eyes;
+      if (eyeTint && pose.left.color === DEFAULT_EYE.color) pose.left.color = eyeTint;
+      if (eyeTint && pose.right.color === DEFAULT_EYE.color) pose.right.color = eyeTint;
+    }
+    if (this.themeFade) {
+      const k = easeOutQuint(clamp((now - this.themeFade.at) / THEME_FADE_MS, 0, 1));
+      if (k >= 1) {
+        this.themeFade = null;
+      } else {
+        pose.body.color = lerpColor(this.themeFade.body, pose.body.color, k);
+        pose.left.color = lerpColor(this.themeFade.eyes, pose.left.color, k);
+        pose.right.color = lerpColor(this.themeFade.eyes, pose.right.color, k);
+      }
     }
 
     const openS = clamp(this.openSpring.x, 0.02, 1.5);
@@ -829,6 +880,7 @@ export class EmotionEngine {
         const s = seq.settle;
         if (s === 'base') {
           this.prevPose = this.lastPose ? clonePose(this.lastPose) : clonePose(last.pose);
+          this.inertia.begin(this.lastPose);
           this.transStart = now;
           this.transDur = (this.def as EmotionDef).transition || 500;
           this.seq = null;
@@ -847,7 +899,8 @@ export class EmotionEngine {
       const a = frames[i] as PoseFrame;
       const b = frames[i + 1] as PoseFrame;
       if (t >= a.at && t < b.at) {
-        const k = easeInOutCubic((t - a.at) / (b.at - a.at));
+        const u = (t - a.at) / (b.at - a.at);
+        const k = seq.linear ? u : easeInOutCubic(u);
         return lerpPose(a.pose, b.pose, k);
       }
     }
