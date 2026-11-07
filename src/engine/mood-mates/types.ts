@@ -221,6 +221,7 @@ export interface EmotionRaw extends PoseSpec {
   name: string;
   group: string;
   desc?: string;
+  effect?: string;
   transition?: number;
   gaze?: boolean;
   pool?: string[];

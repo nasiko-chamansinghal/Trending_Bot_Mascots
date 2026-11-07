@@ -1,3 +1,5 @@
+import { Effects } from '../shared/effects';
+import { easeOutQuint, Inertia, wrapDegrees } from '../shared/inertia';
 import {
   BOUNCE_SEGS,
   BOUNCE_TOTAL,
@@ -9,6 +11,8 @@ import {
   spring,
   springStep,
 } from '../shared/math';
+import { MOTIONS } from '../shared/motions';
+import { makeTheme, type Theme } from '../shared/theme';
 import { clamp, rand } from '../shared/util';
 import { EMOTION_GROUPS, EMOTION_SEED } from './data/emotions';
 import type { EyePair, Ring } from './geometry';
@@ -251,6 +255,7 @@ interface PoseFrame {
 type AnimFn = (a: AnimSpec, t: number, eng?: EmotionEngine) => number;
 
 const ANIM_TYPES: Record<string, AnimFn> = {
+  ...MOTIONS,
   sine: (a, t) => (a.amp as number) * Math.sin((TAU * t) / (a.period || 2000) + (a.phase || 0)),
   pulse: (a, t) => (a.amp as number) * 0.5 * (1 - Math.cos((TAU * t) / (a.period || 1000) + (a.phase || 0))),
   jitter: (a, t, eng) => {
@@ -399,7 +404,14 @@ function resolvePoseColors(pose: Pose, ch: ResolvedCharacter): Pose {
 function normalizeFor(rawIn: EmotionRaw, ch: ResolvedCharacter): EmotionDef {
   const over = ch.emotions?.[rawIn.id];
   const raw = over
-    ? ({ id: rawIn.id, name: rawIn.name, group: rawIn.group, desc: rawIn.desc, ...over } as EmotionRaw)
+    ? ({
+        id: rawIn.id,
+        name: rawIn.name,
+        group: rawIn.group,
+        desc: rawIn.desc,
+        effect: rawIn.effect,
+        ...over,
+      } as EmotionRaw)
     : rawIn;
   const base = resolvePoseColors(applySpec(applySpec(defaultPose(), ch.poseDefaults || undefined), raw), ch);
   let pool = (raw.pool || ['calm', 'calm2']).filter((s) => ch.eyeFamily[s]);
@@ -515,6 +527,8 @@ export interface IdleConfig {
   sleepId: string;
 }
 
+const THEME_FADE_MS = 360;
+
 export interface EngineOptions {
   character?: string;
   emotion?: string;
@@ -524,7 +538,7 @@ export interface EngineOptions {
   lite?: boolean;
   autostart?: boolean;
   color?: string;
-  eyeColor?: string;
+  eyeColor?: string | null;
   eyeScale?: number;
   fallbackId?: string;
 }
@@ -564,11 +578,12 @@ interface SeqState {
 export class EmotionEngine {
   character: ResolvedCharacter;
   ball: BallHandle;
+  private effects: Effects;
   seed: number;
   private events: Record<string, Array<(payload: never) => void>> = {};
   private gaze = { x: 0, y: 0, tx: 0, ty: 0 };
   private style = { sketch: 0 };
-  private theme: { body: string; eyes: string } | null;
+  private theme: Theme | null;
   private eyeScale: number;
   private lastTick = 0;
   private spinState: Spring | null = null;
@@ -591,6 +606,8 @@ export class EmotionEngine {
   private def: EmotionDef | null = null;
   private lastPose: Pose | null = null;
   private prevPose: Pose | null = null;
+  private inertia = new Inertia();
+  private themeFade: { at: number; body: string; eyes: string } | null = null;
   private transStart = 0;
   private transDur = 0;
   private emoStart = 0;
@@ -621,8 +638,9 @@ export class EmotionEngine {
       character: ch,
       lite: opts.lite != null ? opts.lite : opts.autostart === false,
     });
+    this.effects = new Effects(this.ball.svg, ch.id);
     this.seed = Math.random() * 100;
-    this.theme = opts.color ? { body: opts.color, eyes: opts.eyeColor || '#FFFFFF' } : null;
+    this.theme = makeTheme(opts.color, opts.eyeColor);
     this.eyeScale = opts.eyeScale || 1;
 
     const calm = ch.eyeFamily.calm as EyePair;
@@ -706,12 +724,18 @@ export class EmotionEngine {
     const now = performance.now();
     const prevId = this.def ? this.def.id : null;
     this.prevPose = this.lastPose ? clonePose(this.lastPose) : null;
+    this.inertia.begin(this.lastPose);
     const prevTurn = this.prevPose?.body.turn;
     if (this.prevPose && prevTurn != null) {
       const target = def.base.body.turn || 0;
       this.prevPose.body.turn = target + Math.atan2(Math.sin(prevTurn - target), Math.cos(prevTurn - target));
     }
+    if (this.prevPose) {
+      const restRotate = def.base.body.rotate || 0;
+      this.prevPose.body.rotate = restRotate + wrapDegrees(this.prevPose.body.rotate - restRotate);
+    }
     this.def = def;
+    this.effects.play(def.raw.effect, now);
     this.emoStart = now;
     this.transStart = now;
     this.transDur = this.prevPose ? def.transition : 0;
@@ -812,6 +836,15 @@ export class EmotionEngine {
 
   setStyle(style?: { sketch?: number }): this {
     Object.assign(this.style, style || {});
+    if (!this.active) this.renderStatic();
+    return this;
+  }
+
+  setColor(body: string | null, eyes?: string | null, instant = false): this {
+    const from = this.lastPose;
+    this.theme = makeTheme(body, eyes);
+    this.themeFade =
+      !instant && from ? { at: performance.now(), body: from.body.color, eyes: from.left.color } : null;
     if (!this.active) this.renderStatic();
     return this;
   }
@@ -929,6 +962,7 @@ export class EmotionEngine {
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
+    this.effects.still(this.lastPose?.body.color ?? '#FFFFFF', this.lastPose?.body.scale ?? 1);
     this.seq = seq;
   }
 
@@ -936,6 +970,7 @@ export class EmotionEngine {
     this.stopTour();
     this.setActive(false);
     this.events = {};
+    this.effects.destroy();
     this.ball.destroy();
   }
 
@@ -944,7 +979,9 @@ export class EmotionEngine {
     this.lastTick = now;
     if (this.idle && !this.isTouring) this.checkIdle(now);
     const pose = this.compose(now, 0);
+    this.inertia.apply(pose, now);
     this.ball.applyPose(pose);
+    this.effects.frame(now, pose.body.color, pose.body.scale);
     this.lastPose = pose;
   }
 
@@ -1102,10 +1139,21 @@ export class EmotionEngine {
     }
 
     if (this.theme) {
-      pose.body.color = this.theme.body;
+      if (this.theme.body) pose.body.color = this.theme.body;
       const chEye = this.character.palette.eye;
-      if (pose.left.color === chEye) pose.left.color = this.theme.eyes;
-      if (pose.right.color === chEye) pose.right.color = this.theme.eyes;
+      const eyeTint = this.theme.eyes;
+      if (eyeTint && pose.left.color === chEye) pose.left.color = eyeTint;
+      if (eyeTint && pose.right.color === chEye) pose.right.color = eyeTint;
+    }
+    if (this.themeFade) {
+      const k = easeOutQuint(clamp((now - this.themeFade.at) / THEME_FADE_MS, 0, 1));
+      if (k >= 1) {
+        this.themeFade = null;
+      } else {
+        pose.body.color = lerpColor(this.themeFade.body, pose.body.color, k);
+        pose.left.color = lerpColor(this.themeFade.eyes, pose.left.color, k);
+        pose.right.color = lerpColor(this.themeFade.eyes, pose.right.color, k);
+      }
     }
 
     const openS = openStyle ? clamp(this.openSpring.x, 0.02, 1.5) : 1;
@@ -1210,6 +1258,7 @@ export class EmotionEngine {
         const s = seq.settle;
         if (s === 'base') {
           this.prevPose = this.lastPose ? clonePose(this.lastPose) : clonePose(last.pose);
+          this.inertia.begin(this.lastPose);
           this.transStart = now;
           this.transDur = (this.def as EmotionDef).transition || 500;
           this.seq = null;
