@@ -9,6 +9,7 @@ export interface BodyShape {
   skirt: number[];
   join: number;
   depth: number[];
+  flat?: number;
 }
 
 export interface StemShape {
@@ -17,6 +18,29 @@ export interface StemShape {
   c2: Vec3;
   tip: Vec3;
   radius: Array<[number, number, number]>;
+}
+
+export interface LimbSpec {
+  side: 1 | -1;
+  base: Vec3;
+  length: number;
+  angle: number;
+  bend: number;
+  radius: Array<[number, number, number]>;
+}
+
+const DEG = Math.PI / 180;
+
+export function limbShape(l: LimbSpec, raise: number): StemShape {
+  const a = (l.angle + raise) * DEG;
+  const dx = l.side * Math.cos(a);
+  const dy = Math.sin(a);
+  const at = (t: number, bend: number): Vec3 => [
+    l.base[0] + dx * l.length * t - dy * l.side * l.bend * bend,
+    l.base[1] + dy * l.length * t + dx * l.side * l.bend * bend,
+    l.base[2],
+  ];
+  return { base: l.base, c1: at(0.33, 1), c2: at(0.66, 1), tip: at(1, 0), radius: l.radius };
 }
 
 export interface SolidAngles {
@@ -92,7 +116,7 @@ export function bodyPoint(s: BodyShape, theta: number, phi: number): Vec3 {
   const skirt = profile(s.skirt, theta);
   const base = (dome ** s.join + skirt ** s.join) ** (1 / s.join);
   const r = base * (1 - profile(s.depth, theta) * rib);
-  return [r * st * Math.sin(phi), r * Math.cos(theta), r * st * Math.cos(phi)];
+  return [r * st * Math.sin(phi), r * Math.cos(theta), r * st * Math.cos(phi) * (s.flat ?? 1)];
 }
 
 export interface LimbGrid {
