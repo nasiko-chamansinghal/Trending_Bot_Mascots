@@ -1,9 +1,9 @@
 {
-  "name": "aora-bot",
+  "name": "mascot-studio",
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Emotion Ball and Mood Mates: SVG expression engines for AI mascots, with a React gallery",
+  "description": "Emotion Ball and Mood Mates: SVG expression engines for AI mascots, with a React studio",
   "packageManager": "pnpm@11.9.0",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -15,8 +15,7 @@
     "typecheck": "tsc",
     "lint": "biome check",
     "lint:fix": "biome check --write",
-    "build:lib": "LIB=mood-mates vite build -c vite.lib.config.ts && LIB=emotion-ball vite build -c vite.lib.config.ts",
-    "test:live": "node tests/live/live-check.mjs"
+    "build:lib": "LIB=mood-mates vite build -c vite.lib.config.ts && LIB=emotion-ball vite build -c vite.lib.config.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
