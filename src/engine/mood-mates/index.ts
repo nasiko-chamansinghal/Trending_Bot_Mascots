@@ -2,6 +2,7 @@ import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
 import { pumpkin } from './characters/pumpkin';
 import { stampy } from './characters/stampy';
+import { woody } from './characters/woody';
 import { characters, config, create, EmotionEngine, version } from './engine';
 import { registerSkin } from './fx';
 import * as geo from './geometry';
@@ -13,6 +14,7 @@ registerSkin('blockpop', blockpop);
 characters.register(nubby);
 characters.register(stampy);
 characters.register(pumpkin);
+characters.register(woody);
 
 export const MoodMates = {
   create,
