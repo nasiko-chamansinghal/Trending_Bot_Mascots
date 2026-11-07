@@ -12,6 +12,8 @@ export interface BodyPose {
   zzz: number;
   scaleX: number;
   scaleY: number;
+  armL?: number;
+  armR?: number;
   yaw?: number;
   peel?: number;
   flip?: number;

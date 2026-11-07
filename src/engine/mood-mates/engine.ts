@@ -162,6 +162,8 @@ const DEFAULT_BODY = {
   zzz: 0,
   scaleX: 1,
   scaleY: 1,
+  armL: 0,
+  armR: 0,
 };
 const DEFAULT_EYE = {
   x: 0,
