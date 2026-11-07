@@ -6,11 +6,13 @@ import type { BallHandle, BallOptions } from '../render';
 import type { EyePose, Pose } from '../types';
 import { centroid, clamp, el, r2, ringPath } from '../util';
 import {
+  apply,
   type BodyShape,
   buildDecalMap,
   type DecalMap,
   type LimbGrid,
   limbGrid,
+  limbShape,
   type Mat3,
   outline,
   projectEye,
@@ -25,6 +27,7 @@ import type { SolidSpec } from './spec';
 const C = 120;
 const LIMB_KNEE = 0.7;
 const LIMB_MAX = 0.94;
+const LIMB_STEPS = 40;
 const RADIUS_BINS = 720;
 let uid = 0;
 
@@ -159,6 +162,12 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.appendChild(body);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
+  const limbs = (spec.limbs ?? []).map(() => {
+    const node = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
+    bodyG.insertBefore(node, body);
+    return node;
+  });
+  const limbFront = limbs.map(() => false);
   svg.appendChild(bodyG);
 
   const clip = el('clipPath', { id: `${id}clip` });
@@ -224,6 +233,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   let lastM: Mat3 = rotation(spec.rest);
   let curSketch = -1;
   let prevNow = 0;
+  let lastLimbKey = '';
 
   function setGeometry(yaw: number, pitch: number): Mat3 {
     const key = `${Math.round(yaw * 573)}:${Math.round(pitch * 573)}`;
@@ -235,6 +245,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const bodyD = polyPath(sil);
     body.setAttribute('d', bodyD);
     clipBody.setAttribute('d', bodyD);
+    lastLimbKey = '';
+    if (!spec.stem) {
+      cap.style.display = 'none';
+      return m;
+    }
     const st = projectStem(spec.stem, m);
     const toScreen = (p: Vec2): Vec2 => [CX + p[0] * KX, CY + p[1] * KY];
     const stemOutline = st.outline.map(toScreen);
@@ -258,6 +273,22 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       cap.style.display = 'none';
     }
     return m;
+  }
+
+  function setLimbs(m: Mat3, raise: number[]): void {
+    const key = raise.map((a) => Math.round(a * 10)).join(':');
+    if (key === lastLimbKey) return;
+    lastLimbKey = key;
+    spec.limbs?.forEach((limb, i) => {
+      const node = limbs[i] as SVGPathElement;
+      const tube = projectStem(limbShape(limb, raise[i] ?? 0), m, LIMB_STEPS);
+      node.setAttribute('d', polyPath(tube.outline.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+      const front = apply(m, limb.base)[2] > 0;
+      if (front === limbFront[i]) return;
+      limbFront[i] = front;
+      if (front) bodyG.appendChild(node);
+      else bodyG.insertBefore(node, body);
+    });
   }
 
   function eyeRing(pose: EyePose): Vec2[] {
@@ -336,6 +367,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const sketch = b.sketch || 0;
     const spinYaw = b.yaw || 0;
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
+    if (limbs.length) setLimbs(m, [b.armL ?? 0, b.armR ?? 0]);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
@@ -346,12 +378,13 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       curSketch = sketchOn ? 1 : 0;
       svg.classList.toggle('is-sketch', sketchOn);
       stemRoot.style.display = sketchOn ? 'none' : '';
-      for (const node of [body, stemBack, stemFront, cap]) {
+      for (const node of [body, stemBack, stemFront, cap, ...limbs]) {
         node.style.stroke = sketchOn ? `var(--sketch-ink, ${b.color})` : '';
         node.style.strokeWidth = sketchOn ? '1.6' : '';
       }
     }
     body.setAttribute('fill', sketchOn ? 'none' : b.color);
+    for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : b.color);
     stemRoot.setAttribute('fill', spec.stemColor);
     stemBack.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
     stemFront.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);

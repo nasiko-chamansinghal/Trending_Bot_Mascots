@@ -1,8 +1,9 @@
-import type { BodyShape, SolidAngles, StemShape } from './model';
+import type { BodyShape, LimbSpec, SolidAngles, StemShape } from './model';
 
 export interface SolidSpec {
   body: BodyShape;
-  stem: StemShape;
+  stem?: StemShape;
+  limbs?: LimbSpec[];
   rest: SolidAngles;
   scale: number;
   stretch: [number, number];
