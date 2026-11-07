@@ -172,7 +172,7 @@ export const TYPING = loopEmotion(
 export const LOADING_BLOCKS = loopEmotion(
   {
     id: '58',
-    name: 'Loading Blocks',
+    name: 'Block Loader',
     desc: 'Two squares slide out from behind it as it shrinks, it turns into a matching square, all three pulse in turn like loading dots, then it grows back into itself',
   },
   { duration: LOADING_MS, poster: 2000, expr: 'calm', pose: loadingBlocks },
