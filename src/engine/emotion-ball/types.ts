@@ -4,6 +4,8 @@ export interface BodyPose {
   x: number;
   y: number;
   scale: number;
+  scaleX?: number;
+  scaleY?: number;
   rotate: number;
   color: string;
   breathe: number;
@@ -86,6 +88,7 @@ export interface SequenceFrameSpec extends PoseSpec {
 
 export interface SequenceSpec {
   settle?: 'base' | 'hold' | { next: string };
+  interp?: 'ease' | 'linear';
   frames: SequenceFrameSpec[];
 }
 
@@ -99,6 +102,7 @@ export interface EmotionRaw extends PoseSpec {
   name: string;
   group: string;
   desc?: string;
+  effect?: string;
   transition?: number;
   gaze?: boolean;
   pool?: number[];

@@ -309,7 +309,7 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
 
     bodyG.setAttribute(
       'transform',
-      `translate(${r2(HEAD_C + b.x)} ${r2(HEAD_C + b.y)}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale)}) translate(${r2(-HEAD_C)} ${r2(-HEAD_C)})`,
+      `translate(${r2(HEAD_C + b.x)} ${r2(HEAD_C + b.y)}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * (b.scaleX ?? 1))} ${r2(b.scale * (b.scaleY ?? 1))}) translate(${r2(-HEAD_C)} ${r2(-HEAD_C)})`,
     );
     setBodyColor(b.color);
 
