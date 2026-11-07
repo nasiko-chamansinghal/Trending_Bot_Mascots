@@ -30,6 +30,8 @@ export interface MascotEngine {
   readonly touring: boolean;
   setEmotion(id: string, o?: { auto?: boolean }): boolean;
   setStyle(style?: { sketch?: number }): unknown;
+  setColor(body: string | null, eyes?: string | null, instant?: boolean): unknown;
+  renderStatic(): void;
   setActive(on: boolean): void;
   replay(): void;
   setGaze(nx: number, ny: number): unknown;
