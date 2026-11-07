@@ -1,4 +1,5 @@
 import type { CharacterRaw } from '../../types';
+import { BLOCK_SLOTS, fxEmotions } from '../fx-emotions';
 import { cardFlip, cornerPeel } from './clips';
 import { STAMPY_BASE_ANIMS, STAMPY_EMOTIONS, STAMPY_JOY } from './emotions';
 import { STAMPY_EYES } from './eyes';
@@ -29,5 +30,5 @@ export const stampy: CharacterRaw = {
   clips: { cornerPeel, cardFlip },
   signatureClips: ['cornerPeel', 'cardFlip'],
   baseAnims: STAMPY_BASE_ANIMS,
-  emotions: STAMPY_EMOTIONS,
+  emotions: { ...STAMPY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS) },
 };

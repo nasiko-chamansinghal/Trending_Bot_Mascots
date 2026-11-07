@@ -1,4 +1,5 @@
 import type { CharacterRaw } from '../../types';
+import { BLOCK_SLOTS, fxEmotions } from '../fx-emotions';
 import { marbleEyes, peekabooPop } from './clips';
 import { NUBBY_BASE_ANIMS, NUBBY_EMOTIONS } from './emotions';
 import { NUBBY_EYE_SHAPES } from './eyes';
@@ -28,7 +29,7 @@ export const nubby: CharacterRaw = {
   extraEmotions: VIDEO_EMOTIONS,
   emotionGroups: VIDEO_GROUPS,
   baseAnims: NUBBY_BASE_ANIMS,
-  emotions: NUBBY_EMOTIONS,
+  emotions: { ...NUBBY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS) },
   clips: { peekabooPop, marbleEyes },
   signatureClips: ['peekabooPop', 'marbleEyes'],
 };
