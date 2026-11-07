@@ -1,3 +1,4 @@
+import { createRibbons } from '../shared/ribbons';
 import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
@@ -233,6 +234,17 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
 
   const fx: FxHandle | null = !lite
     ? createFx({ back: fxBack, front: fxFront, C, skin: ch.fxSkin, palette })
+    : null;
+  const ribbons = !lite
+    ? createRibbons({
+        id,
+        defs,
+        back: fxBack,
+        front: fxFront,
+        centerX: C,
+        centerY: C,
+        nextUid: () => uid++,
+      })
     : null;
 
   let curSketch = -1;
@@ -529,6 +541,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     if (fx) {
       fx.update(dt, now, { yaw, dYaw, vel });
     }
+    if (ribbons) ribbons.update(dt, now, yaw, (b.orbit || 0) > 0);
   }
 
   function burst(count?: number): void {
