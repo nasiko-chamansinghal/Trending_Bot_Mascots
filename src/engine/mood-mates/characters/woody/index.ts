@@ -3,6 +3,7 @@ import type { AnimSpec, CharacterRaw } from '../../types';
 import { type EyeSlots, fxEmotions } from '../fx-emotions';
 import { grokEmotions } from '../pumpkin/emotions';
 import { withArms } from './arms';
+import { cheer, timber, wave } from './clips';
 import { WOODY_MOTION, WOODY_RINGS } from './eyes';
 import { WOODY_PALETTE } from './palette';
 import { WOODY_SPEC } from './spec';
@@ -43,5 +44,7 @@ export const woody: CharacterRaw = {
   bounceScale: WOODY_MOTION,
   gazeRange: [24 * WOODY_MOTION, 15 * WOODY_MOTION],
   baseAnims: WOODY_BASE_ANIMS,
+  clips: { wave, cheer, timber },
+  signatureClips: ['wave', 'cheer', 'timber'],
   emotions: withArms({ ...GROK, '02': { ...GROK['02'], pool: ['calm'] }, ...fxEmotions(WOODY_SLOTS) }),
 };

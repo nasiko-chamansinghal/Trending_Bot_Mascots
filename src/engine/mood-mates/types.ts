@@ -102,6 +102,8 @@ export interface ClipFrame {
   turn?: number;
   pitch?: number;
   yaw?: number;
+  armL?: number;
+  armR?: number;
 }
 
 export interface BackFace {
