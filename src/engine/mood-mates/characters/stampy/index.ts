@@ -2,7 +2,7 @@ import type { CharacterRaw } from '../../types';
 import { BLOCK_SLOTS, fxEmotions } from '../fx-emotions';
 import { cardFlip, cornerPeel } from './clips';
 import { STAMPY_BASE_ANIMS, STAMPY_EMOTIONS, STAMPY_JOY } from './emotions';
-import { STAMPY_EYES } from './eyes';
+import { STAMPY_RINGS } from './eyes';
 import { STAMPY_PALETTE } from './palette';
 import { STAMPY_BODY } from './shape';
 import { STAMPY_STATES, STATE_GROUPS, STATE_PROPS } from './states';
@@ -16,7 +16,8 @@ export const stampy: CharacterRaw = {
   material: 'flat',
   face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, level: 0, contain: 16 },
   palette: STAMPY_PALETTE,
-  eyeShapes: STAMPY_EYES,
+  eyeShapes: {},
+  eyeRings: STAMPY_RINGS,
   gazeRange: [8, 6],
   blink: [
     { slot: 'lidDrop', ms: 34 },

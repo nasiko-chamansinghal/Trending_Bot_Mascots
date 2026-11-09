@@ -1,4 +1,5 @@
-import type { CutEye, CutParams, Point } from '../../geometry';
+import type { CutEye, CutParams, EyePair, Point } from '../../geometry';
+import { eyeRing } from './ring';
 import { BODY_ROT, SIDE } from './shape';
 
 const S = SIDE;
@@ -189,3 +190,10 @@ export const STAMPY_EYES: Record<string, CutParams> = {
   joyLeft: pair({ ...JOY, left: { dx: -0.045, dy: -0.035 }, right: { dx: -0.015, dy: 0.027 } }),
   joyRight: pair({ ...JOY, left: { dx: 0.015, dy: -0.035 }, right: { dx: 0.045, dy: 0.027 } }),
 };
+
+export const STAMPY_RINGS: Record<string, EyePair> = Object.fromEntries(
+  Object.entries(STAMPY_EYES).map(([slot, p]): [string, EyePair] => [
+    slot,
+    [eyeRing(p.left, p.rot, p.cx, p.cy), eyeRing(p.right, p.rot, p.cx, p.cy)],
+  ]),
+);
