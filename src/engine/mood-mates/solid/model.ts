@@ -26,6 +26,7 @@ export interface LimbSpec {
   length: number;
   angle: number;
   bend: number;
+  lift?: number;
   radius: Array<[number, number, number]>;
 }
 
@@ -35,12 +36,14 @@ export function limbShape(l: LimbSpec, raise: number): StemShape {
   const a = (l.angle + raise) * DEG;
   const dx = l.side * Math.cos(a);
   const dy = Math.sin(a);
+  const out = l.side * (l.lift ?? 0) * Math.max(0, dy - Math.sin(l.angle * DEG));
+  const base: Vec3 = [l.base[0] + out, l.base[1], l.base[2]];
   const at = (t: number, bend: number): Vec3 => [
-    l.base[0] + dx * l.length * t - dy * l.side * l.bend * bend,
-    l.base[1] + dy * l.length * t + dx * l.side * l.bend * bend,
-    l.base[2],
+    base[0] + dx * l.length * t - dy * l.side * l.bend * bend,
+    base[1] + dy * l.length * t + dx * l.side * l.bend * bend,
+    base[2],
   ];
-  return { base: l.base, c1: at(0.33, 1), c2: at(0.66, 1), tip: at(1, 0), radius: l.radius };
+  return { base, c1: at(0.33, 1), c2: at(0.66, 1), tip: at(1, 0), radius: l.radius };
 }
 
 export interface SolidAngles {

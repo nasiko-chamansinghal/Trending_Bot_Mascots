@@ -7,6 +7,7 @@ const DOME = 0.05;
 const KNOTS = 61;
 const SEARCH_STEPS = 40;
 const ARM_RADIUS = 0.28;
+const ARM_LIFT = 0.9;
 const CAP_STEPS = 8;
 const DEPTH = 0.62;
 
@@ -33,7 +34,12 @@ function reach(theta: number): number {
 
 function armRadius(length: number): Array<[number, number, number]> {
   const cap = ARM_RADIUS / length;
-  const knots: Array<[number, number, number]> = [[0, ARM_RADIUS, ARM_RADIUS]];
+  const knots: Array<[number, number, number]> = [];
+  for (let k = 0; k <= CAP_STEPS; k++) {
+    const u = k / CAP_STEPS;
+    const r = ARM_RADIUS * Math.sqrt(Math.max(0, 1 - (1 - u) * (1 - u)));
+    knots.push([cap * u, r, r]);
+  }
   for (let k = 0; k <= CAP_STEPS; k++) {
     const u = k / CAP_STEPS;
     const r = ARM_RADIUS * Math.sqrt(Math.max(0, 1 - u * u));
@@ -43,7 +49,7 @@ function armRadius(length: number): Array<[number, number, number]> {
 }
 
 function arm(side: 1 | -1, join: [number, number], angle: number, visible: number): LimbSpec {
-  const inner = 0.55;
+  const inner = 0.14;
   const a = (angle * Math.PI) / 180;
   const dx = side * Math.cos(a);
   const dy = Math.sin(a);
@@ -54,6 +60,7 @@ function arm(side: 1 | -1, join: [number, number], angle: number, visible: numbe
     length,
     angle,
     bend: 0.04,
+    lift: ARM_LIFT,
     radius: armRadius(length),
   };
 }
