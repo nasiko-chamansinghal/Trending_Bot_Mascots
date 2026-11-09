@@ -28,8 +28,12 @@ import type { SolidSpec } from './spec';
 const C = 120;
 const LIMB_KNEE = 0.7;
 const LIMB_MAX = 0.94;
-const LIMB_STEPS = 40;
+const LIMB_STEPS = 180;
 const RADIUS_BINS = 720;
+const LIMB_FRONT_EDGE = 0.15;
+const LIMB_SHADE_DROP = 2;
+const LIMB_SHADE_OPACITY = '0.3';
+const LIMB_SHADE_BLUR = 4;
 let uid = 0;
 
 function radiusAt(table: Float64Array, angle: number): number {
@@ -54,6 +58,7 @@ interface Prepared {
   map: DecalMap;
   restRadius: Float64Array;
   restBottom: number;
+  restTop: number;
 }
 
 const prepared = new WeakMap<SolidSpec, Prepared>();
@@ -66,7 +71,12 @@ function prepare(spec: SolidSpec): Prepared {
   const skin = skinOf(spec.body);
   const restSil = outline(grid, rest, RADIUS_BINS);
   let bottom = Number.NEGATIVE_INFINITY;
-  for (const p of restSil) bottom = Math.max(bottom, spec.center[1] + p[1] * spec.scale * spec.stretch[1]);
+  let top = Number.POSITIVE_INFINITY;
+  for (const p of restSil) {
+    const y = spec.center[1] + p[1] * spec.scale * spec.stretch[1];
+    bottom = Math.max(bottom, y);
+    top = Math.min(top, y);
+  }
   const restRadius = new Float64Array(restSil.map((p) => Math.hypot(p[0], p[1])));
   const out: Prepared = {
     grid,
@@ -74,6 +84,7 @@ function prepare(spec: SolidSpec): Prepared {
     map: buildDecalMap(skin, rest),
     restRadius,
     restBottom: bottom,
+    restTop: top,
   };
   prepared.set(spec, out);
   return out;
@@ -156,7 +167,13 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const stemRoot = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const stemBack = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const body = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
-  const bodyFill = createTint(id, defs, spec.tint, palette.body);
+  const bodyFill = createTint(
+    id,
+    defs,
+    spec.tint,
+    palette.body,
+    spec.limbs?.length ? [prep.restTop, prep.restBottom] : undefined,
+  );
 
   const stemFront = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const cap = el('ellipse', { fill: spec.capColor, stroke: 'none' }) as SVGEllipseElement;
@@ -171,6 +188,35 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     return node;
   });
   const limbFront = limbs.map(() => false);
+  if (limbs.length) {
+    const blur = el('filter', {
+      id: `${id}lb`,
+      filterUnits: 'userSpaceOnUse',
+      x: '-60',
+      y: '-60',
+      width: '360',
+      height: '360',
+    });
+    blur.appendChild(el('feGaussianBlur', { stdDeviation: LIMB_SHADE_BLUR }));
+    defs.appendChild(blur);
+  }
+  const limbShades = limbs.map((_, i) => {
+    const clipPath = el('clipPath', { id: `${id}lc${i}` });
+    const clipArm = el('path', {}) as SVGPathElement;
+    clipPath.appendChild(clipArm);
+    defs.appendChild(clipPath);
+    const path = el('path', {
+      fill: '#000000',
+      'fill-opacity': LIMB_SHADE_OPACITY,
+      stroke: 'none',
+      filter: `url(#${id}lb)`,
+      transform: `translate(0 ${LIMB_SHADE_DROP})`,
+    }) as SVGPathElement;
+    const g = el('g', { 'clip-path': `url(#${id}lc${i})`, 'pointer-events': 'none' }) as SVGGElement;
+    g.appendChild(path);
+    bodyG.insertBefore(g, body);
+    return { g, path, clipArm };
+  });
   svg.appendChild(bodyG);
 
   const clip = el('clipPath', { id: `${id}clip` });
@@ -248,6 +294,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const bodyD = polyPath(sil);
     body.setAttribute('d', bodyD);
     clipBody.setAttribute('d', bodyD);
+    for (const shade of limbShades) shade.path.setAttribute('d', bodyD);
     lastLimbKey = '';
     if (!spec.stem) {
       cap.style.display = 'none';
@@ -284,14 +331,27 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     lastLimbKey = key;
     spec.limbs?.forEach((limb, i) => {
       const node = limbs[i] as SVGPathElement;
+      const shade = limbShades[i] as (typeof limbShades)[number];
       const tube = projectStem(limbShape(limb, raise[i] ?? 0), m, LIMB_STEPS);
-      node.setAttribute('d', polyPath(tube.outline.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
-      const front = apply(m, limb.base)[2] > 0;
+      const d = polyPath(tube.outline.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY]));
+      node.setAttribute('d', d);
+      shade.clipArm.setAttribute('d', d);
+      const front = apply(m, limb.base)[2] > LIMB_FRONT_EDGE;
       if (front === limbFront[i]) return;
       limbFront[i] = front;
-      if (front) bodyG.appendChild(node);
-      else bodyG.insertBefore(node, body);
+      if (front) {
+        bodyG.appendChild(node);
+      } else {
+        bodyG.insertBefore(node, body);
+        bodyG.insertBefore(shade.g, body);
+      }
+      showLimbShade(i);
     });
+  }
+
+  function showLimbShade(i: number): void {
+    (limbShades[i] as (typeof limbShades)[number]).g.style.display =
+      !limbFront[i] && curSketch <= 0.5 ? '' : 'none';
   }
 
   function eyeRing(pose: EyePose): Vec2[] {
@@ -385,9 +445,10 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         node.style.stroke = sketchOn ? `var(--sketch-ink, ${b.color})` : '';
         node.style.strokeWidth = sketchOn ? '1.6' : '';
       }
+      for (let i = 0; i < limbs.length; i++) showLimbShade(i);
     }
     body.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
-    for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : b.color);
+    for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
     stemRoot.setAttribute('fill', spec.stemColor);
     stemBack.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
     stemFront.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);

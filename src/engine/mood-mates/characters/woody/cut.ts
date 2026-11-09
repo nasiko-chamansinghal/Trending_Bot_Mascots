@@ -8,6 +8,9 @@ const DEPTH_OF_CHORD = 0.42;
 const DEPTH_OF_WIDTH = 1;
 const WIDTH_PROBES = 36;
 const MAX_STEP = 0.6;
+const THIN_EYE = 8.5;
+const FULL_CUT_EYE = 20;
+const MIN_DEPTH = 1.2;
 
 function areaOf(ring: Ring): number {
   let area = 0;
@@ -113,6 +116,27 @@ function along(path: Point[], count: number): Point[] {
   return out;
 }
 
+function smoothstep(lo: number, hi: number, v: number): number {
+  const t = Math.min(1, Math.max(0, (v - lo) / (hi - lo)));
+  return t * t * (3 - 2 * t);
+}
+
+function plainEye(ring: Ring, at: Point): Ring {
+  let first = 0;
+  let nearest = Number.POSITIVE_INFINITY;
+  ring.forEach(([x, y], i) => {
+    const d = Math.hypot(x - at[0], y - at[1]);
+    if (d < nearest) {
+      nearest = d;
+      first = i;
+    }
+  });
+  const path = Array.from({ length: ring.length + 1 }, (_, j) =>
+    j === 0 ? at : (ring[(first + j - 1) % ring.length] as Point),
+  );
+  return along([...path, at], RING_POINTS);
+}
+
 export function notchEye(input: Ring): Ring {
   const ring = densify(areaOf(input) >= 0 ? input : [...input].reverse());
   const n = ring.length;
@@ -120,7 +144,11 @@ export function notchEye(input: Ring): Ring {
   const dir: Point = [Math.cos(AXIS), Math.sin(AXIS)];
   const outer = farthestHit(ring, centre, dir);
   const inner = farthestHit(ring, centre, [-dir[0], -dir[1]]);
-  const depth = Math.min(DEPTH_OF_CHORD * (outer + inner), DEPTH_OF_WIDTH * narrowest(ring));
+  const thickness = narrowest(ring);
+  const depth =
+    smoothstep(THIN_EYE, FULL_CUT_EYE, thickness) *
+    Math.min(DEPTH_OF_CHORD * (outer + inner), DEPTH_OF_WIDTH * thickness);
+  if (depth < MIN_DEPTH) return plainEye(ring, [centre[0] + dir[0] * outer, centre[1] + dir[1] * outer]);
   const apex: Point = [centre[0] + dir[0] * (outer - depth), centre[1] + dir[1] * (outer - depth)];
   const cosOpening = Math.cos(HALF_OPENING);
   const inside = ring.map(([x, y]) => {

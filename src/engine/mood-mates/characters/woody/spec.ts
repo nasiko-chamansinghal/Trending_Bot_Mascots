@@ -2,14 +2,20 @@ import type { LimbSpec } from '../../solid/model';
 import type { SolidSpec } from '../../solid/spec';
 
 const HALF_HEIGHT = 1.37;
-const CORNER = 0.17;
-const DOME = 0.05;
-const KNOTS = 61;
+const CORNER = 0.26;
+const DOME = 0.08;
+const KNOTS = 241;
 const SEARCH_STEPS = 40;
-const ARM_RADIUS = 0.28;
 const ARM_LIFT = 0.9;
-const CAP_STEPS = 8;
-const DEPTH = 0.62;
+const ARM_ROOT = 0.2;
+const ARM_KNOTS = 200;
+const ROOT_CAP = 0.3;
+const HAND_CAP = 0.3;
+const ARM_PROFILE: Array<[number, number]> = [
+  [0, 0.33],
+  [1, 0.3],
+];
+const DEPTH = 0.66;
 
 function inside(rho: number, y: number): boolean {
   const k = 1 + DOME * Math.max(0, 1 - rho * rho);
@@ -32,36 +38,49 @@ function reach(theta: number): number {
   return lo;
 }
 
-function armRadius(length: number): Array<[number, number, number]> {
-  const cap = ARM_RADIUS / length;
-  const knots: Array<[number, number, number]> = [];
-  for (let k = 0; k <= CAP_STEPS; k++) {
-    const u = k / CAP_STEPS;
-    const r = ARM_RADIUS * Math.sqrt(Math.max(0, 1 - (1 - u) * (1 - u)));
-    knots.push([cap * u, r, r]);
+function smoothstep(t: number): number {
+  const u = Math.min(1, Math.max(0, t));
+  return u * u * (3 - 2 * u);
+}
+
+function limbWidth(s: number): number {
+  for (let i = 1; i < ARM_PROFILE.length; i++) {
+    const [s0, r0] = ARM_PROFILE[i - 1] as [number, number];
+    const [s1, r1] = ARM_PROFILE[i] as [number, number];
+    if (s <= s1) return r0 + (r1 - r0) * smoothstep((s - s0) / (s1 - s0));
   }
-  for (let k = 0; k <= CAP_STEPS; k++) {
-    const u = k / CAP_STEPS;
-    const r = ARM_RADIUS * Math.sqrt(Math.max(0, 1 - u * u));
-    knots.push([1 - cap + cap * u, r, r]);
+  return (ARM_PROFILE[ARM_PROFILE.length - 1] as [number, number])[1];
+}
+
+function armRadius(length: number, inner: number): Array<[number, number, number]> {
+  const cap = HAND_CAP / length;
+  const knots: Array<[number, number, number]> = [];
+  for (let k = 0; k <= ARM_KNOTS; k++) {
+    const t = k / ARM_KNOTS;
+    const toEnd = Math.min(1, (1 - t) / cap);
+    const fromStart = Math.min(1, t / (ROOT_CAP / length));
+    const round =
+      Math.sqrt(Math.max(0, 1 - (1 - toEnd) ** 2)) * Math.sqrt(Math.max(0, 1 - (1 - fromStart) ** 2));
+    const r = limbWidth((t * length - inner) / (length - inner)) * round;
+    knots.push([t, r, r]);
   }
   return knots;
 }
 
 function arm(side: 1 | -1, join: [number, number], angle: number, visible: number): LimbSpec {
-  const inner = 0.14;
+  const inner = ARM_ROOT;
   const a = (angle * Math.PI) / 180;
   const dx = side * Math.cos(a);
   const dy = Math.sin(a);
   const length = inner + visible;
   return {
     side,
-    base: [join[0] - inner * dx, join[1] - inner * dy, 0.12],
+    base: [join[0] - inner * dx, join[1] - inner * dy, 0],
     length,
     angle,
     bend: 0.04,
     lift: ARM_LIFT,
-    radius: armRadius(length),
+    radius: armRadius(length, inner),
   };
 }
 
@@ -75,6 +94,7 @@ export const WOODY_SPEC: SolidSpec = {
     depth: [0, 0],
     flat: DEPTH,
   },
+  tint: { top: ['#FFB56B', 0.5], bottom: ['#B8441A', 0.55] },
   limbs: [arm(-1, [-1, 0.23], 40, 0.9), arm(1, [1, -0.22], 36, 0.79)],
   rest: { yaw: 0, pitch: 0.05, roll: 0 },
   scale: 60,
