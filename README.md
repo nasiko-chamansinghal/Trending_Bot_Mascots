@@ -1,12 +1,54 @@
+<div align="center">
+
 # Trending Grokbot Mascots
 
-Animated SVG mascots for AI assistants. Each mascot has 32 emotions, and your AI picks one by sending a single `emotionId`.
+**Animated SVG mascots for AI assistants.**
+Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
-| Mascot | Engine | Extras |
+![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
+![Characters](https://img.shields.io/badge/characters-5-f97316)
+
+<img src="docs/screenshots/studio-light.png" alt="Mascot Studio in light mode, showing the Pumpkin mascot with its character and emotion pickers" width="880">
+
+</div>
+
+## Meet the mascots
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="170"><br><b>Ball</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="170"><br><b>Nubby</b><br><sub>53 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="170"><br><b>Stampy</b><br><sub>51 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpkin" width="170"><br><b>Pumpkin</b><br><sub>56 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>44 emotions</sub></td>
+  </tr>
+</table>
+
+| Mascot | Engine | What makes it special |
 | --- | --- | --- |
-| Grok bot ball | `src/engine/emotion-ball` | blob, wedge and gem shapes |
-| Nubby (block) | `src/engine/mood-mates` | 9 video states, Peekaboo Pop and Marble Eyes click animations |
-| Stampy (stamp) | `src/engine/mood-mates` | 6 video states, corner peel and card flip click animations |
+| Ball | `src/engine/emotion-ball` | The Grok bot ball, with blob, wedge and gem shapes |
+| Nubby | `src/engine/mood-mates` | A stair-stepped block on stubby legs, 9 video states, Peekaboo Pop and Marble Eyes click animations |
+| Stampy | `src/engine/mood-mates` | A perforated postage stamp, 6 video states, corner peel and card flip click animations |
+| Pumpkin | `src/engine/mood-mates` | A carved pumpkin that turns like a 3D head, its eyes wrap around the curve, 8 click animations |
+| Woody | `src/engine/mood-mates` | An orange wooden slab with raised arms and cut-notch eyes, it turns like a real 3D block |
+
+The emotion counts are what Mascot Studio shows for each character.
+
+## Mascot Studio
+
+A React app for trying every mascot before you wire one into your product.
+
+- **Customise:** pick a character, an eye colour and any of its emotions, and recolour the body.
+- **Animation:** build a timeline of 2-second clips and play it back.
+- **Export:** download a PNG or SVG, or copy the image or the SVG code to the clipboard.
+- **Themes:** light and dark.
+
+<div align="center">
+<img src="docs/screenshots/studio-dark.png" alt="Mascot Studio in dark mode with Woody selected" width="440">
+<img src="docs/screenshots/animation-dark.png" alt="The Animation tab with the clip timeline" width="440">
+</div>
 
 ## Quick start
 
@@ -15,11 +57,7 @@ pnpm install
 pnpm dev
 ```
 
-| URL | Page |
-| --- | --- |
-| `/` | All three mascots on one stage |
-| `/mood-mates/` | Nubby and Stampy |
-| `/emotion-ball/` | The Grok bot ball |
+Open `http://localhost:5173/`. You need Node `^20.19.0` or `>=22.12.0`.
 
 ## Use in your app
 
@@ -34,19 +72,36 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-Use `dist-lib/emotion-ball.iife.js` and `EmotionBall.create(el, { shape: 'blob' })` for the ball. In React, mount any mascot through `src/app/components/Mascot.tsx`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin` or `woody`.
+- For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
+- In React, mount any mascot through `src/app/components/Mascot.tsx`.
+- Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
+- `tips` is surfaced through the `tips` event.
 
-Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event. `tips` is surfaced through the `tips` event.
+### Emotion IDs
+
+Every character shares the same ID ranges, so your AI can use one mapping for all of them.
+
+| IDs | Group | Examples |
+| --- | --- | --- |
+| `00`–`07` | Sleep and wake | Sleeping, Waking, Idle, Curious |
+| `10`–`21` | Moods | Happy, Puzzled, Surprised, Angry |
+| `30`–`41` | AI states | Thinking, Listening, Searching, Done, Error |
+| `60`–`71` | Effects | Alert, Notification, Rocket Blast Off, Love Strike |
+
+Some characters add their own IDs on top, for example Pumpkin's `44` Giggle and `47` Pumpkin Show. Open the studio to browse all of them.
 
 ## Project layout
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby and Stampy
-  characters/nubby/            Nubby: shape, eyes, emotions, clips, video states
-  characters/stampy/           Stampy: shape, eyes, emotions, clips, states
-src/app/                       React pages and components
-tests/live/live-check.mjs      end-to-end checks against a running site
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin and Woody
+  characters/<name>/           one folder per character: shape, eyes, emotions, clips
+  solid/                       shared 3D-slab renderer
+src/engine/shared/             code shared by both engines
+src/app/                       Mascot Studio (React): App, components, export, theme
+src/styles/app.css             the studio's styles, light and dark tokens
+docs/screenshots/              images used in this README
 ```
 
 ## Checks
@@ -56,11 +111,8 @@ pnpm typecheck
 pnpm lint
 pnpm build
 pnpm build:lib
-pnpm test:live http://localhost:5173
 ```
 
-## License
+## Credits
 
-- Engine code and emotion data: free for personal learning, commercial license available. See [LICENSE](LICENSE), [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) and [mood-mates/LICENSE](mood-mates/LICENSE).
-- Ball visual design: learning only, no commercial use. See [NOTICE.md](NOTICE.md).
-- Nubby and Stampy are recreated from videos by socoloffalex on X, for learning.
+Nubby and Stampy are recreated from videos by socoloffalex on X, for learning.
