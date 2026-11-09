@@ -2,6 +2,7 @@ import { solidRestOutline } from '../../solid/render';
 import type { AnimSpec, CharacterRaw } from '../../types';
 import { type EyeSlots, fxEmotions } from '../fx-emotions';
 import { grokEmotions } from '../pumpkin/emotions';
+import { rumble, survey, wring } from './clips';
 import { PEAK_MOTION, PEAK_RINGS } from './eyes';
 import { PEAK_PALETTE } from './palette';
 import { PEAK_SPEC } from './spec';
@@ -40,5 +41,7 @@ export const peak: CharacterRaw = {
   bounceScale: PEAK_MOTION,
   gazeRange: [24 * PEAK_MOTION, 15 * PEAK_MOTION],
   baseAnims: PEAK_BASE_ANIMS,
+  clips: { rumble, survey, wring },
+  signatureClips: ['rumble', 'survey', 'wring'],
   emotions: { ...GROK, '02': { ...GROK['02'], pool: ['calm'] }, ...fxEmotions(PEAK_SLOTS) },
 };
