@@ -6,6 +6,9 @@ export interface BodyShape {
   ribs: number;
   sharp: number[];
   radius: number[];
+  rim?: number[];
+  rimSoft?: number[];
+  puff?: number;
   skirt: number[];
   join: number;
   depth: number[];
@@ -112,8 +115,26 @@ function profile(knots: number[], theta: number): number {
   return cubic(at(i - 1), at(i), at(i + 1), at(i + 2), u - i);
 }
 
+function rimAt(rim: number[], angle: number): number {
+  const n = rim.length;
+  const u = ((angle + Math.PI) / TAU) * n;
+  const i = Math.floor(u);
+  const at = (k: number): number => rim[((k % n) + n) % n] as number;
+  return cubic(at(i - 1), at(i), at(i + 1), at(i + 2), u - i);
+}
+
+function inflate(s: BodyShape, rim: number[], nx: number, ny: number, nz: number): Vec3 {
+  const angle = Math.atan2(ny, nx);
+  const exact = rimAt(rim, angle);
+  const outline = s.rimSoft ? exact + (rimAt(s.rimSoft, angle) - exact) * Math.abs(nz) : exact;
+  const p = s.puff ?? 2;
+  const r = ((Math.hypot(nx, ny) / outline) ** p + (Math.abs(nz) / (s.flat ?? 1)) ** p) ** (-1 / p);
+  return [r * nx, r * ny, r * nz];
+}
+
 export function bodyPoint(s: BodyShape, theta: number, phi: number): Vec3 {
   const st = Math.sin(theta);
+  if (s.rim) return inflate(s, s.rim, st * Math.sin(phi), Math.cos(theta), st * Math.cos(phi));
   const rib = (1 - Math.abs(Math.sin((s.ribs * phi) / 2))) ** profile(s.sharp, theta);
   const dome = profile(s.radius, theta);
   const skirt = profile(s.skirt, theta);
@@ -129,7 +150,7 @@ export interface LimbGrid {
   n: Float64Array;
 }
 
-export function limbGrid(s: BodyShape, nt = 120, np = s.ribs * 56): LimbGrid {
+export function limbGrid(s: BodyShape, nt = s.rim ? 360 : 120, np = s.ribs * 56): LimbGrid {
   const p = new Float64Array((nt + 1) * np * 3);
   const n = new Float64Array((nt + 1) * np * 3);
   const e = 1e-4;

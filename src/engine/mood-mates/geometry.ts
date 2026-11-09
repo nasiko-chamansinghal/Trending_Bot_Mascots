@@ -68,7 +68,12 @@ function r2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
-export function roundedOutline(vertices: Point[], radius: number, arcSteps: number, edgeStep: number): Ring {
+export function roundedOutline(
+  vertices: Point[],
+  radius: number | number[],
+  arcSteps: number,
+  edgeStep: number,
+): Ring {
   const n = vertices.length;
   const corners: Ring[] = [];
   for (let i = 0; i < n; i++) {
@@ -88,7 +93,8 @@ export function roundedOutline(vertices: Point[], radius: number, arcSteps: numb
       corners.push([p1]);
       continue;
     }
-    const t = Math.min(radius / Math.tan(theta / 2), l1 / 2, l2 / 2);
+    const corner = typeof radius === 'number' ? radius : (radius[i] as number);
+    const t = Math.min(corner / Math.tan(theta / 2), l1 / 2, l2 / 2);
     const r = t * Math.tan(theta / 2);
     const bx = u1[0] + u2[0];
     const by = u1[1] + u2[1];

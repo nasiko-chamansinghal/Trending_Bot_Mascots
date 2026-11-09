@@ -1,7 +1,13 @@
 import type { BodyShape, LimbSpec, SolidAngles, StemShape } from './model';
 
+export interface BodyTint {
+  top: [string, number];
+  bottom: [string, number];
+}
+
 export interface SolidSpec {
   body: BodyShape;
+  tint?: BodyTint;
   stem?: StemShape;
   limbs?: LimbSpec[];
   rest: SolidAngles;
