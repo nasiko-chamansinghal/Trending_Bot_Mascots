@@ -8,9 +8,9 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
-![Characters](https://img.shields.io/badge/characters-6-f97316)
+![Characters](https://img.shields.io/badge/characters-9-f97316)
 
-<img src="docs/screenshots/studio-light.png" alt="Mascot Studio in light mode, showing the Peaky mascot with its character and emotion pickers" width="880">
+<img src="docs/screenshots/studio-light.png" alt="Mascot Studio in light mode, showing the Ghosty mascot with its character and emotion pickers" width="880">
 
 </div>
 
@@ -25,6 +25,11 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>44 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="170"><br><b>Peaky</b><br><sub>44 emotions</sub></td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="170"><br><b>Ghosty</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="170"><br><b>Bloom</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="170"><br><b>Hexo</b><br><sub>44 emotions</sub></td>
+  </tr>
 </table>
 
 | Mascot | Engine | What makes it special |
@@ -35,6 +40,9 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Pumpkin | `src/engine/mood-mates` | A carved pumpkin that turns like a 3D head, its eyes wrap around the curve, 8 click animations |
 | Woody | `src/engine/mood-mates` | An orange wooden slab with raised arms and cut-notch eyes, a different arm pose for every emotion, Wave, Cheer and Timber click animations |
 | Peaky | `src/engine/mood-mates` | A pink-to-peach mountain with a three-peak crown, built as a soft pillow-shaped 3D solid, Rumble, Survey and Wring click animations |
+| Ghosty | `src/engine/mood-mates` | A white-and-lavender ghost leaning like a tilted teardrop, with a tail of three soft lobes, built as a smooth 3D solid |
+| Bloom | `src/engine/mood-mates` | An orange flower with eight petals of different lengths, two tall ones leaning up, built as a puffy 3D solid |
+| Hexo | `src/engine/mood-mates` | A glossy dark rounded hexagon with bright eyes, built as a chunky 3D solid |
 
 The emotion counts are what Mascot Studio shows for each character.
 
@@ -74,7 +82,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody` or `peak`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom` or `hexo`.
 - For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
@@ -97,8 +105,9 @@ Some characters add their own IDs on top, for example Pumpkin's `44` Giggle and 
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin, Woody and Peaky
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin, Woody, Peaky, Ghosty, Bloom and Hexo
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
+  characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo)
   solid/                       shared 3D solid renderer (slabs, limbs, inflated outlines)
 src/engine/shared/             code shared by both engines
 src/app/                       Mascot Studio (React): App, components, export, theme
