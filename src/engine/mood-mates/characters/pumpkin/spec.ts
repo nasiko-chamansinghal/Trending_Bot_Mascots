@@ -31,6 +31,7 @@ export const PUMPKIN_SPEC: SolidSpec = {
       [1.0, 0.1048, 0.109],
     ],
   },
+  tint: { top: ['#FFB347', 0.5], bottom: ['#B02A08', 0.55] },
   rest: { yaw: 0.0511, pitch: 0.2049, roll: -0.0003 },
   scale: 82,
   stretch: [1.0231, 1.0576],

@@ -66,6 +66,7 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
     defaultEyeRing: family.calm,
     fxSkin: raw.fxSkin || 'spark',
     material: raw.material || 'flat',
+    tint: raw.tint || null,
     zzz: raw.zzz || null,
     props: raw.props || [],
     baseAnims: raw.baseAnims || [],

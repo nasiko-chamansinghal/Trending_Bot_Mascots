@@ -1,4 +1,5 @@
 import type { Ring } from '../geometry';
+import type { BodyTint } from '../tint';
 import type { Palette } from '../types';
 
 export interface MaterialContext {
@@ -6,6 +7,7 @@ export interface MaterialContext {
   defs: SVGDefsElement;
   headRing: Ring;
   palette: Palette;
+  tint: BodyTint | null;
   silMinY: number;
   silMaxY: number;
   silMaxW: number;

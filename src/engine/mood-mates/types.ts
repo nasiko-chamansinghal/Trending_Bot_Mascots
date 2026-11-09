@@ -1,5 +1,6 @@
 import type { BodyDescriptor, CutParams, EyePair, Ring } from './geometry';
 import type { SolidSpec } from './solid/spec';
+import type { BodyTint } from './tint';
 
 export interface BodyPose {
   x: number;
@@ -146,6 +147,7 @@ export interface CharacterRaw {
   bounceScale?: number;
   fxSkin?: string;
   material?: string;
+  tint?: BodyTint;
   zzz?: ZzzStyle;
   props?: PropDef[];
   extraEmotions?: EmotionRaw[];
@@ -172,6 +174,7 @@ export interface ResolvedCharacter {
   defaultEyeRing: EyePair;
   fxSkin: string;
   material: string;
+  tint: BodyTint | null;
   zzz: ZzzStyle | null;
   props: PropDef[];
   baseAnims: AnimSpec[];

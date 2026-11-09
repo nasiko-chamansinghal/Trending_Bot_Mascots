@@ -14,6 +14,7 @@ export const stampy: CharacterRaw = {
   desc: 'A little lime postage stamp with perforated edges and two tilted pill eyes — no mouth, all feeling in the eyes',
   body: { type: 'stamp', stamp: STAMPY_BODY, edgeStep: 2 },
   material: 'flat',
+  tint: { top: ['#F0FFBE', 0.55], bottom: ['#2F9A3A', 0.6] },
   face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, level: 0, contain: 16 },
   palette: STAMPY_PALETTE,
   eyeShapes: {},

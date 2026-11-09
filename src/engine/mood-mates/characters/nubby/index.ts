@@ -14,6 +14,7 @@ export const nubby: CharacterRaw = {
   desc: 'A chunky stair-stepped block on two stubby legs, with two big round eyes and no mouth — it says everything with its eyes and its body',
   body: { type: 'outline', vertices: NUBBY_VERTICES, radius: NUBBY_CORNER_RADIUS },
   material: 'flat',
+  tint: { top: ['#9BE0A4', 0.5], bottom: ['#1E5A3C', 0.55] },
   face: { x: 0, y: 0, sx: 1, sy: 1, eye: 1, level: 1, contain: 14 },
   palette: NUBBY_PALETTE,
   eyeShapes: NUBBY_EYE_SHAPES,

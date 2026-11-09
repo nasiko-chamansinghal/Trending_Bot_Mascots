@@ -4,6 +4,7 @@ import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
 import { createProps } from './props';
 import { createSolidBall } from './solid/render';
+import { createTint } from './tint';
 import type { BodyPose, EyePose, Pose, ResolvedCharacter } from './types';
 import { centroid, clamp, el, r2, ringPath, shade } from './util';
 
@@ -150,7 +151,16 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
   const materialId = opts.material || ch.material;
   const materialDef = getMaterial(materialId);
   if (!materialDef) throw new Error(`[MoodMates] Unknown material: ${materialId}`);
-  const material = materialDef.create({ id, defs, headRing, palette, silMinY, silMaxY, silMaxW });
+  const material = materialDef.create({
+    id,
+    defs,
+    headRing,
+    palette,
+    tint: ch.tint,
+    silMinY,
+    silMaxY,
+    silMaxW,
+  });
 
   const shGrad = el('radialGradient', { id: `${id}sh`, cx: '50%', cy: '50%', r: '50%' });
   shGrad.appendChild(el('stop', { offset: '0%', 'stop-color': '#000000', 'stop-opacity': '0.9' }));
@@ -327,7 +337,12 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     clip: SVGPathElement;
     g: SVGGElement;
   } | null = null;
-  let backState: { g: SVGGElement; card: SVGPathElement; text: SVGTextElement } | null = null;
+  let backState: {
+    g: SVGGElement;
+    card: SVGPathElement;
+    text: SVGTextElement;
+    paint: (color: string) => string;
+  } | null = null;
   let sinkState: { g: SVGGElement; hole: SVGEllipseElement; clip: SVGRectElement } | null = null;
 
   function applyPeel(amount: number, color: string, bodyTf: string): void {
@@ -420,9 +435,9 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
       g.appendChild(card);
       g.appendChild(text);
       bodyG.appendChild(g);
-      backState = { g, card, text };
+      backState = { g, card, text, paint: createTint(`${id}b`, defs, ch.tint, palette.body) };
     }
-    backState.card.setAttribute('fill', shade(color, ch.backFace?.lighten ?? 0.5));
+    backState.card.setAttribute('fill', backState.paint(shade(color, ch.backFace?.lighten ?? 0.5)));
     backState.text.setAttribute('fill', shade(color, -0.45));
     backState.g.style.display = '';
   }

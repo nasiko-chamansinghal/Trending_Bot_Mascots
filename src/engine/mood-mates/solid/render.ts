@@ -1,9 +1,9 @@
-import { lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
 import type { BallHandle, BallOptions } from '../render';
+import { createTint } from '../tint';
 import type { EyePose, Pose } from '../types';
 import { centroid, clamp, el, r2, ringPath } from '../util';
 import {
@@ -156,26 +156,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const stemRoot = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const stemBack = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const body = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
-  const tint = spec.tint;
-  const tintStops = tint
-    ? (['0%', '100%'].map((offset) => el('stop', { offset })) as [SVGStopElement, SVGStopElement])
-    : null;
-  if (tintStops) {
-    const tintGrad = el('linearGradient', { id: `${id}body`, x1: '0', y1: '0', x2: '0', y2: '1' });
-    for (const stop of tintStops) tintGrad.appendChild(stop);
-    defs.appendChild(tintGrad);
-  }
-  let tintColor = '';
-
-  function bodyFill(color: string): string {
-    if (!tint || !tintStops) return color;
-    if (color !== tintColor) {
-      tintColor = color;
-      tintStops[0].setAttribute('stop-color', lerpColor(color, tint.top[0], tint.top[1]));
-      tintStops[1].setAttribute('stop-color', lerpColor(color, tint.bottom[0], tint.bottom[1]));
-    }
-    return `url(#${id}body)`;
-  }
+  const bodyFill = createTint(id, defs, spec.tint, palette.body);
 
   const stemFront = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
   const cap = el('ellipse', { fill: spec.capColor, stroke: 'none' }) as SVGEllipseElement;
