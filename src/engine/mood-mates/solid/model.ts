@@ -126,7 +126,7 @@ function rimAt(rim: number[], angle: number): number {
 function inflate(s: BodyShape, rim: number[], nx: number, ny: number, nz: number): Vec3 {
   const angle = Math.atan2(ny, nx);
   const exact = rimAt(rim, angle);
-  const outline = s.rimSoft ? exact + (rimAt(s.rimSoft, angle) - exact) * Math.abs(nz) : exact;
+  const outline = s.rimSoft ? exact + Math.min(0, rimAt(s.rimSoft, angle) - exact) * Math.abs(nz) : exact;
   const p = s.puff ?? 2;
   const r = ((Math.hypot(nx, ny) / outline) ** p + (Math.abs(nz) / (s.flat ?? 1)) ** p) ** (-1 / p);
   return [r * nx, r * ny, r * nz];
