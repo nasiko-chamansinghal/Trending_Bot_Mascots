@@ -46,6 +46,60 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
 The emotion counts are what Mascot Studio shows for each character.
 
+## Build your own mascot from one image
+
+<div align="center">
+
+**Bring one picture. Get a fully animated 3D mascot.**
+
+Smooth edges, a real gradient, a body that turns in 3D and all 44 emotions, built by Claude from your image alone.
+
+</div>
+
+> [!TIP]
+> This is how Ghosty, Bloom and Hexo were made. You need Claude Code, this repo and one image.
+
+**1. Set up the repo**
+
+```bash
+pnpm install
+pnpm dev
+```
+
+**2. Open the repo in Claude Code** and drag your image into the prompt box.
+
+**3. Paste this prompt and send it**
+
+```text
+Build one new mascot for this repo (Mascot Studio: Vite + React + TypeScript) from the image I attached.
+It must match the image's silhouette, colours and eye position exactly, look fully 3D with smooth edges and a gradient, and support every emotion the repo already has.
+
+First read src/engine/mood-mates/characters/rim.ts and one finished example: characters/ghosty (traced outline) or characters/hexo (simple geometric shape). Copy their patterns and do not guess any API. Before coding, tell me in two lines what you see: shape, body colour, eye colour, eye positions.
+
+1. Silhouette: trace it from the image pixels, never by eye. With Playwright (already installed, channel 'chrome'), draw the image on a canvas, mask the character (ignore background and alpha), take its centroid, and cast 240 rays at equal angles from +x going clockwise on screen (y down). Store each ray's farthest character pixel divided by the largest radius in characters/<id>/radii.ts. Re-trace and compare to prove it matches. Simple shapes (hexagon, rounded square) can use roundedOutline instead.
+2. Smooth: radialRing(radii, 100), then smoothContour or the windowed smoothing in ghosty/bloom until there are no dips, wiggles or flat tips that the image does not have.
+3. 3D: rimSpec({ ring, unit: 100, depth, puff, sigma, edge, tint, scale, center }). Start from depth 0.6-0.8, puff 2.2-2.4, sigma 30-40, scale 66-80 and center [120,124], so the body fills about 70% of the 240 view.
+4. Gradient: tint { top: [lighter, 0.5], bottom: [deeper, 0.55] }. Same hue family, lighter and warmer on top, deeper and richer at the bottom, like the other characters.
+5. Eyes: rimEyes anchored at the image's eye position, converted into the 240 view (offset from the centroid divided by the max radius, times scale). Start from ghosty's values. Eyes must stay inside the body at every turn angle.
+6. Emotions: rimCharacter gives all 44 emotions (sleep, moods, AI states, effects) for free. Fill palette(...) with state colours in the same hue family (blush pink, angry red, off grey). If I attached an expression sheet, match those eye shapes too.
+7. Register: add the import and characters.register(...) in src/engine/mood-mates/index.ts. The studio picks it up on its own.
+8. Verify with scratch scripts in /tmp against pnpm dev, and delete them afterwards: a contact sheet of all emotions; the body turned from -70 to 70 degrees; recolouring with the studio swatches (Rose, Sky, Pale pink, Grey) and Reset; eyes inside the outline; then pnpm typecheck && pnpm lint && pnpm build && pnpm build:lib. Show me the images and numbers. Do not say done without them.
+
+Rules: no click animations unless I ask. Do not change existing characters or shared engine files; if one needs changing, stop and ask me. Match the existing code style. Add the character's card to this README and its screenshot to docs/screenshots/<id>.png, then commit it all as one commit.
+```
+
+**4. Open `http://localhost:5173/`.** Your character is in the picker, with every emotion ready.
+
+<details>
+<summary><b>Tips for a better result</b></summary>
+
+- Use one character per image, front view, on a plain or transparent background, with both eyes visible.
+- Want custom expressions? Attach a second image of the expressions you want and the prompt will match those eye shapes.
+- Want click animations? Add "also build three click animations" to the prompt. Without it, the character gets the body animation only.
+- Not happy with a detail? Say so in plain words, for example "smooth the dip on the left side" or "make the top lighter".
+
+</details>
+
 ## Mascot Studio
 
 A React app for trying every mascot before you wire one into your product.
@@ -87,19 +141,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
 - `tips` is surfaced through the `tips` event.
-
-### Emotion IDs
-
-Every character shares the same ID ranges, so your AI can use one mapping for all of them.
-
-| IDs | Group | Examples |
-| --- | --- | --- |
-| `00`–`07` | Sleep and wake | Sleeping, Waking, Idle, Curious |
-| `10`–`21` | Moods | Happy, Puzzled, Surprised, Angry |
-| `30`–`41` | AI states | Thinking, Listening, Searching, Done, Error |
-| `60`–`71` | Effects | Alert, Notification, Rocket Blast Off, Love Strike |
-
-Some characters add their own IDs on top, for example Pumpkin's `44` Giggle and `47` Pumpkin Show. Open the studio to browse all of them.
+- Every character shares the same emotion IDs, so one mapping works for all of them. Open the studio to browse them.
 
 ## Project layout
 
@@ -114,16 +156,3 @@ src/app/                       Mascot Studio (React): App, components, export, t
 src/styles/app.css             the studio's styles, light and dark tokens
 docs/screenshots/              images used in this README
 ```
-
-## Checks
-
-```bash
-pnpm typecheck
-pnpm lint
-pnpm build
-pnpm build:lib
-```
-
-## Credits
-
-Nubby and Stampy are recreated from videos by socoloffalex on X, for learning.
