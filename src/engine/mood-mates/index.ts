@@ -1,5 +1,6 @@
 import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
+import { peak } from './characters/peak';
 import { pumpkin } from './characters/pumpkin';
 import { stampy } from './characters/stampy';
 import { woody } from './characters/woody';
@@ -15,6 +16,7 @@ characters.register(nubby);
 characters.register(stampy);
 characters.register(pumpkin);
 characters.register(woody);
+characters.register(peak);
 
 export const MoodMates = {
   create,
