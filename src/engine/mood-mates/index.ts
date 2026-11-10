@@ -1,5 +1,6 @@
 import { bloom } from './characters/bloom';
 import { drip } from './characters/drip';
+import { flame } from './characters/flame';
 import { ghosty } from './characters/ghosty';
 import { hexo } from './characters/hexo';
 import { jelo } from './characters/jelo';
@@ -30,6 +31,7 @@ characters.register(hexo);
 characters.register(ninjo);
 characters.register(jelo);
 characters.register(drip);
+characters.register(flame);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
