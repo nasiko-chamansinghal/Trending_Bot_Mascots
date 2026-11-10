@@ -122,7 +122,6 @@ export function App() {
               <Stage
                 character={character}
                 emotion={emotion}
-                emotionName={current?.name ?? emotion}
                 color={color}
                 eyes={eyeHexes[character] ?? null}
                 onEmotionChange={setEmotion}

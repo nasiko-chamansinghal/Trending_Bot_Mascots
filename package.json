@@ -18,7 +18,7 @@
     "build:lib": "LIB=mood-mates vite build -c vite.lib.config.ts && LIB=emotion-ball vite build -c vite.lib.config.ts"
   },
   "dependencies": {
-    "gifenc": "1.0.3",
+    "mediabunny": "1.65.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

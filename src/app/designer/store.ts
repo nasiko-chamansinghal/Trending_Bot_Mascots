@@ -88,6 +88,10 @@ export function hasDesign(id: string): boolean {
   return state.designs.some((d) => d.id === id);
 }
 
+export function getDesign(id: string): Design | null {
+  return state.designs.find((d) => d.id === id) ?? null;
+}
+
 export function designCount(): number {
   return state.designs.length;
 }

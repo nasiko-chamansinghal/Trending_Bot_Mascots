@@ -23,8 +23,7 @@ import {
   saveDesign,
   selectDesign,
 } from '../designer/store';
-import { download } from '../exportImage';
-import { MediaExports } from './MediaExports';
+import { download } from '../download';
 import { Stage } from './Stage';
 import { Tile } from './Tile';
 
@@ -268,7 +267,6 @@ export function DesignView({ state, onUse }: DesignViewProps) {
             key={`${draft.id}:${revision}`}
             character={draft.id}
             emotion={emotion}
-            emotionName={current?.name ?? emotion}
             exportName={draft.name}
             color={null}
             eyes={null}
@@ -313,13 +311,6 @@ export function DesignView({ state, onUse }: DesignViewProps) {
           </button>
           {importInput}
         </div>
-        <MediaExports
-          character={draft.id}
-          name={draft.name}
-          emotion={emotion}
-          emotionName={current?.name ?? emotion}
-          onNote={setNote}
-        />
         <p className="design-note" role="status">
           {note}
         </p>
