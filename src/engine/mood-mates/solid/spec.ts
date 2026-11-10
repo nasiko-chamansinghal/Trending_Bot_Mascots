@@ -15,6 +15,8 @@ export interface PlateSpec {
   top: string;
   bottom: string;
   inverse?: { top: string; bottom: string };
+  tint?: BodyTint;
+  darkTint?: BodyTint;
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 

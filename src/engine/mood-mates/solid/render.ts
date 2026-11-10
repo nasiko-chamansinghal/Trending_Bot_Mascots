@@ -275,13 +275,26 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
   }
+  const plateTint = plateLook?.tint ? createTint(`${id}pl`, defs, plateLook.tint, palette.body) : null;
+  const plateDarkTint = plateLook?.darkTint
+    ? createTint(`${id}pd`, defs, plateLook.darkTint, palette.body)
+    : null;
   let plateTone = 0;
+
+  function eyeTone(eye: string): number {
+    const [r, g, b] = hexToRgb(eye);
+    return Math.round(clamp((0.299 * r + 0.587 * g + 0.114 * b) / 255 - 0.3, 0, 0.4) * 80) / 32;
+  }
+
+  function plateFillFor(body: string, eye: string): string {
+    if (!plateTint) return plateFill;
+    return plateDarkTint && eyeTone(eye) >= 0.5 ? plateDarkTint(body) : plateTint(body);
+  }
 
   function tonePlate(eye: string): void {
     const inverse = plateLook?.inverse;
     if (!plateLook || !inverse) return;
-    const [r, g, b] = hexToRgb(eye);
-    const tone = Math.round(clamp((0.299 * r + 0.587 * g + 0.114 * b) / 255 - 0.3, 0, 0.4) * 80) / 32;
+    const tone = eyeTone(eye);
     if (!Number.isFinite(tone) || tone === plateTone) return;
     plateTone = tone;
     plateStops[0]?.setAttribute('stop-color', lerpColor(plateLook.top, inverse.top, tone));
@@ -590,7 +603,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     stemFront.setAttribute('fill', sketchOn ? 'none' : stemFill);
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
-    plate?.setAttribute('fill', sketchOn ? 'none' : plateFill);
+    plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
     tonePlate(pose.left.color);
 
     clipBody.setAttribute('transform', bodyTf);
