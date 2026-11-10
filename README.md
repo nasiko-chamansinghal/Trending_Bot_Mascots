@@ -33,6 +33,9 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="170"><br><b>Jelo</b><br><sub>44 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="170"><br><b>Drip</b><br><sub>44 emotions</sub></td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="170"><br><b>Flame</b><br><sub>44 emotions</sub></td>
+  </tr>
 </table>
 
 | Mascot | Engine | What makes it special |
@@ -49,6 +52,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Ninjo | `src/engine/mood-mates` | A round black ninja-bot with a white visor, Grok-style capsule eyes and a shaded 3D antenna, built as a smooth 3D solid |
 | Jelo | `src/engine/mood-mates` | A glossy blue jelly dome with two tall oval eyes and five leaf-shaped legs tucked behind it, each leg fitted to the reference image |
 | Drip | `src/engine/mood-mates` | A pale mint bubble with two small oval eyes and a smooth drip tail, built as a round solid that stays slim from every side |
+| Flame | `src/engine/mood-mates` | A tilted J-curve flame in glowing orange with a bright yellow face area that turns with its eyes, built as a 3D solid whose tip stays pointed from every side |
 
 The emotion counts are what Mascot Studio shows for each character.
 
@@ -253,7 +257,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo` or `drip`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip` or `flame`.
 - For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
@@ -264,7 +268,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo and Drip
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip and Flame
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
   design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
