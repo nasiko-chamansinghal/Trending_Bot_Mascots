@@ -35,6 +35,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
   </tr>
   <tr>
     <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="170"><br><b>Flame</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="170"><br><b>Germy</b><br><sub>44 emotions</sub></td>
   </tr>
 </table>
 
@@ -53,6 +54,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Jelo | `src/engine/mood-mates` | A glossy blue jelly dome with two tall oval eyes and five leaf-shaped legs tucked behind it, each leg fitted to the reference image |
 | Drip | `src/engine/mood-mates` | A pale mint bubble with two small oval eyes and a smooth drip tail, built as a round solid that stays slim from every side |
 | Flame | `src/engine/mood-mates` | A tilted J-curve flame in glowing orange with a bright yellow face area that turns with its eyes, built as a 3D solid whose tip stays pointed from every side |
+| Germy | `src/engine/mood-mates` | A round green germ with a fuzzy ring of 26 tiny spikes traced from the reference, a few dark spots and two big round eyes, built as a 3D solid |
 
 The emotion counts are what Mascot Studio shows for each character.
 
@@ -257,7 +259,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip` or `flame`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame` or `germy`.
 - For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
@@ -268,7 +270,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip and Flame
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame and Germy
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
   design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
