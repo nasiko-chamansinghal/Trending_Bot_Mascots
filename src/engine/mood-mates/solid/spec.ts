@@ -15,7 +15,7 @@ export interface PlateSpec {
   top: string;
   bottom: string;
   inverse?: { top: string; bottom: string };
-  follow?: { anchor: [number, number]; gain: number; limit: [number, number] };
+  follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 
 export interface SolidSpec {

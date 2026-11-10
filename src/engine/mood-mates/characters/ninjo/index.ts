@@ -64,7 +64,7 @@ const SPEC: SolidSpec = {
     top: '#FFFFFF',
     bottom: '#C9CEDC',
     inverse: { top: '#262836', bottom: '#0C0D12' },
-    follow: { anchor: view(0, EYES_Y), gain: 0.8, limit: [7.7, 6] },
+    follow: { anchor: view(0, EYES_Y), gain: 1, lean: 0.3, limit: [0.26, 0.19, 0.28] },
   },
   stemColor: '#0B0C12',
   capColor: '#0B0C12',

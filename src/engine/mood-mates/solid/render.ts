@@ -22,6 +22,7 @@ import {
   rotation,
   skinOf,
   TAU,
+  turnFace,
   type Vec2,
 } from './model';
 import type { SolidSpec } from './spec';
@@ -402,21 +403,50 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     return [x + pose.x + pose.lookX, y + pose.y + pose.lookY];
   }
 
+  function eyeLean(pose: EyePose): number {
+    const ring = pose.ring as Ring;
+    const [cx, cy] = centroid(ring);
+    let sxx = 0;
+    let syy = 0;
+    let sxy = 0;
+    for (const [x, y] of ring) {
+      sxx += (x - cx) ** 2;
+      syy += (y - cy) ** 2;
+      sxy += (x - cx) * (y - cy);
+    }
+    const stretch = Math.hypot(sxx - syy, 2 * sxy) / (sxx + syy || 1);
+    let lean = 0.5 * Math.atan2(2 * sxy, sxx - syy) - Math.PI / 2;
+    if (lean < -Math.PI / 2) lean += Math.PI;
+    lean += ((pose.rotate || 0) * Math.PI) / 180;
+    return lean * clamp(stretch * 2, 0, 1) * clamp((1.05 - Math.abs(lean)) / 0.45, 0, 1);
+  }
+
   function setPlate(node: SVGPathElement, m: Mat3, pose: Pose): void {
     const follow = plateLook?.follow;
-    let dx = 0;
-    let dy = 0;
+    let yaw = 0;
+    let pitch = 0;
+    let roll = 0;
     if (follow) {
       const [lx, ly] = eyeCentre(pose.left);
       const [rx, ry] = eyeCentre(pose.right);
-      dx = clamp(follow.gain * ((lx + rx) / 2 - follow.anchor[0]), -follow.limit[0], follow.limit[0]);
-      dy = clamp(follow.gain * ((ly + ry) / 2 - follow.anchor[1]), -follow.limit[1], follow.limit[1]);
+      const [maxYaw, maxPitch, maxRoll] = follow.limit;
+      const across = (follow.gain * ((lx + rx) / 2 - follow.anchor[0])) / KX;
+      const up = (follow.gain * (follow.anchor[1] - (ly + ry) / 2)) / KY;
+      const lean = (eyeLean(pose.left) + eyeLean(pose.right)) / 2;
+      yaw = clamp(Math.asin(clamp(across, -1, 1)), -maxYaw, maxYaw);
+      pitch = clamp(Math.asin(clamp(up, -1, 1)), -maxPitch, maxPitch);
+      roll = clamp(Math.atan2(ry - ly, rx - lx) + follow.lean * lean, -maxRoll, maxRoll);
     }
-    const key = `${lastKey}:${Math.round(dx * 8)}:${Math.round(dy * 8)}`;
+    const key = `${lastKey}:${Math.round(yaw * 573)}:${Math.round(pitch * 573)}:${Math.round(roll * 573)}`;
     if (key === plateKey) return;
     plateKey = key;
-    const ring = plateRing.map(([x, y]): Vec2 => [x + dx / KX, y + dy / KY]);
-    const face = projectEye(prep.skin, prep.map, ring, m, spec.edge);
+    const face = projectEye(
+      prep.skin,
+      prep.map,
+      plateRing,
+      follow ? turnFace(m, yaw, pitch, roll) : m,
+      spec.edge,
+    );
     node.style.display = face ? '' : 'none';
     if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
   }

@@ -86,6 +86,14 @@ export function rotation({ yaw, pitch, roll }: SolidAngles): Mat3 {
   return mul(c, mul(b, a));
 }
 
+export function turnFace(m: Mat3, yaw: number, pitch: number, roll: number): Mat3 {
+  const spin = mul(
+    rotation({ yaw, pitch: 0, roll: 0 }),
+    mul(rotation({ yaw: 0, pitch, roll: 0 }), rotation({ yaw: 0, pitch: 0, roll })),
+  );
+  return mul(m, spin);
+}
+
 function mul(m: Mat3, n: Mat3): Mat3 {
   const o = new Array(9).fill(0) as Mat3;
   for (let r = 0; r < 3; r++) {
