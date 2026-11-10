@@ -1,3 +1,4 @@
+import { GitHubLink } from './GitHubLink';
 import { ThemeToggle } from './ThemeToggle';
 
 export type Tab = 'customise' | 'design' | 'animation';
@@ -35,7 +36,10 @@ export function AppBar({ tab }: AppBarProps) {
           </a>
         ))}
       </nav>
-      <ThemeToggle />
+      <div className="appbar-actions">
+        <ThemeToggle />
+        <GitHubLink />
+      </div>
     </header>
   );
 }
