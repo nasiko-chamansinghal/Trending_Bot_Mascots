@@ -10,6 +10,8 @@ interface StageProps {
   character: string;
   emotion: string;
   emotionName: string;
+  /** Name used for exported files; defaults to the character id. */
+  exportName?: string;
   color: string | null;
   eyes: string | null;
   idle?: boolean;
@@ -29,6 +31,7 @@ export function Stage({
   character,
   emotion,
   emotionName,
+  exportName,
   color,
   eyes,
   idle = true,
@@ -92,7 +95,7 @@ export function Stage({
         <div className="stage-actions">
           <ExportMenu
             getSvg={() => artRef.current?.querySelector('svg') ?? null}
-            baseName={`mascot-${character}-${slug(emotionName)}`}
+            baseName={`mascot-${slug(exportName ?? character)}-${slug(emotionName)}`}
           />
         </div>
       ) : null}

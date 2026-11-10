@@ -105,6 +105,7 @@ Rules: no click animations unless I ask. Do not change existing characters or sh
 A React app for trying every mascot before you wire one into your product.
 
 - **Customise:** pick a character, an eye colour and any of its emotions, and recolour the body.
+- **Design:** build your own mascot in the browser. Start from a template (blob, squircle, polygon, star, flower, ghost, drop), then sculpt the outline, size, thickness, gradient and eyes with live preview. Every design gets all the built-in emotions, shows up in Customise and Animation, exports as PNG/SVG, and can be saved or loaded as a `.mascot.json` file. Designs live in your browser's localStorage, so no account is needed.
 - **Animation:** build a timeline of 2-second clips and play it back.
 - **Export:** download a PNG or SVG, or copy the image or the SVG code to the clipboard.
 - **Themes:** light and dark.
