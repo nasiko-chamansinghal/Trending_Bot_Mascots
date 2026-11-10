@@ -61,7 +61,7 @@ Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting sh
 1. **Pick a template:** Blob, Squircle, Polygon, Star, Flower, Ghost or Drop.
 2. **Sculpt it** with the controls below.
 3. **Preview any emotion** from the dropdown, or press **Random emotion**.
-4. **Export it** or press **Use in Customise** to recolour it and build an animation timeline with it.
+4. **Download a video or copy the embed code**, or press **Use in Customise** to recolour it and build an animation timeline with it.
 
 | Section | What you can change |
 | --- | --- |
@@ -72,8 +72,8 @@ Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting sh
 | Eyes | Colour, left/right and up/down position, spacing, size, and tall or wide |
 
 <div align="center">
-<img src="docs/screenshots/design-love-strike.gif" alt="An animated GIF of the custom star mascot playing the Love Strike emotion, exported from the Design tab" width="240">
-<br><sub>Exported straight from the Design tab: <b>Animated GIF</b>, Love Strike, 4 seconds.</sub>
+<img src="docs/screenshots/design-love-strike.gif" alt="A custom star mascot playing the Love Strike emotion" width="240">
+<br><sub>A custom star mascot playing Love Strike.</sub>
 </div>
 
 **Saved in your browser.** Designs are stored in `localStorage` under `mascot-studio.designs.v1`, so they are still there after a reload with no login. Up to 40 designs fit, and each can be duplicated or deleted (Delete asks for a second click). Clearing site data or using a private window starts you fresh, so download the ones you want to keep.
@@ -143,8 +143,8 @@ A React app for trying every mascot before you wire one into your product.
 
 - **Customise:** pick a character, an eye colour and any of its emotions, and recolour the body.
 - **Design:** build your own mascot from a template with live 3D preview. It is saved in your browser and works everywhere in the studio. See [Design your own mascot in the browser](#design-your-own-mascot-in-the-browser).
-- **Animation:** build a timeline of 2-second clips, play it back, and export the whole timeline as a GIF.
-- **Export:** download a PNG, SVG or animated GIF, or copy the image or the SVG code to the clipboard.
+- **Animation:** build a timeline of 2-second clips and play it back.
+- **Export:** on every tab, download an MP4 video or copy a one-paste embed code. See [Exports](#exports).
 - **Themes:** light and dark.
 
 <div align="center">
@@ -154,18 +154,72 @@ A React app for trying every mascot before you wire one into your product.
 
 ### Exports
 
-| Export | Where | Output |
-| --- | --- | --- |
-| PNG | Export menu on Customise, Design and Animation | 1024 × 1024, transparent |
-| SVG | Export menu | Vector, sharp at any size |
-| Copy image / Copy SVG code | Export menu | PNG or SVG markup on the clipboard |
-| GIF | Export menu on Customise and Design | 512 × 512, 25 fps, 4 s loop of the current emotion, on the studio background or transparent |
-| Timeline GIF | **Export as GIF** on Animation | 512 × 512, 25 fps, every clip in order with the transitions between them |
-| Custom GIF | **Animated GIF** on Design | 2, 4 or 6 s; 240, 360 or 480 px; white, dark or transparent background |
-| Emotion sheet | **Emotion sheet** on Design | One PNG with every emotion's pose, labelled with its name and ID |
-| Design file | **Download design** on Design | A `.mascot.json` file you can import again |
+Customise, Design and Animation all end in the same two buttons.
 
-GIFs keep your recolour and eye colour. They are rendered off-screen on a fixed 25 fps clock, so they come out the same however busy the page is, and the live preview keeps running. GIF files are large (about 1.4 MB for a 4-second loop at 512 px). Transparent GIFs only support fully clear or fully solid pixels, so their edges are a little jagged; the background version is the smoother one.
+| Button | What you get |
+| --- | --- |
+| **Download video** | An MP4 (H.264, 512 × 512, 30 fps) that plays in any browser, phone, Slack, WhatsApp, PowerPoint or video player. Customise and Design record 4 seconds of the character, colours and emotion you have selected. Animation records your whole timeline, every clip in order, transitions and effects included. The background follows the studio theme. |
+| **Copy embed code** | One snippet that puts the live mascot on any website, with the same character, colours and emotion. On the Animation tab it plays your timeline on a loop. You can switch emotions yourself with `bot.setEmotion('10')`. |
+
+```html
+<div id="mascot-x7k2p" style="width:240px;height:240px"></div>
+<script src="https://your-studio.example.com/mood-mates.js"></script>
+<script>
+  var bot = MoodMates.create(document.getElementById('mascot-x7k2p'), {
+    character: 'pumpkin',
+    color: '#E11D48'
+  });
+  bot.setEmotion('10');
+</script>
+```
+
+An Animation timeline with several clips becomes `bot.startTour(['10', '30', '33'], 2000)` instead, which plays the clips in order, 2 seconds each, and repeats.
+
+Each copy gets its own id, so you can paste several mascots on one page. The studio serves its own copy of the libraries at `/mood-mates.js` and `/emotion-ball.js`, so the snippet works as soon as the studio is deployed. For production, copy those files next to your site and change the `src`: otherwise your mascot stops if the studio goes offline. Mascots from the Design tab work the same way: the snippet carries the design as a few hundred characters of JSON.
+
+**In React or Next.js**, do not paste the snippet into JSX (scripts inside JSX never run). Load the library once and create the mascot in an effect. Call `destroy()` in the cleanup, otherwise `StrictMode` shows two mascots:
+
+```jsx
+import { useEffect, useRef } from 'react';
+
+const LIBRARY = 'https://your-studio.example.com/mood-mates.js';
+let loading;
+
+function loadLibrary() {
+  loading ??= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = LIBRARY;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return loading;
+}
+
+export function Mascot({ character = 'pumpkin', color, emotion = '10' }) {
+  const host = useRef(null);
+
+  useEffect(() => {
+    let bot;
+    let stopped = false;
+    loadLibrary().then(() => {
+      if (stopped) return;
+      bot = window.MoodMates.create(host.current, { character, color });
+      bot.setEmotion(emotion);
+    });
+    return () => {
+      stopped = true;
+      bot?.destroy();
+    };
+  }, [character, color, emotion]);
+
+  return <div ref={host} style={{ width: 240, height: 240 }} />;
+}
+```
+
+A site with a strict Content Security Policy must allow the script's address and an inline `style` on the container, or give the container its size from a CSS class instead.
+
+Videos are recorded off-screen on a fixed clock, so they look the same however busy the page is. Recording needs a browser that can encode video with WebCodecs (tested in Chrome). If yours cannot, the studio says so and the embed code still works. The embed code is the only option that keeps a transparent background. **Download design** on the Design tab saves a small `.mascot.json` file you can import again.
 
 
 ## Quick start
@@ -204,11 +258,14 @@ src/engine/emotion-ball/       Grok bot ball engine
 src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin, Woody, Peaky, Ghosty, Bloom and Hexo
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo)
+  design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
   solid/                       shared 3D solid renderer (slabs, limbs, inflated outlines)
 src/engine/shared/             code shared by both engines
 src/app/                       Mascot Studio (React): App, components, export, theme
-  designer/                    Design tab: shapes, compiling a design into a character, browser storage
-  mediaExport.ts               off-screen GIF and emotion sheet renderer
+  designer/                    Design tab: browser storage for saved designs
+  videoExport.ts               off-screen MP4 recorder
+  embed.ts                     builds the copy-paste embed code
+scripts/publish-embed.mjs      copies the two libraries into dist so the studio serves them
 src/styles/app.css             the studio's styles, light and dark tokens
 docs/screenshots/              images used in this README
 ```
