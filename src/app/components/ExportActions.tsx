@@ -56,9 +56,11 @@ interface ExportActionsProps {
   look: Look;
   timeline: Segment[];
   baseName: string;
+  /** Rendered first in the row, for example the image and GIF export menu. The video button then steps back to secondary. */
+  leading?: ReactNode;
 }
 
-export function ExportActions({ look, timeline, baseName }: ExportActionsProps) {
+export function ExportActions({ look, timeline, baseName, leading }: ExportActionsProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -108,10 +110,11 @@ export function ExportActions({ look, timeline, baseName }: ExportActionsProps) 
   return (
     <div className="export" aria-busy={recording || undefined}>
       <div className="export-row">
+        {leading}
         <button
           type="button"
           className="export-button"
-          data-kind="primary"
+          data-kind={leading ? 'secondary' : 'primary'}
           disabled={empty || recording}
           onClick={record}
         >
@@ -136,7 +139,7 @@ export function ExportActions({ look, timeline, baseName }: ExportActionsProps) 
       <p className="export-note" role="status" data-error={error ? '' : undefined}>
         {error ||
           (empty
-            ? 'Add a clip to export it.'
+            ? 'Add a clip to record a video or copy the embed code.'
             : `MP4 video, ${seconds} s, ${timeline.length === 1 ? 'of this emotion' : `${timeline.length} emotions in order`}. Or paste the embed code on any website.`)}
       </p>
     </div>
