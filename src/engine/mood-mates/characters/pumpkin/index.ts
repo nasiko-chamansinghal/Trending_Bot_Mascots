@@ -11,7 +11,7 @@ import { PUMPKIN_GROUPS, PUMPKIN_HAPPY } from './states';
 
 export const pumpkin: CharacterRaw = {
   id: 'pumpkin',
-  name: 'Pumpkin',
+  name: 'Pumpy',
   industry: 'general',
   desc: 'A carved orange pumpkin that turns, nods and spins like a real 3D head — its eyes wrap around the curve',
   body: { type: 'outline', vertices: solidRestOutline(PUMPKIN_SPEC), radius: 0.5, arcSteps: 2, edgeStep: 6 },

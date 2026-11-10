@@ -7,7 +7,7 @@ const D = Math.PI / 180;
 const STEP = 1000 / 30;
 
 export const PUMPKIN_GROUPS: EmotionGroup[] = [
-  { key: 'pumpkin', name: 'Pumpkin Video' },
+  { key: 'pumpkin', name: 'Pumpy Video' },
   { key: 'happy', name: 'Happy Moves' },
 ];
 

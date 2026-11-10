@@ -169,8 +169,8 @@ export const PUMPKIN_SHOW: EmotionRaw[] = [
   replay(
     {
       id: '47',
-      name: 'Pumpkin Show',
-      desc: 'The whole Pumpkin Bot routine: peek, pop, giggle, stretch, jump spin and settle, frame for frame',
+      name: 'Pumpy Show',
+      desc: 'The whole Pumpy routine: peek, pop, giggle, stretch, jump spin and settle, frame for frame',
     },
     0,
     [{ from: 0, to: 353 }],

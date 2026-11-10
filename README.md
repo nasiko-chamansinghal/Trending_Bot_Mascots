@@ -21,7 +21,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="170"><br><b>Ball</b><br><sub>44 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="170"><br><b>Nubby</b><br><sub>53 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="170"><br><b>Stampy</b><br><sub>51 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpkin" width="170"><br><b>Pumpkin</b><br><sub>56 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="170"><br><b>Pumpy</b><br><sub>56 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>44 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="170"><br><b>Peaky</b><br><sub>44 emotions</sub></td>
   </tr>
@@ -38,7 +38,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Ball | `src/engine/emotion-ball` | The Grok bot ball, with blob, wedge and gem shapes |
 | Nubby | `src/engine/mood-mates` | A stair-stepped block on stubby legs, 9 video states, Peekaboo Pop and Marble Eyes click animations |
 | Stampy | `src/engine/mood-mates` | A perforated postage stamp, 6 video states, corner peel and card flip click animations |
-| Pumpkin | `src/engine/mood-mates` | A carved pumpkin that turns like a 3D head, its eyes wrap around the curve, 8 click animations |
+| Pumpy | `src/engine/mood-mates` | A carved pumpkin that turns like a 3D head, its eyes wrap around the curve, 8 click animations |
 | Woody | `src/engine/mood-mates` | An orange wooden slab with raised arms and cut-notch eyes, a different arm pose for every emotion, Wave, Cheer and Timber click animations |
 | Peaky | `src/engine/mood-mates` | A pink-to-peach mountain with a three-peak crown, built as a soft pillow-shaped 3D solid, Rumble, Survey and Wring click animations |
 | Ghosty | `src/engine/mood-mates` | A white-and-lavender ghost leaning like a tilted teardrop, with a tail of three soft lobes, built as a smooth 3D solid |
@@ -260,7 +260,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin, Woody, Peaky, Ghosty, Bloom, Hexo and Ninjo
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo and Ninjo
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
   design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
