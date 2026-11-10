@@ -32,6 +32,8 @@ export interface MascotEngine {
   setStyle(style?: { sketch?: number }): unknown;
   setColor(body: string | null, eyes?: string | null, instant?: boolean): unknown;
   renderStatic(): void;
+  /** Advances the animation to a timestamp; driven by the engine's own ticker when active. */
+  tick(now: number): void;
   setActive(on: boolean): void;
   replay(): void;
   setGaze(nx: number, ny: number): unknown;

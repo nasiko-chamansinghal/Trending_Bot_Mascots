@@ -1,14 +1,15 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { canCopyImage, copyPng, copySvg, download, renderPng, renderSvg } from '../exportImage';
+import { GIF_SIZE, type Look, renderGif, type Segment, themeBackdrop } from '../mediaExport';
 
-type ActionId = 'png' | 'svg' | 'copy-png' | 'copy-svg';
+type ActionId = 'png' | 'svg' | 'gif' | 'gif-clear' | 'copy-png' | 'copy-svg';
 type Status = 'idle' | 'busy' | 'saved' | 'copied' | 'failed';
 
 interface Action {
   id: ActionId;
   label: string;
   detail: string;
-  group: 'download' | 'copy';
+  group: 'download' | 'animated' | 'copy';
 }
 
 const ACTIONS: Action[] = [
@@ -19,7 +20,7 @@ const ACTIONS: Action[] = [
 ];
 
 const STATUS_LABEL: Record<Status, string> = {
-  idle: 'Export as PNG',
+  idle: 'Export',
   busy: 'Exporting',
   saved: 'Saved',
   copied: 'Copied',
@@ -55,6 +56,18 @@ function Icon({ children, size = 18 }: IconProps) {
 const ICONS: Record<ActionId | 'saved', ReactNode> = {
   png: <path d="M12 4v11m0 0-4-4.2M12 15l4-4.2M4 19.5h16" />,
   svg: <path d="m8.5 8-4.5 4 4.5 4m7-8 4.5 4-4.5 4M13.5 6l-3 12" />,
+  gif: (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="3.5" />
+      <path d="m10.25 9.25 4.5 2.75-4.5 2.75z" />
+    </>
+  ),
+  'gif-clear': (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="3.5" strokeDasharray="2.6 2.4" />
+      <path d="m10.25 9.25 4.5 2.75-4.5 2.75z" />
+    </>
+  ),
   'copy-png': (
     <>
       <rect x="8.5" y="8.5" width="11" height="11" rx="3" />
@@ -70,19 +83,49 @@ const ICONS: Record<ActionId | 'saved', ReactNode> = {
   saved: <path d="m5 12.5 4.5 4.5L19 7.5" />,
 };
 
+/** What an animated export records: the mascot's look and the emotions to play in order. */
+export interface AnimationSource {
+  look: Look;
+  timeline: Segment[];
+  /** Short description for the menu, for example "4 s loop" or "6 clips, 0:12". */
+  summary: string;
+}
+
 interface ExportMenuProps {
   getSvg: () => SVGSVGElement | null;
   baseName: string;
+  animation?: AnimationSource | null;
+  /** Which export the main button runs. */
+  primary?: 'png' | 'gif';
 }
 
-export function ExportMenu({ getSvg, baseName }: ExportMenuProps) {
+function actionsFor(animation: AnimationSource | null | undefined): Action[] {
+  const list = ACTIONS.filter((a) => a.id !== 'copy-png' || canCopyImage());
+  if (!animation) return list;
+  const size = `${GIF_SIZE} × ${GIF_SIZE}`;
+  const gifs: Action[] = [
+    {
+      id: 'gif',
+      label: 'Download GIF',
+      detail: `${size}, ${animation.summary}, ${themeBackdrop() === 'dark' ? 'dark' : 'light'} background`,
+      group: 'animated',
+    },
+    { id: 'gif-clear', label: 'Transparent GIF', detail: `${size}, ${animation.summary}`, group: 'animated' },
+  ];
+  const at = list.findIndex((a) => a.group === 'copy');
+  return at < 0 ? [...list, ...gifs] : [...list.slice(0, at), ...gifs, ...list.slice(at)];
+}
+
+export function ExportMenu({ getSvg, baseName, animation, primary = 'png' }: ExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
+  const [progress, setProgress] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const menuId = useId();
-  const actions = ACTIONS.filter((a) => a.id !== 'copy-png' || canCopyImage());
+  const actions = actionsFor(animation);
+  const main: ActionId = primary === 'gif' && animation ? 'gif' : 'png';
   const busy = status === 'busy';
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
@@ -104,8 +147,29 @@ export function ExportMenu({ getSvg, baseName }: ExportMenuProps) {
   };
 
   const run = async (id: ActionId) => {
-    const svg = getSvg();
     setOpen(false);
+    if (id === 'gif' || id === 'gif-clear') {
+      if (!animation) return;
+      setStatus('busy');
+      setProgress(0);
+      try {
+        const blob = await renderGif({
+          ...animation.look,
+          timeline: animation.timeline,
+          backdrop: id === 'gif-clear' ? 'transparent' : themeBackdrop(),
+          onProgress: setProgress,
+        });
+        download(blob, `${baseName}${id === 'gif-clear' ? '-transparent' : ''}.gif`);
+        settle('saved');
+      } catch (e) {
+        console.error(e);
+        settle('failed');
+      } finally {
+        setProgress(null);
+      }
+      return;
+    }
+    const svg = getSvg();
     if (!svg) return;
     setStatus('busy');
     try {
@@ -153,9 +217,13 @@ export function ExportMenu({ getSvg, baseName }: ExportMenuProps) {
   return (
     <div className="export" ref={rootRef} onKeyDown={onRootKeyDown}>
       <div className="split">
-        <button type="button" className="split-main" onClick={() => run('png')} disabled={busy}>
-          <Icon size={18}>{confirmed ? ICONS.saved : ICONS.png}</Icon>
-          {STATUS_LABEL[status]}
+        <button type="button" className="split-main" onClick={() => run(main)} disabled={busy}>
+          <Icon size={18}>{confirmed ? ICONS.saved : ICONS[main]}</Icon>
+          {status === 'idle'
+            ? `Export as ${main === 'gif' ? 'GIF' : 'PNG'}`
+            : busy && progress !== null
+              ? `Recording ${Math.round(progress * 100)}%`
+              : STATUS_LABEL[status]}
         </button>
         <span className="split-rule" aria-hidden="true" />
         <button

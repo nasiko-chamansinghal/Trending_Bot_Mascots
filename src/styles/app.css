@@ -730,6 +730,7 @@ button.tile {
 
 .animation[data-preview] .inspector,
 .animation[data-preview] .timeline,
+.animation[data-preview] .stage-actions,
 .animation[data-preview] .title-row {
   display: none;
 }

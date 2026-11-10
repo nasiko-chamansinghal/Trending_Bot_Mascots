@@ -165,8 +165,17 @@ export function AnimationView({ character, color, eyes, clips, onClipsChange }: 
           color={color}
           eyes={eyes}
           idle={false}
-          exportable={false}
           clickable={false}
+          primaryExport="gif"
+          animation={
+            clipCount > 0
+              ? {
+                  look: { character, color, eyeColor: eyes },
+                  timeline: clips.map((clip) => ({ emotion: clip.emotion, ms: CLIP_MS })),
+                  summary: `${clipCount} ${clipCount === 1 ? 'clip' : 'clips'}, ${mmss(total)}`,
+                }
+              : undefined
+          }
           onEmotionChange={noop}
         />
         <Timeline

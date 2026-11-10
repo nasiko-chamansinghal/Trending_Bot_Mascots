@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BACKDROPS, type Backdrop, renderGif, renderSheet } from '../designer/exporters';
 import { download } from '../exportImage';
+import { BACKDROPS, type Backdrop, renderGif, renderSheet } from '../mediaExport';
 
 const LENGTHS = [2, 4, 6];
 const SIZES = [
@@ -40,7 +40,13 @@ export function MediaExports({ character, name, emotion, emotionName, onNote }: 
     const onProgress = (done: number) => setJob({ kind, done });
     try {
       if (kind === 'gif') {
-        const blob = await renderGif({ character, emotion, seconds, size, backdrop, onProgress });
+        const blob = await renderGif({
+          character,
+          timeline: [{ emotion, ms: seconds * 1000 }],
+          size,
+          backdrop,
+          onProgress,
+        });
         download(blob, `mascot-${slug(name)}-${slug(emotionName)}.gif`);
         onNote(`Saved a ${seconds}s GIF of ${emotionName} (${Math.round(blob.size / 1024)} KB)`);
       } else {
