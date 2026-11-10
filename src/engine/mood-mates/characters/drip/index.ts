@@ -6,7 +6,7 @@ const SCALE = 96;
 const CENTER: [number, number] = [120, 114];
 const FIT = SCALE / 107.535;
 const EYES_X = 0.0016;
-const EYES_Y = -0.371;
+const EYES_Y = -0.22;
 const KNOTS = 241;
 
 function traced(degrees: number): number {
