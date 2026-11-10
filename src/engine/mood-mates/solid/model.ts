@@ -59,6 +59,7 @@ export interface StemProjection {
   outline: Vec2[];
   root: Vec2[];
   cap: { cx: number; cy: number; rx: number; ry: number; angle: number } | null;
+  tip: Vec2;
   front: boolean;
 }
 
@@ -365,7 +366,7 @@ export function projectStem(s: StemShape, m: Mat3, steps = 24): StemProjection {
       : null;
   const base = apply(m, s.base);
   const up = apply(m, [0, 1, 0]);
-  return { outline, root, cap, front: base[2] > 0 && up[2] > 0.25 };
+  return { outline, root, cap, tip: [tip[0], -tip[1]], front: base[2] > 0 && up[2] > 0.25 };
 }
 
 export interface DecalMap {

@@ -1,3 +1,4 @@
+import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
@@ -111,6 +112,16 @@ function polyPath(pts: Vec2[]): string {
   return `${s}Z`;
 }
 
+function paint(
+  tag: 'linearGradient' | 'radialGradient',
+  attrs: Record<string, string>,
+  stops: Array<[string, string]>,
+): SVGElement {
+  const gradient = el(tag, attrs);
+  for (const [offset, color] of stops) gradient.appendChild(el('stop', { offset, 'stop-color': color }));
+  return gradient;
+}
+
 interface EyeNode {
   node: SVGPathElement;
   lastD: string;
@@ -182,6 +193,30 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.appendChild(body);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
+  const shading = spec.stemShading;
+  const stemFill = shading ? `url(#${id}stem)` : spec.stemColor;
+  const ballLook = shading?.ball;
+  const ballFill = `url(#${id}ball)`;
+  const ball = ballLook ? el('circle', { fill: ballFill, stroke: 'none' }) : null;
+  if (shading) {
+    defs.appendChild(
+      paint('linearGradient', { id: `${id}stem`, x1: '0', y1: '0', x2: '1', y2: '0' }, [
+        ['0%', shading.edge],
+        ['38%', shading.light],
+        ['100%', shading.edge],
+      ]),
+    );
+  }
+  if (ball && ballLook) {
+    defs.appendChild(
+      paint('radialGradient', { id: `${id}ball`, cx: '0.5', cy: '0.5', r: '0.5', fx: '0.34', fy: '0.28' }, [
+        ['0%', ballLook.light],
+        ['55%', lerpColor(ballLook.light, ballLook.dark, 0.55)],
+        ['100%', ballLook.dark],
+      ]),
+    );
+    bodyG.appendChild(ball);
+  }
   const limbs = (spec.limbs ?? []).map(() => {
     const node = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
     bodyG.insertBefore(node, body);
@@ -224,6 +259,33 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   clip.appendChild(clipBody);
   defs.appendChild(clip);
   const eyeG = el('g', { 'clip-path': `url(#${id}clip)` });
+  const plateLook = spec.plate;
+  const plateFill = `url(#${id}plate)`;
+  const plateRing = (plateLook?.ring ?? []).map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]);
+  let plateKey = '';
+  const plate = plateLook ? el('path', { fill: plateFill, stroke: 'none' }) : null;
+  let plateStops: SVGStopElement[] = [];
+  if (plate && plateLook) {
+    const gradient = paint('linearGradient', { id: `${id}plate`, x1: '0', y1: '0', x2: '0', y2: '1' }, [
+      ['0%', plateLook.top],
+      ['100%', plateLook.bottom],
+    ]);
+    plateStops = Array.from(gradient.children) as SVGStopElement[];
+    defs.appendChild(gradient);
+    eyeG.appendChild(plate);
+  }
+  let plateTone = 0;
+
+  function tonePlate(eye: string): void {
+    const inverse = plateLook?.inverse;
+    if (!plateLook || !inverse) return;
+    const [r, g, b] = hexToRgb(eye);
+    const tone = Math.round(clamp((0.299 * r + 0.587 * g + 0.114 * b) / 255 - 0.3, 0, 0.4) * 80) / 32;
+    if (!Number.isFinite(tone) || tone === plateTone) return;
+    plateTone = tone;
+    plateStops[0]?.setAttribute('stop-color', lerpColor(plateLook.top, inverse.top, tone));
+    plateStops[1]?.setAttribute('stop-color', lerpColor(plateLook.bottom, inverse.bottom, tone));
+  }
   const eyes: [EyeNode, EyeNode] = [0, 1].map(() => {
     const node = el('path', { fill: palette.eye, stroke: 'none', 'stroke-width': '1.6' }) as SVGPathElement;
     eyeG.appendChild(node);
@@ -307,6 +369,16 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const d = polyPath(stemOutline);
     stemFront.setAttribute('d', st.front ? d : 'M0 0Z');
     stemBack.setAttribute('d', st.front ? 'M0 0Z' : d);
+    if (ball && ballLook) {
+      cap.style.display = 'none';
+      const tip = toScreen(st.tip);
+      ball.setAttribute('cx', r2(tip[0]).toString());
+      ball.setAttribute('cy', r2(tip[1]).toString());
+      ball.setAttribute('r', r2(ballLook.radius * K).toString());
+      if (!st.front) bodyG.insertBefore(ball, body);
+      else bodyG.appendChild(ball);
+      return m;
+    }
     if (st.cap) {
       cap.style.display = '';
       cap.setAttribute('cx', r2(CX + st.cap.cx * KX).toString());
@@ -323,6 +395,30 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       cap.style.display = 'none';
     }
     return m;
+  }
+
+  function eyeCentre(pose: EyePose): Vec2 {
+    const [x, y] = centroid(pose.ring as Ring);
+    return [x + pose.x + pose.lookX, y + pose.y + pose.lookY];
+  }
+
+  function setPlate(node: SVGPathElement, m: Mat3, pose: Pose): void {
+    const follow = plateLook?.follow;
+    let dx = 0;
+    let dy = 0;
+    if (follow) {
+      const [lx, ly] = eyeCentre(pose.left);
+      const [rx, ry] = eyeCentre(pose.right);
+      dx = clamp(follow.gain * ((lx + rx) / 2 - follow.anchor[0]), -follow.limit[0], follow.limit[0]);
+      dy = clamp(follow.gain * ((ly + ry) / 2 - follow.anchor[1]), -follow.limit[1], follow.limit[1]);
+    }
+    const key = `${lastKey}:${Math.round(dx * 8)}:${Math.round(dy * 8)}`;
+    if (key === plateKey) return;
+    plateKey = key;
+    const ring = plateRing.map(([x, y]): Vec2 => [x + dx / KX, y + dy / KY]);
+    const face = projectEye(prep.skin, prep.map, ring, m, spec.edge);
+    node.style.display = face ? '' : 'none';
+    if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
   }
 
   function setLimbs(m: Mat3, raise: number[]): void {
@@ -431,17 +527,27 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const spinYaw = b.yaw || 0;
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
     if (limbs.length) setLimbs(m, [b.armL ?? 0, b.armR ?? 0]);
+    if (plate) setPlate(plate, m, pose);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
     bodyG.setAttribute('transform', bodyTf);
+    plate?.setAttribute('transform', bodyTf);
 
     const sketchOn = sketch > 0.5;
     if (sketchOn !== curSketch > 0.5) {
       curSketch = sketchOn ? 1 : 0;
       svg.classList.toggle('is-sketch', sketchOn);
       stemRoot.style.display = sketchOn ? 'none' : '';
-      for (const node of [body, stemBack, stemFront, cap, ...limbs]) {
+      for (const node of [
+        body,
+        stemBack,
+        stemFront,
+        cap,
+        ...limbs,
+        ...(ball ? [ball] : []),
+        ...(plate ? [plate] : []),
+      ]) {
         node.style.stroke = sketchOn ? `var(--sketch-ink, ${b.color})` : '';
         node.style.strokeWidth = sketchOn ? '1.6' : '';
       }
@@ -450,9 +556,12 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     body.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
     for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
     stemRoot.setAttribute('fill', spec.stemColor);
-    stemBack.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
-    stemFront.setAttribute('fill', sketchOn ? 'none' : spec.stemColor);
+    stemBack.setAttribute('fill', sketchOn ? 'none' : stemFill);
+    stemFront.setAttribute('fill', sketchOn ? 'none' : stemFill);
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
+    ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
+    plate?.setAttribute('fill', sketchOn ? 'none' : plateFill);
+    tonePlate(pose.left.color);
 
     clipBody.setAttribute('transform', bodyTf);
     setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
