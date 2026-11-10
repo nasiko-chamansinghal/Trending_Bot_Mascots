@@ -8,7 +8,7 @@ function paddedViewBox(svg: SVGSVGElement): string {
   return `${x - padX} ${y - padY} ${width + padX * 2} ${height + padY * 2}`;
 }
 
-function standaloneSvg(svg: SVGSVGElement): string {
+export function standaloneSvg(svg: SVGSVGElement): string {
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');

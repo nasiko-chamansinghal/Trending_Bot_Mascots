@@ -1086,6 +1086,32 @@ button.tile {
   flex: 1;
 }
 
+.media-exports {
+  padding-top: 8px;
+  border-top: 0;
+}
+
+.media-exports .select select {
+  min-width: 0;
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.select-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.select select:disabled,
+.button-quiet:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 .design-note {
   min-height: 20px;
   margin-top: 8px;
