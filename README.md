@@ -122,7 +122,7 @@ First read src/engine/mood-mates/characters/rim.ts and one finished example: cha
 5. Eyes: rimEyes anchored at the image's eye position, converted into the 240 view (offset from the centroid divided by the max radius, times scale). Start from ghosty's values. Eyes must stay inside the body at every turn angle.
 6. Emotions: rimCharacter gives all 44 emotions (sleep, moods, AI states, effects) for free. Fill palette(...) with state colours in the same hue family (blush pink, angry red, off grey). If I attached an expression sheet, match those eye shapes too.
 7. Register: add the import and characters.register(...) in src/engine/mood-mates/index.ts. The studio picks it up on its own.
-8. Verify with scratch scripts in /tmp against pnpm dev, and delete them afterwards: a contact sheet of all emotions; the body turned from -70 to 70 degrees; recolouring with the studio swatches (Rose, Sky, Pale pink, Grey) and Reset; eyes inside the outline; then pnpm typecheck && pnpm lint && pnpm build && pnpm build:lib. Show me the images and numbers. Do not say done without them.
+8. Verify with scratch scripts in /tmp against pnpm dev, and delete them afterwards: a contact sheet of all emotions; the body turned from -70 to 70 degrees; recolouring with the studio swatches (Rose, Sky, Pink, Emerald) and Reset; eyes inside the outline; then pnpm typecheck && pnpm lint && pnpm build && pnpm build:lib. Show me the images and numbers. Do not say done without them.
 
 Rules: no click animations unless I ask. Do not change existing characters or shared engine files; if one needs changing, stop and ask me. Match the existing code style. Add the character's card to this README and its screenshot to docs/screenshots/<id>.png, then commit it all as one commit.
 ```
