@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createMascot } from '../characters';
 import type { MascotEngine } from '../engine-types';
-import { GIF_SECONDS } from '../mediaExport';
-import { type AnimationSource, ExportMenu } from './ExportMenu';
+import { EMOTION_VIDEO_MS, type Segment } from '../videoExport';
+import { ExportActions } from './ExportActions';
 import { Mascot } from './Mascot';
 
 const IDLE = { standbyAfter: 60000, sleepAfter: 180000 };
@@ -10,16 +10,13 @@ const IDLE = { standbyAfter: 60000, sleepAfter: 180000 };
 interface StageProps {
   character: string;
   emotion: string;
-  emotionName: string;
   /** Name used for exported files; defaults to the character id. */
   exportName?: string;
   color: string | null;
   eyes: string | null;
   idle?: boolean;
   exportable?: boolean;
-  /** What the GIF export records; defaults to the current emotion as a short loop. */
-  animation?: AnimationSource;
-  primaryExport?: 'png' | 'gif';
+  timeline?: Segment[];
   clickable?: boolean;
   onEmotionChange: (id: string) => void;
 }
@@ -34,19 +31,16 @@ function slug(text: string): string {
 export function Stage({
   character,
   emotion,
-  emotionName,
   exportName,
   color,
   eyes,
   idle = true,
   exportable = true,
-  animation,
-  primaryExport,
+  timeline,
   clickable = true,
   onEmotionChange,
 }: StageProps) {
   const engineRef = useRef<MascotEngine | null>(null);
-  const artRef = useRef<HTMLDivElement>(null);
   const emotionRef = useRef(emotion);
   const colorRef = useRef(color);
   const eyesRef = useRef(eyes);
@@ -67,7 +61,7 @@ export function Stage({
 
   return (
     <section className="stage" aria-label="Preview">
-      <div className="stage-art" ref={artRef}>
+      <div className="stage-art">
         <Mascot
           key={character}
           className="stage-mascot"
@@ -99,17 +93,10 @@ export function Stage({
       </div>
       {exportable ? (
         <div className="stage-actions">
-          <ExportMenu
-            getSvg={() => artRef.current?.querySelector('svg') ?? null}
-            baseName={`mascot-${slug(exportName ?? character)}-${slug(animation ? 'animation' : emotionName)}`}
-            primary={primaryExport}
-            animation={
-              animation ?? {
-                look: { character, color, eyeColor: eyes },
-                timeline: [{ emotion, ms: GIF_SECONDS * 1000 }],
-                summary: `${GIF_SECONDS} s loop`,
-              }
-            }
+          <ExportActions
+            look={{ character, color, eyeColor: eyes }}
+            timeline={timeline ?? [{ emotion, ms: EMOTION_VIDEO_MS }]}
+            baseName={`mascot-${slug(exportName ?? character)}`}
           />
         </div>
       ) : null}

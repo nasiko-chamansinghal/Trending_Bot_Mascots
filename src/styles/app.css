@@ -259,35 +259,26 @@ a {
 }
 
 .export {
-  position: relative;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.export-note {
-  min-height: 16px;
-  font-size: 13px;
-  line-height: 16px;
-  color: var(--negative);
-}
-
-.split {
-  display: flex;
-  align-items: stretch;
-  height: 44px;
-  border-radius: var(--radius-pill);
-  background: var(--primary);
-  color: var(--primary-ink);
-  overflow: hidden;
-}
-
-.split button {
+.export-button {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 20px;
   border: 0;
-  background: none;
-  color: inherit;
+  border-radius: var(--radius-pill);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -295,125 +286,35 @@ a {
     transform var(--press) var(--ease-out);
 }
 
-.split button:active:not(:disabled) {
-  transform: scale(0.97);
+.export-button[data-kind="primary"] {
+  min-width: 176px;
+  background: var(--primary);
+  color: var(--primary-ink);
 }
 
-.split button:disabled {
-  cursor: progress;
-  opacity: 0.7;
-}
-
-.split-main {
-  gap: 10px;
-  min-width: 164px;
-  padding: 0 18px;
-}
-
-.split-more {
-  padding: 0 14px 0 12px;
-}
-
-.split-more svg {
-  transition: transform 280ms var(--ease-out);
-}
-
-.split-more[aria-expanded="true"] svg {
-  transform: rotate(180deg);
-}
-
-.split-rule {
-  align-self: stretch;
-  width: 1px;
-  margin: 11px 0;
-  background: currentColor;
-  opacity: 0.25;
-}
-
-.menu {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 12px);
-  z-index: 5;
-  width: 288px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--surface);
-  box-shadow: var(--shadow-float);
-  transform-origin: bottom left;
-  opacity: 0;
-  transform: translateY(8px) scale(0.96);
-  visibility: hidden;
-  transition:
-    opacity 150ms var(--ease-out),
-    transform 150ms var(--ease-out),
-    visibility 0s linear 150ms;
-}
-
-.menu[data-open] {
-  opacity: 1;
-  transform: none;
-  visibility: visible;
-  transition:
-    opacity 240ms var(--ease-out),
-    transform 240ms var(--ease-out),
-    visibility 0s;
-}
-
-.menu-sep {
-  height: 1px;
-  margin: 6px 12px;
-  border: 0;
-  background: var(--border);
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 16px;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--press) var(--ease-out);
-}
-
-.menu-item:focus-visible {
-  background: var(--raised);
-  outline: 2px solid var(--text);
-  outline-offset: -2px;
-}
-
-.menu-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-pill);
+.export-button[data-kind="secondary"] {
   background: var(--raised);
   color: var(--text);
 }
 
-.menu-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.export-button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
-.menu-label {
-  font-weight: 600;
-  line-height: 20px;
+.export-button:disabled {
+  cursor: progress;
+  opacity: 0.7;
 }
 
-.menu-detail {
+.export-note {
+  min-height: 18px;
   font-size: 13px;
   line-height: 18px;
   color: var(--muted);
+}
+
+.export-note[data-error] {
+  color: var(--negative);
 }
 
 .button-quiet {
@@ -1087,15 +988,6 @@ button.tile {
   flex: 1;
 }
 
-.media-exports {
-  padding-top: 8px;
-  border-top: 0;
-}
-
-.media-exports .select select {
-  min-width: 0;
-}
-
 .select {
   display: inline-flex;
   align-items: center;
@@ -1351,12 +1243,12 @@ button.tile {
     transform: scale(1.1);
   }
 
-  .split button:not(:disabled):hover {
+  .export-button[data-kind="primary"]:not(:disabled):hover {
     background: var(--primary-hover);
   }
 
-  .menu-item:hover {
-    background: var(--raised);
+  .export-button[data-kind="secondary"]:not(:disabled):hover {
+    background: var(--raised-hover);
   }
 
   .button-quiet:hover {
@@ -1380,7 +1272,7 @@ button.tile {
 
   .tile:active,
   .tile:hover .tile-art,
-  .split button:active:not(:disabled),
+  .export-button:active:not(:disabled),
   .button-quiet:active,
   .theme-toggle:active,
   .swatch:active .swatch-fill,
