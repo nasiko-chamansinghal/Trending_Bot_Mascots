@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { CHARACTERS, characterName, DEFAULT_EMOTION, emotionsOf, hasCharacter } from './characters';
+import { characterName, DEFAULT_EMOTION, emotionsOf, hasCharacter, listCharacters } from './characters';
 import type { Clip } from './clips';
 import { type EyeTone, eyeHex, isEyeTone, isSavedColor } from './colors';
 import { AnimationView } from './components/AnimationView';
 import { AppBar, type Tab } from './components/AppBar';
 import { CharacterPicker } from './components/CharacterPicker';
 import { ColorPicker } from './components/ColorPicker';
+import { DesignView } from './components/DesignView';
 import { EmotionPicker } from './components/EmotionPicker';
 import { EyePicker } from './components/EyePicker';
 import { Stage } from './components/Stage';
+import { useDesigns } from './designer/store';
 import { installGazeListeners } from './gaze';
 import { usePrefs } from './prefs';
 
@@ -29,7 +31,7 @@ function sanitize(prefs: Prefs): Prefs {
   const storedEyes: Eyes = prefs.eyes && typeof prefs.eyes === 'object' ? prefs.eyes : {};
   const colors: Colors = {};
   const eyes: Eyes = {};
-  for (const c of CHARACTERS) {
+  for (const c of listCharacters()) {
     const color = storedColors[c.id] ?? null;
     const tone = storedEyes[c.id];
     colors[c.id] = isSavedColor(color) ? color : null;
@@ -45,7 +47,10 @@ function sanitize(prefs: Prefs): Prefs {
 const NO_CLIPS: Clip[] = [];
 
 function readTab(): Tab {
-  return window.location.hash === '#animation' ? 'animation' : 'customise';
+  const hash = window.location.hash;
+  if (hash === '#animation') return 'animation';
+  if (hash === '#design') return 'design';
+  return 'customise';
 }
 
 export function App() {
@@ -53,6 +58,7 @@ export function App() {
   const [emotion, setEmotion] = useState(DEFAULT_EMOTION);
   const [tab, setTab] = useState<Tab>(readTab);
   const [timelines, setTimelines] = useState<Record<string, Clip[]>>({});
+  const designs = useDesigns();
 
   useEffect(() => installGazeListeners(), []);
 
@@ -62,38 +68,47 @@ export function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const emotions = emotionsOf(prefs.character);
+  const character = hasCharacter(prefs.character) ? prefs.character : DEFAULTS.character;
+  const emotions = emotionsOf(character);
   const current = emotions.find((def) => def.id === emotion);
-  const color = prefs.colors[prefs.character] ?? null;
-  const tone = prefs.eyes[prefs.character] ?? null;
+  const color = prefs.colors[character] ?? null;
+  const tone = prefs.eyes[character] ?? null;
   const eyeHexes: Record<string, string | null> = {};
-  for (const c of CHARACTERS) eyeHexes[c.id] = eyeHex(prefs.eyes[c.id] ?? null);
+  for (const c of listCharacters()) eyeHexes[c.id] = eyeHex(prefs.eyes[c.id] ?? null);
 
   const selectCharacter = (id: string) => {
-    if (id === prefs.character) return;
+    if (id === character) return;
     updatePrefs({ character: id });
     setEmotion(DEFAULT_EMOTION);
   };
 
   const selectColor = (hex: string | null) => {
-    updatePrefs({ colors: { ...prefs.colors, [prefs.character]: hex } });
+    updatePrefs({ colors: { ...prefs.colors, [character]: hex } });
   };
 
   const selectEyes = (next: EyeTone | null) => {
-    updatePrefs({ eyes: { ...prefs.eyes, [prefs.character]: next } });
+    updatePrefs({ eyes: { ...prefs.eyes, [character]: next } });
   };
 
   return (
     <>
       <AppBar tab={tab} />
       <main className="canvas" id={tab}>
-        {tab === 'animation' ? (
+        {tab === 'design' ? (
+          <DesignView
+            state={designs}
+            onUse={(id) => {
+              selectCharacter(id);
+              window.location.hash = '#customise';
+            }}
+          />
+        ) : tab === 'animation' ? (
           <AnimationView
-            character={prefs.character}
+            character={character}
             color={color}
-            eyes={eyeHexes[prefs.character] ?? null}
-            clips={timelines[prefs.character] ?? NO_CLIPS}
-            onClipsChange={(next) => setTimelines((all) => ({ ...all, [prefs.character]: next }))}
+            eyes={eyeHexes[character] ?? null}
+            clips={timelines[character] ?? NO_CLIPS}
+            onClipsChange={(next) => setTimelines((all) => ({ ...all, [character]: next }))}
           />
         ) : (
           <>
@@ -101,15 +116,15 @@ export function App() {
               <div className="title-row">
                 <h1>Customise</h1>
                 <p>
-                  {characterName(prefs.character)} · {current?.name ?? '—'}
+                  {characterName(character)} · {current?.name ?? '—'}
                 </p>
               </div>
               <Stage
-                character={prefs.character}
+                character={character}
                 emotion={emotion}
                 emotionName={current?.name ?? emotion}
                 color={color}
-                eyes={eyeHexes[prefs.character] ?? null}
+                eyes={eyeHexes[character] ?? null}
                 onEmotionChange={setEmotion}
               />
             </div>
@@ -119,7 +134,7 @@ export function App() {
                   <h2>Character</h2>
                 </div>
                 <CharacterPicker
-                  character={prefs.character}
+                  character={character}
                   colors={prefs.colors}
                   eyes={eyeHexes}
                   onSelect={selectCharacter}
@@ -144,10 +159,10 @@ export function App() {
                   <span className="meta">{emotions.length}</span>
                 </div>
                 <EmotionPicker
-                  character={prefs.character}
+                  character={character}
                   emotion={emotion}
                   color={color}
-                  eyes={eyeHexes[prefs.character] ?? null}
+                  eyes={eyeHexes[character] ?? null}
                   onSelect={setEmotion}
                 />
               </section>

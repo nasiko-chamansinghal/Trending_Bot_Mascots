@@ -46,6 +46,43 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
 The emotion counts are what Mascot Studio shows for each character.
 
+## Design your own mascot in the browser
+
+<div align="center">
+
+**No code, no account. Shape it, colour it, export it.**
+
+<img src="docs/screenshots/design-light.png" alt="The Design tab with a custom star mascot, its saved mascots, shape picker and export controls" width="880">
+
+</div>
+
+Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting shape. Every slider updates the 3D preview live, and your mascot gets all 44 emotions the built-in characters have.
+
+1. **Pick a template:** Blob, Squircle, Polygon, Star, Flower, Ghost or Drop.
+2. **Sculpt it** with the controls below.
+3. **Preview any emotion** from the dropdown, or press **Random emotion**.
+4. **Export it** or press **Use in Customise** to recolour it and build an animation timeline with it.
+
+| Section | What you can change |
+| --- | --- |
+| Shape | The base template. Your colours and other settings carry over when you switch |
+| Outline | Corners, points, petals or tail lobes; wobble, squareness, point or petal depth; roundness; width; height; tilt. Blob has a **Shuffle** button for a new random wobble |
+| Body | Size, thickness and puffiness of the 3D body |
+| Colour | Body colour (swatches or any colour), plus the top and bottom of the gradient. **Auto gradient** rebuilds them from the body colour |
+| Eyes | Colour, left/right and up/down position, spacing, size, and tall or wide |
+
+<div align="center">
+<img src="docs/screenshots/design-love-strike.gif" alt="An animated GIF of the custom star mascot playing the Love Strike emotion, exported from the Design tab" width="240">
+<br><sub>Exported straight from the Design tab: <b>Animated GIF</b>, Love Strike, 4 seconds.</sub>
+</div>
+
+**Saved in your browser.** Designs are stored in `localStorage` under `mascot-studio.designs.v1`, so they are still there after a reload with no login. Up to 40 designs fit, and each can be duplicated or deleted (Delete asks for a second click). Clearing site data or using a private window starts you fresh, so download the ones you want to keep.
+
+**Share a design.** **Download design** saves a small `.mascot.json` file. **Import** loads one back as a new mascot and never overwrites an existing one.
+
+> [!NOTE]
+> Designed mascots live in the studio. To ship one in your own app through `pnpm build:lib`, turn it into a character file with the Claude Code prompt in the next section, or follow `characters/hexo` (the same outline, gradient and eye settings map onto `rimSpec` and `rimEyes`).
+
 ## Build your own mascot from one image
 
 <div align="center">
@@ -105,14 +142,31 @@ Rules: no click animations unless I ask. Do not change existing characters or sh
 A React app for trying every mascot before you wire one into your product.
 
 - **Customise:** pick a character, an eye colour and any of its emotions, and recolour the body.
-- **Animation:** build a timeline of 2-second clips and play it back.
-- **Export:** download a PNG or SVG, or copy the image or the SVG code to the clipboard.
+- **Design:** build your own mascot from a template with live 3D preview. It is saved in your browser and works everywhere in the studio. See [Design your own mascot in the browser](#design-your-own-mascot-in-the-browser).
+- **Animation:** build a timeline of 2-second clips, play it back, and export the whole timeline as a GIF.
+- **Export:** download a PNG, SVG or animated GIF, or copy the image or the SVG code to the clipboard.
 - **Themes:** light and dark.
 
 <div align="center">
 <img src="docs/screenshots/studio-dark.png" alt="Mascot Studio in dark mode with Woody selected" width="440">
 <img src="docs/screenshots/animation-dark.png" alt="The Animation tab with the clip timeline" width="440">
 </div>
+
+### Exports
+
+| Export | Where | Output |
+| --- | --- | --- |
+| PNG | Export menu on Customise, Design and Animation | 1024 × 1024, transparent |
+| SVG | Export menu | Vector, sharp at any size |
+| Copy image / Copy SVG code | Export menu | PNG or SVG markup on the clipboard |
+| GIF | Export menu on Customise and Design | 512 × 512, 25 fps, 4 s loop of the current emotion, on the studio background or transparent |
+| Timeline GIF | **Export as GIF** on Animation | 512 × 512, 25 fps, every clip in order with the transitions between them |
+| Custom GIF | **Animated GIF** on Design | 2, 4 or 6 s; 240, 360 or 480 px; white, dark or transparent background |
+| Emotion sheet | **Emotion sheet** on Design | One PNG with every emotion's pose, labelled with its name and ID |
+| Design file | **Download design** on Design | A `.mascot.json` file you can import again |
+
+GIFs keep your recolour and eye colour. They are rendered off-screen on a fixed 25 fps clock, so they come out the same however busy the page is, and the live preview keeps running. GIF files are large (about 1.4 MB for a 4-second loop at 512 px). Transparent GIFs only support fully clear or fully solid pixels, so their edges are a little jagged; the background version is the smoother one.
+
 
 ## Quick start
 
@@ -153,6 +207,8 @@ src/engine/mood-mates/         engine for Nubby, Stampy, Pumpkin, Woody, Peaky, 
   solid/                       shared 3D solid renderer (slabs, limbs, inflated outlines)
 src/engine/shared/             code shared by both engines
 src/app/                       Mascot Studio (React): App, components, export, theme
+  designer/                    Design tab: shapes, compiling a design into a character, browser storage
+  mediaExport.ts               off-screen GIF and emotion sheet renderer
 src/styles/app.css             the studio's styles, light and dark tokens
 docs/screenshots/              images used in this README
 ```

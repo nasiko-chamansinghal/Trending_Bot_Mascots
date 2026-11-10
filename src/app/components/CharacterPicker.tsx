@@ -1,4 +1,4 @@
-import { CHARACTERS, DEFAULT_EMOTION } from '../characters';
+import { DEFAULT_EMOTION, listCharacters } from '../characters';
 import { MascotThumb } from './MascotThumb';
 import { Tile } from './Tile';
 
@@ -12,7 +12,7 @@ interface CharacterPickerProps {
 export function CharacterPicker({ character, colors, eyes, onSelect }: CharacterPickerProps) {
   return (
     <div className="tile-grid" role="radiogroup" aria-label="Character">
-      {CHARACTERS.map((c, index) => (
+      {listCharacters().map((c, index) => (
         <Tile
           key={c.id}
           group="character"

@@ -1,9 +1,10 @@
 import { ThemeToggle } from './ThemeToggle';
 
-export type Tab = 'customise' | 'animation';
+export type Tab = 'customise' | 'design' | 'animation';
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'customise', label: 'Customise' },
+  { id: 'design', label: 'Design' },
   { id: 'animation', label: 'Animation' },
 ];
 

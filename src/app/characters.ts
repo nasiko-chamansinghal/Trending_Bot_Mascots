@@ -1,3 +1,5 @@
+import { isCustomId } from './designer/design';
+import { hasDesign } from './designer/store';
 import type { DefLike, EmotionConfigApi, MascotEngine } from './engine-types';
 import { EmotionBall, emotionBallConfig, MoodMates, moodMatesConfigFor } from './kits';
 
@@ -19,17 +21,23 @@ export interface MascotOptions {
 
 export const DEFAULT_EMOTION = '02';
 
-export const CHARACTERS: CharacterInfo[] = [
-  { id: 'ball', name: 'Ball' },
-  ...MoodMates.characters.list().map((c) => ({ id: c.id, name: c.name })),
-];
+/** Built-in characters first, then the custom designs saved in this browser. */
+export function listCharacters(): CharacterInfo[] {
+  return [
+    { id: 'ball', name: 'Ball' },
+    ...MoodMates.characters
+      .list()
+      .filter((c) => !isCustomId(c.id) || hasDesign(c.id))
+      .map((c) => ({ id: c.id, name: c.name })),
+  ];
+}
 
 export function characterName(id: string): string {
-  return CHARACTERS.find((c) => c.id === id)?.name ?? id;
+  return listCharacters().find((c) => c.id === id)?.name ?? id;
 }
 
 export function hasCharacter(id: string): boolean {
-  return CHARACTERS.some((c) => c.id === id);
+  return listCharacters().some((c) => c.id === id);
 }
 
 export function emotionsOf(character: string): DefLike[] {

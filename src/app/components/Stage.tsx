@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createMascot } from '../characters';
 import type { MascotEngine } from '../engine-types';
-import { ExportMenu } from './ExportMenu';
+import { GIF_SECONDS } from '../mediaExport';
+import { type AnimationSource, ExportMenu } from './ExportMenu';
 import { Mascot } from './Mascot';
 
 const IDLE = { standbyAfter: 60000, sleepAfter: 180000 };
@@ -10,10 +11,15 @@ interface StageProps {
   character: string;
   emotion: string;
   emotionName: string;
+  /** Name used for exported files; defaults to the character id. */
+  exportName?: string;
   color: string | null;
   eyes: string | null;
   idle?: boolean;
   exportable?: boolean;
+  /** What the GIF export records; defaults to the current emotion as a short loop. */
+  animation?: AnimationSource;
+  primaryExport?: 'png' | 'gif';
   clickable?: boolean;
   onEmotionChange: (id: string) => void;
 }
@@ -29,10 +35,13 @@ export function Stage({
   character,
   emotion,
   emotionName,
+  exportName,
   color,
   eyes,
   idle = true,
   exportable = true,
+  animation,
+  primaryExport,
   clickable = true,
   onEmotionChange,
 }: StageProps) {
@@ -92,7 +101,15 @@ export function Stage({
         <div className="stage-actions">
           <ExportMenu
             getSvg={() => artRef.current?.querySelector('svg') ?? null}
-            baseName={`mascot-${character}-${slug(emotionName)}`}
+            baseName={`mascot-${slug(exportName ?? character)}-${slug(animation ? 'animation' : emotionName)}`}
+            primary={primaryExport}
+            animation={
+              animation ?? {
+                look: { character, color, eyeColor: eyes },
+                timeline: [{ emotion, ms: GIF_SECONDS * 1000 }],
+                summary: `${GIF_SECONDS} s loop`,
+              }
+            }
           />
         </div>
       ) : null}
