@@ -156,13 +156,39 @@ a {
   border-bottom-color: var(--text);
 }
 
+.appbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  transition:
+    background-color var(--press) var(--ease-out),
+    transform var(--press) var(--ease-out);
+}
+
+.github-link:active {
+  transform: scale(0.96);
+}
+
 .theme-toggle {
   position: relative;
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  margin-left: auto;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
@@ -1255,7 +1281,8 @@ button.tile {
     background: var(--raised-hover);
   }
 
-  .theme-toggle:hover {
+  .theme-toggle:hover,
+  .github-link:hover {
     background: var(--raised);
   }
 
@@ -1275,6 +1302,7 @@ button.tile {
   .export-button:active:not(:disabled),
   .button-quiet:active,
   .theme-toggle:active,
+  .github-link:active,
   .swatch:active .swatch-fill,
   .swatch:hover .swatch-fill {
     transform: none;
@@ -1319,16 +1347,55 @@ button.tile {
   }
 }
 
-@media (max-width: 520px) {
-  .appbar {
-    gap: 16px;
-  }
-
-  .brand-name {
+@media (max-width: 720px) {
+  .github-label {
     display: none;
   }
 
+  .github-link {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-name {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .appbar {
+    gap: 10px;
+  }
+
   .tabs {
-    gap: 18px;
+    gap: 12px;
+  }
+
+  .appbar-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .appbar {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .tabs {
+    gap: 10px;
+  }
+
+  .tab {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand {
+    display: none;
   }
 }
