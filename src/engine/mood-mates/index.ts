@@ -1,6 +1,7 @@
 import { bloom } from './characters/bloom';
 import { ghosty } from './characters/ghosty';
 import { hexo } from './characters/hexo';
+import { ninjo } from './characters/ninjo';
 import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
 import { peak } from './characters/peak';
@@ -24,6 +25,7 @@ characters.register(peak);
 characters.register(ghosty);
 characters.register(bloom);
 characters.register(hexo);
+characters.register(ninjo);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
