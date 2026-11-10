@@ -116,9 +116,10 @@ const SPEC: SolidSpec = {
   body: { ...BODY.body, ribs: 12 },
   plate: {
     ring: plateRing(),
-    top: '#B3DABB',
-    bottom: '#9CCBA7',
-    inverse: { top: '#2F6B55', bottom: '#245844' },
+    top: '#B9DFC1',
+    bottom: '#8DC19B',
+    tint: { top: ['#B9DFC1', 1], bottom: ['#8DC19B', 1] },
+    darkTint: { top: ['#2F6B55', 1], bottom: ['#1F4F3C', 1] },
   },
 };
 
@@ -152,7 +153,7 @@ export const germy = rimCharacter({
   palette: palette(
     '#488B6D',
     '#3A2A12',
-    { dim: '#3C7860', soft: '#5BA088', blush: '#6FA58A', angry: '#5E7A3C', alert: '#4FA38A', off: '#6B7F75' },
+    { dim: '#3C7860', soft: '#4F9577', blush: '#6FA58A', angry: '#5E7A3C', alert: '#4FA38A', off: '#6B7F75' },
     '#A8D3B0',
   ),
   rings: FACE,
