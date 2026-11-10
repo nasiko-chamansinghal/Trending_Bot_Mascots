@@ -12,7 +12,7 @@ const FIT = SCALE / ORIGIN.reach;
 const EYES = { x: 112.1, y: 102.45, half: 32.4, radius: 12.5, tilt: (-10.04 * Math.PI) / 180 };
 const RING_SPOT = { x: 92.5, y: 159.5, outer: 13.7, inner: 9.2 };
 const DOT_SPOT = { x: 159.5, y: 145, radius: 5.6 };
-const MID_SPOT = { x: 126, y: 188, outer: 9.65, inner: 6.5 };
+const MID_SPOT = { x: 134, y: 181, outer: 9.65, inner: 6.5 };
 const SPOT_STEPS = 72;
 const ROUNDNESS = 0.8;
 
