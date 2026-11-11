@@ -10,6 +10,7 @@ import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
 import { peak } from './characters/peak';
 import { pumpkin } from './characters/pumpkin';
+import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
 import { woody } from './characters/woody';
 import { compileDesign, sanitizeDesign } from './design';
@@ -34,6 +35,7 @@ characters.register(jelo);
 characters.register(drip);
 characters.register(flame);
 characters.register(germy);
+characters.register(spiky);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
