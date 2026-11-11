@@ -129,6 +129,12 @@ export const EMOTION_SEED: EmotionRaw[] = [
     desc: 'Glaring eyes under knitted brows; the face flushes within a quarter second and stays, body trembling',
   },
   {
+    id: '22',
+    name: 'Fear',
+    group: 'emotion',
+    desc: 'Eyes stretch into tall ovals as a cold purple wash creeps down from the top, the body shivering with two wavy shiver lines beside it',
+  },
+  {
     id: '30',
     name: 'Thinking',
     group: 'agent',

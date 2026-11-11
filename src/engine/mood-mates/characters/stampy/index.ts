@@ -32,5 +32,5 @@ export const stampy: CharacterRaw = {
   clips: { cornerPeel, cardFlip },
   signatureClips: ['cornerPeel', 'cardFlip'],
   baseAnims: STAMPY_BASE_ANIMS,
-  emotions: { ...STAMPY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS) },
+  emotions: { ...STAMPY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS, [1, 1.12]) },
 };

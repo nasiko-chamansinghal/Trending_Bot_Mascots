@@ -5,7 +5,7 @@ import { solidRestOutline } from '../solid/render';
 import type { BodyTint, SolidSpec } from '../solid/spec';
 import type { AnimSpec, CharacterRaw, Palette } from '../types';
 import { centroid } from '../util';
-import { type EyeSlots, fxEmotions } from './fx-emotions';
+import { type EyeGrow, type EyeSlots, fxEmotions } from './fx-emotions';
 import { grokPairPlacer, normalizeRing } from './grok-rings';
 import { grokEmotions } from './pumpkin/emotions';
 
@@ -218,6 +218,7 @@ export interface RimCharacter {
   spec: SolidSpec;
   palette: Palette;
   rings: Record<string, EyePair>;
+  fear?: EyeGrow;
 }
 
 export function rimCharacter(o: RimCharacter): CharacterRaw {
@@ -240,7 +241,7 @@ export function rimCharacter(o: RimCharacter): CharacterRaw {
     bounceScale: MOTION,
     gazeRange: [24 * MOTION, 15 * MOTION],
     baseAnims: BASE_ANIMS,
-    emotions: { ...grok, '02': { ...grok['02'], pool: ['calm'] }, ...fxEmotions(SLOTS) },
+    emotions: { ...grok, '02': { ...grok['02'], pool: ['calm'] }, ...fxEmotions(SLOTS, o.fear) },
   };
 }
 

@@ -74,8 +74,29 @@ function collapsing({ transition, pool, lift, steps, end }: Collapse): Record<st
   });
 }
 
-export function fxEmotions(s: EyeSlots): Record<string, Record<string, unknown>> {
+export type EyeGrow = [number, number];
+
+const FEAR_GROW: EyeGrow = [1.1, 1.38];
+
+function fearEmotion(calm: string, [growX, growY]: EyeGrow): Record<string, unknown> {
+  return emotion({
+    transition: 500,
+    pool: [calm],
+    blinkMs: [2200, 4500],
+    body: { y: 2, breathe: 0.006, chill: 1, shiver: 1 },
+    eyes: { both: { scaleX: growX, scaleY: growY } },
+    anims: [
+      { target: 'body', prop: 'x', type: 'jitter', amp: 1.2, speed: 13 },
+      { target: 'body', prop: 'y', type: 'jitter', amp: 0.6, speed: 17 },
+      { target: 'eyes', prop: 'lookX', type: 'jitter', amp: 2.5, speed: 6 },
+      { target: 'eyes', prop: 'lookY', type: 'jitter', amp: 1.5, speed: 5 },
+    ],
+  });
+}
+
+export function fxEmotions(s: EyeSlots, grow: EyeGrow = FEAR_GROW): Record<string, Record<string, unknown>> {
   return {
+    '22': fearEmotion(s.calm, grow),
     '60': collapsing({ pool: [s.calm], lift: 0, steps: SLOW_COLLAPSE, end: 480 }),
     '61': collapsing({ transition: 220, pool: [s.wide], lift: -4, steps: QUICK_COLLAPSE, end: 380 }),
     '62': emotion({

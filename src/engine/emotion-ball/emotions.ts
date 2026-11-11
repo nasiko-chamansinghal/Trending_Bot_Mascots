@@ -335,6 +335,23 @@ export const EMOTION_SEED: EmotionRaw[] = [
     },
   },
   {
+    id: '22',
+    name: 'Fear',
+    group: 'emotion',
+    desc: 'Rings stretch into tall ovals as a cold purple wash creeps down from the top, the body shivering with two wavy shiver lines beside it',
+    transition: 500,
+    pool: [0],
+    blinkMs: [2200, 4500],
+    body: { y: 2, breathe: 0.006, chill: 1, shiver: 1 },
+    eyes: { both: { scaleX: 1.1, scaleY: 1.38 } },
+    anims: [
+      { target: 'body', prop: 'x', type: 'jitter', amp: 1.2, speed: 13 },
+      { target: 'body', prop: 'y', type: 'jitter', amp: 0.6, speed: 17 },
+      { target: 'eyes', prop: 'lookX', type: 'jitter', amp: 2.5, speed: 6 },
+      { target: 'eyes', prop: 'lookY', type: 'jitter', amp: 1.5, speed: 5 },
+    ],
+  },
+  {
     id: '30',
     name: 'Thinking',
     group: 'agent',

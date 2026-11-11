@@ -30,7 +30,7 @@ export const nubby: CharacterRaw = {
   extraEmotions: VIDEO_EMOTIONS,
   emotionGroups: VIDEO_GROUPS,
   baseAnims: NUBBY_BASE_ANIMS,
-  emotions: { ...NUBBY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS) },
+  emotions: { ...NUBBY_EMOTIONS, ...fxEmotions(BLOCK_SLOTS, [1.15, 1.65]) },
   clips: { peekabooPop, marbleEyes },
   signatureClips: ['peekabooPop', 'marbleEyes'],
 };
