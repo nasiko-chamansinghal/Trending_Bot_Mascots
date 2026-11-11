@@ -18,24 +18,26 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="170"><br><b>Ball</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="170"><br><b>Nubby</b><br><sub>53 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="170"><br><b>Stampy</b><br><sub>51 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="170"><br><b>Pumpy</b><br><sub>56 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="170"><br><b>Peaky</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="170"><br><b>Ball</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="170"><br><b>Nubby</b><br><sub>54 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="170"><br><b>Stampy</b><br><sub>52 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="170"><br><b>Pumpy</b><br><sub>57 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="170"><br><b>Peaky</b><br><sub>45 emotions</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="170"><br><b>Ghosty</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="170"><br><b>Bloom</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="170"><br><b>Hexo</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/ninjo.png" alt="Ninjo" width="170"><br><b>Ninjo</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="170"><br><b>Jelo</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="170"><br><b>Drip</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="170"><br><b>Ghosty</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="170"><br><b>Bloom</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="170"><br><b>Hexo</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/ninjo.png" alt="Ninjo" width="170"><br><b>Ninjo</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="170"><br><b>Jelo</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="170"><br><b>Drip</b><br><sub>45 emotions</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="170"><br><b>Flame</b><br><sub>44 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="170"><br><b>Germy</b><br><sub>44 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="170"><br><b>Flame</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="170"><br><b>Germy</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/spiky.png" alt="Spiky" width="170"><br><b>Spiky</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/mokey.png" alt="Mokey" width="170"><br><b>Mokey</b><br><sub>45 emotions</sub></td>
   </tr>
 </table>
 
@@ -55,6 +57,8 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Drip | `src/engine/mood-mates` | A pale mint bubble with two small oval eyes and a smooth drip tail, built as a round solid that stays slim from every side |
 | Flame | `src/engine/mood-mates` | A tilted J-curve flame in glowing orange with a bright yellow face area that turns with its eyes, built as a 3D solid whose tip stays pointed from every side |
 | Germy | `src/engine/mood-mates` | A round green germ with a fuzzy ring of 26 tiny spikes traced from the reference, a few dark spots and two big round eyes, built as a 3D solid |
+| Spiky | `src/engine/mood-mates` | A red blob with a spiky crown and little side bumps traced from the reference, with two tall tilted capsule eyes, built as a 3D solid |
+| Mokey | `src/engine/mood-mates` | A red monkey head with round ears that have white centres, a white face with two big dark eyes and a small banana growing out of the top, built as a 3D solid |
 
 The emotion counts are what Mascot Studio shows for each character.
 
@@ -68,7 +72,7 @@ The emotion counts are what Mascot Studio shows for each character.
 
 </div>
 
-Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting shape. Every slider updates the 3D preview live, and your mascot gets all 44 emotions the built-in characters have.
+Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting shape. Every slider updates the 3D preview live, and your mascot gets all 45 emotions the built-in characters have.
 
 1. **Pick a template:** Blob, Squircle, Polygon, Star, Flower, Ghost or Drop.
 2. **Sculpt it** with the controls below.
@@ -101,7 +105,7 @@ Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting sh
 
 **Bring one picture. Get a fully animated 3D mascot.**
 
-Smooth edges, a real gradient, a body that turns in 3D and all 44 emotions, built by Claude from your image alone.
+Smooth edges, a real gradient, a body that turns in 3D and all 45 emotions, built by Claude from your image alone.
 
 </div>
 
@@ -130,7 +134,7 @@ First read src/engine/mood-mates/characters/rim.ts and one finished example: cha
 3. 3D: rimSpec({ ring, unit: 100, depth, puff, sigma, edge, tint, scale, center }). Start from depth 0.6-0.8, puff 2.2-2.4, sigma 30-40, scale 66-80 and center [120,124], so the body fills about 70% of the 240 view.
 4. Gradient: tint { top: [lighter, 0.5], bottom: [deeper, 0.55] }. Same hue family, lighter and warmer on top, deeper and richer at the bottom, like the other characters.
 5. Eyes: rimEyes anchored at the image's eye position, converted into the 240 view (offset from the centroid divided by the max radius, times scale). Start from ghosty's values. Eyes must stay inside the body at every turn angle.
-6. Emotions: rimCharacter gives all 44 emotions (sleep, moods, AI states, effects) for free. Fill palette(...) with state colours in the same hue family (blush pink, angry red, off grey). If I attached an expression sheet, match those eye shapes too.
+6. Emotions: rimCharacter gives all 45 emotions (sleep, moods, AI states, effects) for free. Fill palette(...) with state colours in the same hue family (blush pink, angry red, off grey). If I attached an expression sheet, match those eye shapes too.
 7. Register: add the import and characters.register(...) in src/engine/mood-mates/index.ts. The studio picks it up on its own.
 8. Verify with scratch scripts in /tmp against pnpm dev, and delete them afterwards: a contact sheet of all emotions; the body turned from -70 to 70 degrees; recolouring with the studio swatches (Rose, Sky, Pink, Emerald) and Reset; eyes inside the outline; then pnpm typecheck && pnpm lint && pnpm build && pnpm build:lib. Show me the images and numbers. Do not say done without them.
 
@@ -259,7 +263,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame` or `germy`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame`, `germy`, `spiky` or `mokey`.
 - For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
@@ -270,7 +274,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame and Germy
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame, Germy, Spiky and Mokey
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
   design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
