@@ -161,6 +161,8 @@ const DEFAULT_BODY = {
   breathe: 0.01,
   sketch: 0,
   zzz: 0,
+  chill: 0,
+  shiver: 0,
   scaleX: 1,
   scaleY: 1,
   armL: 0,

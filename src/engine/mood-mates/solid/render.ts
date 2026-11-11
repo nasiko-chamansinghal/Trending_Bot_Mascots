@@ -1,3 +1,4 @@
+import { createShiver, createWash } from '../../shared/fear';
 import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { createFx, type FxHandle } from '../fx';
@@ -275,6 +276,14 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
   }
+  const washPaint = createWash(id, defs);
+  const wash = el('path', {
+    fill: washPaint.fill,
+    stroke: 'none',
+    opacity: '0',
+    'pointer-events': 'none',
+  }) as SVGPathElement;
+  eyeG.appendChild(wash);
   const plateTint = plateLook?.tint ? createTint(`${id}pl`, defs, plateLook.tint, palette.body) : null;
   const plateDarkTint = plateLook?.darkTint
     ? createTint(`${id}pd`, defs, plateLook.darkTint, palette.body)
@@ -334,6 +343,8 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
   }
 
+  const shiver = lite ? null : createShiver(fxBack, solidRestOutline(spec, 360));
+
   container.appendChild(svg);
 
   const fx: FxHandle | null = !lite
@@ -369,6 +380,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const sil = outline(prep.grid, m, 1080).map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
     const bodyD = polyPath(sil);
     body.setAttribute('d', bodyD);
+    wash.setAttribute('d', bodyD);
     clipBody.setAttribute('d', bodyD);
     for (const shade of limbShades) shade.path.setAttribute('d', bodyD);
     lastLimbKey = '';
@@ -607,6 +619,10 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     tonePlate(pose.left.color);
 
     clipBody.setAttribute('transform', bodyTf);
+    wash.setAttribute('transform', bodyTf);
+    const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
+    if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
+    if (b.chill > 0.001) washPaint.tint(b.color);
     setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
     setEye(eyes[1], pose.right, m, sketch, bodyTf, sqx, sqy);
 
@@ -644,6 +660,8 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         );
       }
     }
+
+    shiver?.(b.shiver, now);
 
     if (ribbons) ribbons.update(dt, now, spinYaw, b.aura ? (AURAS[b.aura] ?? null) : (b.orbit || 0) > 0);
     if (fx) fx.update(dt, now, { yaw: 0, dYaw: 0, vel: 0 });

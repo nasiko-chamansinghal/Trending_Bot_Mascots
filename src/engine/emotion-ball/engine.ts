@@ -34,6 +34,8 @@ const DEFAULT_BODY = {
   confetti: 0,
   sketch: 0,
   zzz: 0,
+  chill: 0,
+  shiver: 0,
   orbit: 0,
 };
 const DEFAULT_EYE = {

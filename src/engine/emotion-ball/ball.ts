@@ -1,3 +1,4 @@
+import { createShiver, createWash } from '../shared/fear';
 import { createRibbons } from '../shared/ribbons';
 import { centroid, clamp, el, type Point, type Ring, r2, rand, shade } from '../shared/util';
 import { RINGS } from './rings';
@@ -143,6 +144,15 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     'stroke-width': '2',
   });
   bodyG.appendChild(head);
+  const washPaint = createWash(id, defs);
+  const wash = el('path', {
+    d: ringPath(headRing),
+    fill: washPaint.fill,
+    stroke: 'none',
+    opacity: '0',
+    'pointer-events': 'none',
+  });
+  bodyG.appendChild(wash);
 
   function buildEye(k: number): EyeState {
     const ring0 = (EXPR[0] as [Ring, Ring])[k] as Ring;
@@ -183,6 +193,8 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
       zzzNodes.push(zn);
     }
   }
+
+  const shiver = lite ? null : createShiver(fxBack, headRing);
 
   container.appendChild(svg);
 
@@ -329,6 +341,10 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     setEye(eyeL, pose.left, 0, sketch, yaw);
     setEye(eyeR, pose.right, 1, sketch, yaw);
 
+    const washOpacity = sketch > 0.5 ? '0' : clamp(b.chill, 0, 1).toFixed(3);
+    if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
+    if (b.chill > 0.001) washPaint.tint(b.color);
+
     if (lite) return;
 
     const dt = prevNow ? clamp((now - prevNow) / 1000, 0.001, 0.05) : 1 / 60;
@@ -352,6 +368,8 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
         );
       }
     }
+
+    shiver?.(b.shiver, now);
 
     ribbons.update(dt, now, yaw, (b.orbit || 0) > 0);
 

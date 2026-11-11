@@ -11,6 +11,8 @@ export interface BodyPose {
   breathe: number;
   sketch: number;
   zzz: number;
+  chill: number;
+  shiver: number;
   scaleX: number;
   scaleY: number;
   armL?: number;

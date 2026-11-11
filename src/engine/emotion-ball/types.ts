@@ -13,6 +13,8 @@ export interface BodyPose {
   confetti: number;
   sketch: number;
   zzz: number;
+  chill: number;
+  shiver: number;
   orbit: number;
   yaw?: number;
 }

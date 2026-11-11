@@ -1,3 +1,4 @@
+import { createShiver, createWash } from '../shared/fear';
 import { createRibbons } from '../shared/ribbons';
 import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
@@ -186,6 +187,15 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
 
   const bodyG = el('g', { class: 'mm-body' });
   for (const node of material.body()) bodyG.appendChild(node);
+  const washPaint = createWash(id, defs);
+  const wash = el('path', {
+    d: ringPath(headRing),
+    fill: washPaint.fill,
+    stroke: 'none',
+    opacity: '0',
+    'pointer-events': 'none',
+  });
+  bodyG.appendChild(wash);
 
   function buildEye(k: number): EyeState {
     const ring0 = ch.defaultEyeRing[k] as Ring;
@@ -256,6 +266,8 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
         nextUid: () => uid++,
       })
     : null;
+
+  const shiver = lite ? null : createShiver(fxBack, headRing);
 
   let curSketch = -1;
   let prevYaw = 0;
@@ -522,6 +534,10 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
 
     if (props) props.apply(pose.props, { body: b.color, eye: pose.left.color, sketch: sketchOn });
 
+    const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
+    if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
+    if (b.chill > 0.001) washPaint.tint(b.color);
+
     if (lite) return;
 
     const dt = prevNow ? clamp((now - prevNow) / 1000, 0.001, 0.05) : 1 / 60;
@@ -547,6 +563,8 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
         );
       }
     }
+
+    shiver?.(b.shiver, now);
 
     let dYaw = yaw - prevYaw;
     if (!Number.isFinite(dYaw) || Math.abs(dYaw) > 1.2) dYaw = 0;
