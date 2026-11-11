@@ -193,6 +193,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.appendChild(stemRoot);
   bodyG.appendChild(stemBack);
   bodyG.appendChild(body);
+  const topperFill = createTint(`${id}tp`, defs, spec.tint, palette.body, [prep.restTop, prep.restBottom]);
+  const topper = spec.topper
+    ? (el('path', { fill: palette.body, stroke: 'none', d: polyPath(spec.topper.ring) }) as SVGPathElement)
+    : null;
+  if (topper) bodyG.appendChild(topper);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
   const shading = spec.stemShading;
@@ -265,6 +270,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const plateFill = `url(#${id}plate)`;
   const plateRing = (plateLook?.ring ?? []).map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]);
   let plateKey = '';
+  const marks = (plateLook?.marks ?? []).map((mk) => ({
+    ring: mk.ring.map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]),
+    fill: mk.fill,
+    node: el('path', { fill: mk.fill, stroke: 'none' }) as SVGPathElement,
+  }));
   const plate = plateLook ? el('path', { fill: plateFill, stroke: 'none' }) : null;
   let plateStops: SVGStopElement[] = [];
   if (plate && plateLook) {
@@ -275,6 +285,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     plateStops = Array.from(gradient.children) as SVGStopElement[];
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
+    for (const mk of marks) eyeG.appendChild(mk.node);
   }
   const washPaint = createWash(id, defs);
   const wash = el('path', {
@@ -284,6 +295,17 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     'pointer-events': 'none',
   }) as SVGPathElement;
   eyeG.appendChild(wash);
+  const topperWash = topper
+    ? (el('path', {
+        d: topper.getAttribute('d') ?? '',
+        fill: washPaint.top,
+        'fill-opacity': '0.96',
+        stroke: 'none',
+        opacity: '0',
+        'pointer-events': 'none',
+      }) as SVGPathElement)
+    : null;
+  if (topperWash) bodyG.insertBefore(topperWash, stemFront);
   const plateTint = plateLook?.tint ? createTint(`${id}pl`, defs, plateLook.tint, palette.body) : null;
   const plateDarkTint = plateLook?.darkTint
     ? createTint(`${id}pd`, defs, plateLook.darkTint, palette.body)
@@ -465,15 +487,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const key = `${lastKey}:${Math.round(yaw * 573)}:${Math.round(pitch * 573)}:${Math.round(roll * 573)}`;
     if (key === plateKey) return;
     plateKey = key;
-    const face = projectEye(
-      prep.skin,
-      prep.map,
-      plateRing,
-      follow ? turnFace(m, yaw, pitch, roll) : m,
-      spec.edge,
-    );
-    node.style.display = face ? '' : 'none';
-    if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+    const faceMat = follow ? turnFace(m, yaw, pitch, roll) : m;
+    for (const [decal, ring] of [
+      [node, plateRing] as const,
+      ...marks.map((mk) => [mk.node, mk.ring] as const),
+    ]) {
+      const face = projectEye(prep.skin, prep.map, ring, faceMat, spec.edge);
+      decal.style.display = face ? '' : 'none';
+      if (face) decal.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+    }
   }
 
   function setLimbs(m: Mat3, raise: number[]): void {
@@ -588,6 +610,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
     bodyG.setAttribute('transform', bodyTf);
     plate?.setAttribute('transform', bodyTf);
+    for (const mk of marks) mk.node.setAttribute('transform', bodyTf);
 
     const sketchOn = sketch > 0.5;
     if (sketchOn !== curSketch > 0.5) {
@@ -616,11 +639,19 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
+    for (const mk of marks) mk.node.setAttribute('fill', sketchOn ? 'none' : mk.fill);
     tonePlate(pose.left.color);
 
     clipBody.setAttribute('transform', bodyTf);
     wash.setAttribute('transform', bodyTf);
     const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
+    if (topper && topperWash && spec.topper) {
+      const sway = `translate(${r2(spec.topper.sway * Math.sin((b.turn || 0) + spinYaw))} 0)`;
+      topper.setAttribute('fill', sketchOn ? 'none' : topperFill(b.color));
+      topper.setAttribute('transform', sway);
+      topperWash.setAttribute('transform', sway);
+      topperWash.setAttribute('opacity', washOpacity);
+    }
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
     if (b.chill > 0.001) washPaint.tint(b.color);
     setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
