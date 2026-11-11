@@ -60,6 +60,7 @@ function washColor(base: Hsl & { spread: number }, k: number): string {
 
 export interface Wash {
   fill: string;
+  top: string;
   tint: (base: string) => void;
 }
 
@@ -78,6 +79,7 @@ export function createWash(id: string, defs: SVGElement): Wash {
   let last = '';
   return {
     fill: `url(#${id}fw)`,
+    top: fromHsl(WASH_HSL),
     tint(base) {
       if (base === last) return;
       last = base;
