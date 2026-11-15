@@ -28,6 +28,7 @@ export interface SolidSpec {
   stemShading?: StemShading;
   plate?: PlateSpec;
   topper?: { ring: Ring; sway: number };
+  wrapDecals?: boolean;
   limbs?: LimbSpec[];
   rest: SolidAngles;
   scale: number;

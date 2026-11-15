@@ -492,7 +492,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       [node, plateRing] as const,
       ...marks.map((mk) => [mk.node, mk.ring] as const),
     ]) {
-      const face = projectEye(prep.skin, prep.map, ring, faceMat, spec.edge);
+      const face = projectEye(prep.skin, prep.map, ring, faceMat, spec.edge, !spec.wrapDecals);
       decal.style.display = face ? '' : 'none';
       if (face) decal.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
     }
@@ -561,7 +561,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     sqx: number,
     sqy: number,
   ): void {
-    const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge);
+    const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge, !spec.wrapDecals);
     if (!pts) {
       eye.node.style.display = 'none';
       return;

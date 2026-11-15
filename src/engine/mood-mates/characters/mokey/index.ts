@@ -125,6 +125,7 @@ const SPEC: SolidSpec = {
   ...BODY,
   body: { ...BODY.body, ribs: 12 },
   topper: { ring: topperRing(), sway: TOPPER_SWAY },
+  wrapDecals: true,
   plate: {
     ring: faceRing(),
     top: '#FFFFFF',
