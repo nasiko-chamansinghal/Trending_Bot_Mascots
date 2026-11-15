@@ -21,6 +21,13 @@ export interface PlateSpec {
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 
+export interface EarSpec {
+  center: [number, number, number];
+  radius: number;
+  half: number;
+  inner: { radius: number; fill: string };
+}
+
 export interface SolidSpec {
   body: BodyShape;
   tint?: BodyTint;
@@ -29,6 +36,7 @@ export interface SolidSpec {
   plate?: PlateSpec;
   topper?: { ring: Ring; sway: number };
   wrapDecals?: boolean;
+  ears?: EarSpec[];
   limbs?: LimbSpec[];
   rest: SolidAngles;
   scale: number;
