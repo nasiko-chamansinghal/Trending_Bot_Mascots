@@ -3,7 +3,7 @@ import { RINGS } from '../../emotion-ball/rings';
 import type { EyePair, Point, Ring } from '../geometry';
 import { solidRestOutline } from '../solid/render';
 import type { BodyTint, SolidSpec } from '../solid/spec';
-import type { AnimSpec, CharacterRaw, Palette } from '../types';
+import type { AnimSpec, CharacterRaw, ClipDef, Palette } from '../types';
 import { centroid } from '../util';
 import { type EyeGrow, type EyeSlots, fxEmotions } from './fx-emotions';
 import { grokPairPlacer, normalizeRing } from './grok-rings';
@@ -219,6 +219,7 @@ export interface RimCharacter {
   palette: Palette;
   rings: Record<string, EyePair>;
   fear?: EyeGrow;
+  clips?: Record<string, ClipDef>;
 }
 
 export function rimCharacter(o: RimCharacter): CharacterRaw {
@@ -241,6 +242,8 @@ export function rimCharacter(o: RimCharacter): CharacterRaw {
     bounceScale: MOTION,
     gazeRange: [24 * MOTION, 15 * MOTION],
     baseAnims: BASE_ANIMS,
+    clips: o.clips,
+    signatureClips: Object.keys(o.clips ?? {}),
     emotions: { ...grok, '02': { ...grok['02'], pool: ['calm'] }, ...fxEmotions(SLOTS, o.fear) },
   };
 }

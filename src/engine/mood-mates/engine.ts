@@ -1205,6 +1205,12 @@ export class EmotionEngine {
       eye.scaleX *= f.eyeSx == null ? 1 : f.eyeSx;
       eye.scaleY *= f.eyeSy == null ? 1 : f.eyeSy;
     }
+    if (f.eyeGrow) {
+      pose.left.scaleX *= f.eyeGrow[0];
+      pose.left.scaleY *= f.eyeGrow[0];
+      pose.right.scaleX *= f.eyeGrow[1];
+      pose.right.scaleY *= f.eyeGrow[1];
+    }
     if (f.eyeX || f.eyeY) {
       const hold = 1 - clamp(Math.min(t / 180, (def.duration - t) / 240), 0, 1);
       for (const eye of [pose.left, pose.right]) {
