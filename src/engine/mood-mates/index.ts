@@ -1,9 +1,12 @@
 import { bloom } from './characters/bloom';
+import { dewy } from './characters/dewy';
 import { drip } from './characters/drip';
+import { ember } from './characters/ember';
 import { flame } from './characters/flame';
 import { germy } from './characters/germy';
 import { ghosty } from './characters/ghosty';
 import { hexo } from './characters/hexo';
+import { inky } from './characters/inky';
 import { jelo } from './characters/jelo';
 import { mokey } from './characters/mokey';
 import { ninjo } from './characters/ninjo';
@@ -13,6 +16,7 @@ import { peak } from './characters/peak';
 import { pumpkin } from './characters/pumpkin';
 import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
+import { tufty } from './characters/tufty';
 import { woody } from './characters/woody';
 import { compileDesign, sanitizeDesign } from './design';
 import { characters, config, create, EmotionEngine, version } from './engine';
@@ -38,6 +42,10 @@ characters.register(flame);
 characters.register(germy);
 characters.register(spiky);
 characters.register(mokey);
+characters.register(inky);
+characters.register(dewy);
+characters.register(tufty);
+characters.register(ember);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);

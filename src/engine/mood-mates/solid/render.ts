@@ -7,7 +7,7 @@ import { createProps } from '../props';
 import type { BallHandle, BallOptions } from '../render';
 import { createTint } from '../tint';
 import type { EyePose, Pose } from '../types';
-import { centroid, clamp, el, r2, ringPath } from '../util';
+import { centroid, clamp, shade as darken, el, r2, ringPath } from '../util';
 import { hullReach, projectEar } from './ears';
 import {
   apply,
@@ -27,7 +27,7 @@ import {
   turnFace,
   type Vec2,
 } from './model';
-import type { SolidSpec } from './spec';
+import type { ShadeSpec, SolidSpec } from './spec';
 
 const C = 120;
 const LIMB_KNEE = 0.7;
@@ -38,6 +38,9 @@ const LIMB_FRONT_EDGE = 0.15;
 const LIMB_SHADE_DROP = 2;
 const LIMB_SHADE_OPACITY = '0.3';
 const LIMB_SHADE_BLUR = 4;
+const SHADE_DARK_LUMA = 0.15;
+const SHADE_LIGHTEN = 0.5;
+const SHADE_DEEPEN = 0.55;
 const EAR_WALL_SHADE = '0.14';
 const EAR_CAP_BLEED = '0.6';
 let uid = 0;
@@ -116,6 +119,28 @@ export function solidRestOutline(spec: SolidSpec, count = 120): Point[] {
         spec.center[1] + p[1] * spec.scale * spec.stretch[1],
       ] as Point,
   );
+}
+
+interface ShadeNode {
+  node: SVGPathElement;
+  stops: SVGElement[];
+  spec: ShadeSpec;
+  painted: string;
+}
+
+function shadeColor(spec: ShadeSpec, body: string): string {
+  const [r, g, b] = hexToRgb(body);
+  const dark = clamp(1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255 / SHADE_DARK_LUMA, 0, 1);
+  const derived =
+    spec.tone === 'light' ? lerpColor(body, '#FFFFFF', SHADE_LIGHTEN) : darken(body, -SHADE_DEEPEN);
+  return lerpColor(derived, spec.color, dark);
+}
+
+function paintShade(shade: ShadeNode, body: string): void {
+  const color = shadeColor(shade.spec, body);
+  if (color === shade.painted) return;
+  shade.painted = color;
+  for (const stop of shade.stops) stop.setAttribute('stop-color', color);
 }
 
 function polyPath(pts: Vec2[]): string {
@@ -283,6 +308,46 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   clip.appendChild(clipBody);
   defs.appendChild(clip);
   const eyeG = el('g', { 'clip-path': `url(#${id}clip)` });
+  const shades = (spec.shades ?? []).map((shade, i) => {
+    const gradient = el('linearGradient', {
+      id: `${id}sd${i}`,
+      x1: shade.from[0],
+      y1: shade.from[1],
+      x2: shade.to[0],
+      y2: shade.to[1],
+    });
+    const stops = shade.stops.map(([offset, opacity]) => {
+      const stop = el('stop', { offset, 'stop-color': shade.color, 'stop-opacity': opacity });
+      gradient.appendChild(stop);
+      return stop;
+    });
+    defs.appendChild(gradient);
+    const attrs: Record<string, string | number> = { 'pointer-events': 'none' };
+    if (shade.rim) {
+      const blur = el('filter', {
+        id: `${id}sf${i}`,
+        filterUnits: 'userSpaceOnUse',
+        x: '-60',
+        y: '-60',
+        width: '360',
+        height: '360',
+      });
+      blur.appendChild(el('feGaussianBlur', { stdDeviation: shade.rim.blur }));
+      defs.appendChild(blur);
+      Object.assign(attrs, {
+        fill: 'none',
+        stroke: `url(#${id}sd${i})`,
+        'stroke-width': shade.rim.width,
+        'stroke-linejoin': 'round',
+        filter: `url(#${id}sf${i})`,
+      });
+    } else {
+      Object.assign(attrs, { fill: `url(#${id}sd${i})`, stroke: 'none' });
+    }
+    const node = el('path', attrs) as SVGPathElement;
+    eyeG.appendChild(node);
+    return { node, stops, spec: shade, painted: shade.color };
+  });
   const plateLook = spec.plate;
   const plateFill = `url(#${id}plate)`;
   const plateRing = (plateLook?.ring ?? []).map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]);
@@ -447,6 +512,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const bodyD = polyPath(sil);
     body.setAttribute('d', bodyD);
     wash.setAttribute('d', bodyD);
+    for (const shade of shades) shade.node.setAttribute('d', bodyD);
     clipBody.setAttribute('d', bodyD);
     for (const shade of limbShades) shade.path.setAttribute('d', bodyD);
     lastLimbKey = '';
@@ -717,6 +783,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
 
     clipBody.setAttribute('transform', bodyTf);
     wash.setAttribute('transform', bodyTf);
+    for (const shade of shades) {
+      shade.node.setAttribute('transform', bodyTf);
+      shade.node.style.display = sketchOn ? 'none' : '';
+      paintShade(shade, b.color);
+    }
     const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
     if (topper && topperWash && spec.topper) {
       const angle = (b.turn || 0) + spinYaw;

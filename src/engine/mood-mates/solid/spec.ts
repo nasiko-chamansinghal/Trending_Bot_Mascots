@@ -20,6 +20,15 @@ export interface PlateSpec {
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 
+export interface ShadeSpec {
+  color: string;
+  tone: 'light' | 'deep';
+  from: [number, number];
+  to: [number, number];
+  stops: Array<[number, number]>;
+  rim?: { width: number; blur: number };
+}
+
 export interface EarSpec {
   center: [number, number, number];
   radius: number;
@@ -33,6 +42,7 @@ export interface SolidSpec {
   stem?: StemShape;
   stemShading?: StemShading;
   plate?: PlateSpec;
+  shades?: ShadeSpec[];
   topper?: { ring: Ring; sway: number; thin?: number };
   wrapDecals?: boolean;
   ears?: EarSpec[];

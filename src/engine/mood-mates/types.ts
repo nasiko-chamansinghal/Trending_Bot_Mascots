@@ -97,6 +97,7 @@ export interface ClipFrame {
   sy?: number;
   eyeSx?: number;
   eyeSy?: number;
+  eyeGrow?: [number, number];
   peel?: number;
   flip?: number;
   sink?: number;
