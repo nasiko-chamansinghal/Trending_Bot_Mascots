@@ -38,6 +38,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="170"><br><b>Germy</b><br><sub>45 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/spiky.png" alt="Spiky" width="170"><br><b>Spiky</b><br><sub>45 emotions</sub></td>
     <td align="center"><img src="docs/screenshots/mokey.png" alt="Mokey" width="170"><br><b>Mokey</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/inky.png" alt="Inky" width="170"><br><b>Inky</b><br><sub>45 emotions</sub></td>
   </tr>
 </table>
 
@@ -59,6 +60,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 | Germy | `src/engine/mood-mates` | A round green germ with a fuzzy ring of 26 tiny spikes traced from the reference, a few dark spots and two big round eyes, built as a 3D solid |
 | Spiky | `src/engine/mood-mates` | A red blob with a spiky crown and little side bumps traced from the reference, with two tall tilted capsule eyes, built as a 3D solid |
 | Mokey | `src/engine/mood-mates` | A red monkey head with round ears that have white centres, a white face with two big dark eyes and a small banana growing out of the top, built as a 3D solid |
+| Inky | `src/engine/mood-mates` | A glossy ink-black cat head with two pointed ears, traced from a reference video, with a soft rim light and purple glow that follow its colour, two tall tilted white eyes and a Perk click animation copied from the video, built as a 3D solid |
 
 The emotion counts are what Mascot Studio shows for each character.
 
@@ -263,7 +265,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame`, `germy`, `spiky` or `mokey`.
+- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame`, `germy`, `spiky`, `mokey` or `inky`.
 - For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
 - In React, mount any mascot through `src/app/components/Mascot.tsx`.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
@@ -274,7 +276,7 @@ Build the script-tag bundles with `pnpm build:lib`, then:
 
 ```
 src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame, Germy, Spiky and Mokey
+src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame, Germy, Spiky, Mokey and Inky
   characters/<name>/           one folder per character: shape, eyes, emotions, clips
   characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
   design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
