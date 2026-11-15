@@ -1,5 +1,5 @@
 import type { EyePair, Point, Ring } from '../../geometry';
-import type { SolidSpec } from '../../solid/spec';
+import type { EarSpec, SolidSpec } from '../../solid/spec';
 import { palette, rimCharacter, rimEyes, rimSpec, smoothContour } from '../rim';
 
 type Inside = (x: number, y: number) => boolean;
@@ -16,13 +16,12 @@ const HULL_OFFSET = 0.37;
 const MARCH_STEP = 0.5;
 const MARCH_REACH = 200;
 const BISECT_STEPS = 8;
-const SPOT_STEPS = 72;
 const HEAD = { x: 120, y: 142, rx: 78, ry: 64 };
 const EARS: Point[] = [
   [46, 124],
   [194, 124],
 ];
-const EAR = { radius: 25, inner: 11 };
+const EAR = { radius: 25, inner: 11, z: 30, half: 7, fill: '#F6EFEC' };
 const BANANA = {
   from: [92, 55] as Point,
   bend: [122, 80] as Point,
@@ -52,9 +51,7 @@ const BANANA_BEADS = Array.from({ length: BANANA.steps + 1 }, (_, i) => {
   return { x, y, r: BANANA.ends + BANANA.belly * Math.sin(Math.PI * t) };
 });
 
-const insideBody: Inside = (x, y) =>
-  ((x - HEAD.x) / HEAD.rx) ** 2 + ((y - HEAD.y) / HEAD.ry) ** 2 <= 1 ||
-  EARS.some(([cx, cy]) => inCircle(x, y, cx, cy, EAR.radius));
+const insideHead: Inside = (x, y) => ((x - HEAD.x) / HEAD.rx) ** 2 + ((y - HEAD.y) / HEAD.ry) ** 2 <= 1;
 
 function inNeck(x: number, y: number): boolean {
   if (y < NECK.top || y > NECK.bottom) return false;
@@ -98,39 +95,41 @@ function hull(inside: Inside, origin: Point): Point[] {
   });
 }
 
-function bodyRing(): Ring {
-  return hull(insideBody, ORIGIN).map(([x, y]): Point => [x - ORIGIN[0], -(y - ORIGIN[1])]);
-}
-
-function disc(centre: Point, radius: number, clockwise: boolean): Ring {
-  return Array.from({ length: SPOT_STEPS }, (_, i): Point => {
-    const t = ((clockwise ? i : -i) * 2 * Math.PI) / SPOT_STEPS;
-    return [centre[0] + Math.cos(t) * radius, centre[1] + Math.sin(t) * radius];
-  });
+function headRing(): Ring {
+  return hull(insideHead, ORIGIN).map(([x, y]): Point => [x - ORIGIN[0], -(y - ORIGIN[1])]);
 }
 
 const BODY = rimSpec({
-  ring: bodyRing(),
+  ring: headRing(),
   unit: UNIT,
-  depth: 0.9,
-  puff: 2.4,
-  sigma: 8,
-  edge: 1.5,
+  depth: 0.72,
+  puff: 2.3,
+  sigma: 10,
+  edge: 0,
   tint: { top: ['#FF7A62', 0.45], bottom: ['#9E1408', 0.5] },
   scale: SCALE,
   center: ORIGIN,
 });
+
+const EAR_SPECS = EARS.map(
+  ([x, y]): EarSpec => ({
+    center: [(x - ORIGIN[0]) / SCALE, -(y - ORIGIN[1]) / SCALE, EAR.z / SCALE],
+    radius: EAR.radius / SCALE,
+    half: EAR.half / SCALE,
+    inner: { radius: EAR.inner / SCALE, fill: EAR.fill },
+  }),
+);
 
 const SPEC: SolidSpec = {
   ...BODY,
   body: { ...BODY.body, ribs: 12 },
   topper: { ring: topperRing(), sway: TOPPER_SWAY },
   wrapDecals: true,
+  ears: EAR_SPECS,
   plate: {
     ring: faceRing(),
     top: '#FFFFFF',
     bottom: '#E8DCD7',
-    marks: EARS.map((c) => ({ ring: disc(c, EAR.inner, true), fill: '#F6EFEC' })),
   },
 };
 
