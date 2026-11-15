@@ -573,6 +573,7 @@ function wrapPoints(
   m: Mat3,
   edge: number,
   center: Vec2,
+  peak = false,
 ): Vec2[] | null {
   const n = ring.length;
   let cx = 0;
@@ -602,17 +603,24 @@ function wrapPoints(
     }
     params[i] = refine(s, map.rest, hit, r[0], -r[1]);
   }
-  const at = (q: Vec2): { s: Vec2; v: boolean } => {
+  const at = (q: Vec2): { s: Vec2; v: boolean; f: number } => {
     const p = apply(m, bodyPoint(s, q[0], q[1]));
     const nrm = surface(s, q[0], q[1]).nz;
     const limit = Math.min(edge, apply(map.rest, nrm)[2] - FACING_SLACK);
-    return { s: [p[0], -p[1]], v: apply(m, nrm)[2] > limit };
+    const f = apply(m, nrm)[2];
+    return { s: [p[0], -p[1]], v: f > limit, f };
   };
   const res = params.map(at);
   const visIdx: number[] = [];
   for (let i = 0; i < n; i++) if ((res[i] as { v: boolean }).v) visIdx.push(i);
   if (!visIdx.length) return null;
   const cVis = at(center).v;
+  let facingest = visIdx[0] as number;
+  if (peak) {
+    for (const j of visIdx) {
+      if ((res[j] as { f: number }).f > (res[facingest] as { f: number }).f) facingest = j;
+    }
+  }
   const out: Vec2[] = new Array(n);
   for (let i = 0; i < n; i++) {
     const ri = res[i] as { s: Vec2; v: boolean };
@@ -623,12 +631,16 @@ function wrapPoints(
     let a = center;
     if (!cVis) {
       let best = visIdx[0] as number;
-      let bd = n;
-      for (const j of visIdx) {
-        const d = Math.min(Math.abs(j - i), n - Math.abs(j - i));
-        if (d < bd) {
-          bd = d;
-          best = j;
+      if (peak) {
+        best = facingest;
+      } else {
+        let bd = n;
+        for (const j of visIdx) {
+          const d = Math.min(Math.abs(j - i), n - Math.abs(j - i));
+          if (d < bd) {
+            bd = d;
+            best = j;
+          }
         }
       }
       a = params[best] as Vec2;
@@ -650,7 +662,14 @@ function wrapPoints(
   return out;
 }
 
-export function projectEye(s: BodyShape, map: DecalMap, ring: Vec2[], m: Mat3, edge = 0.06): Vec2[] | null {
+export function projectEye(
+  s: BodyShape,
+  map: DecalMap,
+  ring: Vec2[],
+  m: Mat3,
+  edge = 0.06,
+  sticker = true,
+): Vec2[] | null {
   const n = ring.length;
   let cx = 0;
   let cy = 0;
@@ -663,6 +682,7 @@ export function projectEye(s: BodyShape, map: DecalMap, ring: Vec2[], m: Mat3, e
   const guess = paramAt(map, cx, -cy);
   if (!guess) return null;
   const center = refine(s, map.rest, guess, cx, -cy);
+  if (!sticker) return wrapPoints(s, map, ring, m, edge, center, true);
   const nrm = surface(s, center[0], center[1]).nz;
   const facing = apply(m, nrm)[2];
   if (facing <= HIDE_FACING) return null;
