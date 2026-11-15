@@ -8,6 +8,7 @@ import type { BallHandle, BallOptions } from '../render';
 import { createTint } from '../tint';
 import type { EyePose, Pose } from '../types';
 import { centroid, clamp, shade as darken, el, r2, ringPath } from '../util';
+import { hullReach, projectEar } from './ears';
 import {
   apply,
   type BodyShape,
@@ -40,6 +41,8 @@ const LIMB_SHADE_BLUR = 4;
 const SHADE_DARK_LUMA = 0.15;
 const SHADE_LIGHTEN = 0.5;
 const SHADE_DEEPEN = 0.55;
+const EAR_WALL_SHADE = '0.14';
+const EAR_CAP_BLEED = '0.6';
 let uid = 0;
 
 function radiusAt(table: Float64Array, angle: number): number {
@@ -96,8 +99,19 @@ function prepare(spec: SolidSpec): Prepared {
   return out;
 }
 
+function withEars(spec: SolidSpec, rest: Mat3, sil: Vec2[]): Vec2[] {
+  if (!spec.ears?.length) return sil;
+  const hulls = spec.ears.map((ear) => projectEar(ear, rest).hull);
+  return sil.map(([x, y]): Vec2 => {
+    const angle = Math.atan2(y, x);
+    const r = Math.max(Math.hypot(x, y), ...hulls.map((hull) => hullReach(hull, angle)));
+    return [r * Math.cos(angle), r * Math.sin(angle)];
+  });
+}
+
 export function solidRestOutline(spec: SolidSpec, count = 120): Point[] {
-  const sil = outline(prepare(spec).grid, rotation(spec.rest), count);
+  const rest = rotation(spec.rest);
+  const sil = withEars(spec, rest, outline(prepare(spec).grid, rest, count));
   return sil.map(
     (p) =>
       [
@@ -222,6 +236,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const topper = spec.topper
     ? (el('path', { fill: palette.body, stroke: 'none', d: polyPath(spec.topper.ring) }) as SVGPathElement)
     : null;
+  const topperAnchor = spec.topper
+    ? (Math.min(...spec.topper.ring.map((p) => p[0])) + Math.max(...spec.topper.ring.map((p) => p[0]))) / 2
+    : 0;
   if (topper) bodyG.appendChild(topper);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
@@ -335,11 +352,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const plateFill = `url(#${id}plate)`;
   const plateRing = (plateLook?.ring ?? []).map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]);
   let plateKey = '';
-  const marks = (plateLook?.marks ?? []).map((mk) => ({
-    ring: mk.ring.map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]),
-    fill: mk.fill,
-    node: el('path', { fill: mk.fill, stroke: 'none' }) as SVGPathElement,
-  }));
   const plate = plateLook ? el('path', { fill: plateFill, stroke: 'none' }) : null;
   let plateStops: SVGStopElement[] = [];
   if (plate && plateLook) {
@@ -350,7 +362,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     plateStops = Array.from(gradient.children) as SVGStopElement[];
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
-    for (const mk of marks) eyeG.appendChild(mk.node);
   }
   const washPaint = createWash(id, defs);
   const wash = el('path', {
@@ -402,6 +413,39 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     return { node, lastD: '' };
   }) as [EyeNode, EyeNode];
   svg.appendChild(eyeG);
+
+  const earFill = createTint(`${id}ea`, defs, spec.tint, palette.body, [prep.restTop, prep.restBottom]);
+  const earsBack = el('g', {}) as SVGGElement;
+  const earsUnder = el('g', {}) as SVGGElement;
+  const earsOver = el('g', {}) as SVGGElement;
+  bodyG.insertBefore(earsBack, body);
+  svg.insertBefore(earsUnder, eyeG);
+  svg.appendChild(earsOver);
+  const ears = (spec.ears ?? []).map((ear) => {
+    const shell = el('g', {}) as SVGGElement;
+    const wall = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
+    const shadow = el('path', {
+      fill: '#000000',
+      'fill-opacity': EAR_WALL_SHADE,
+      stroke: 'none',
+      'pointer-events': 'none',
+    }) as SVGPathElement;
+    const cap = el('path', {
+      fill: palette.body,
+      stroke: 'none',
+      'stroke-width': EAR_CAP_BLEED,
+    }) as SVGPathElement;
+    const earWash = el('path', {
+      fill: washPaint.top,
+      'fill-opacity': '0.96',
+      stroke: 'none',
+      opacity: '0',
+      'pointer-events': 'none',
+    }) as SVGPathElement;
+    for (const node of [wall, shadow, cap, earWash]) shell.appendChild(node);
+    const disc = el('path', { fill: ear.inner.fill, stroke: 'none' }) as SVGPathElement;
+    return { ear, shell, wall, shadow, cap, earWash, disc, front: null as boolean | null };
+  });
 
   const propsLayer = ch.props.length ? el('g', { 'pointer-events': 'none' }) : null;
   const props = propsLayer ? createProps(ch.props, propsLayer) : null;
@@ -554,13 +598,32 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     if (key === plateKey) return;
     plateKey = key;
     const faceMat = follow ? turnFace(m, yaw, pitch, roll) : m;
-    for (const [decal, ring] of [
-      [node, plateRing] as const,
-      ...marks.map((mk) => [mk.node, mk.ring] as const),
-    ]) {
-      const face = projectEye(prep.skin, prep.map, ring, faceMat, spec.edge);
-      decal.style.display = face ? '' : 'none';
-      if (face) decal.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+    const face = projectEye(prep.skin, prep.map, plateRing, faceMat, spec.edge, !spec.wrapDecals);
+    node.style.display = face ? '' : 'none';
+    if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+  }
+
+  let earKey = '';
+
+  function setEars(m: Mat3): void {
+    if (!ears.length || earKey === lastKey) return;
+    earKey = lastKey;
+    const toScreen = (p: Vec2): Vec2 => [CX + p[0] * KX, CY + p[1] * KY];
+    for (const e of ears) {
+      const view = projectEar(e.ear, m);
+      const front = view.depth > 0;
+      if (front !== e.front) {
+        (front ? earsUnder : earsBack).appendChild(e.shell);
+        (front ? earsOver : earsBack).appendChild(e.disc);
+        e.front = front;
+      }
+      const d = polyPath(view.hull.map(toScreen));
+      e.wall.setAttribute('d', d);
+      e.shadow.setAttribute('d', d);
+      e.earWash.setAttribute('d', d);
+      e.cap.setAttribute('d', polyPath(view.cap.map(toScreen)));
+      e.disc.style.display = view.inner ? '' : 'none';
+      if (view.inner) e.disc.setAttribute('d', polyPath(view.inner.map(toScreen)));
     }
   }
 
@@ -627,7 +690,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     sqx: number,
     sqy: number,
   ): void {
-    const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge);
+    const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge, !spec.wrapDecals);
     if (!pts) {
       eye.node.style.display = 'none';
       return;
@@ -671,12 +734,14 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
     if (limbs.length) setLimbs(m, [b.armL ?? 0, b.armR ?? 0]);
     if (plate) setPlate(plate, m, pose);
+    setEars(m);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
     bodyG.setAttribute('transform', bodyTf);
     plate?.setAttribute('transform', bodyTf);
-    for (const mk of marks) mk.node.setAttribute('transform', bodyTf);
+    earsUnder.setAttribute('transform', bodyTf);
+    earsOver.setAttribute('transform', bodyTf);
 
     const sketchOn = sketch > 0.5;
     if (sketchOn !== curSketch > 0.5) {
@@ -691,6 +756,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         ...limbs,
         ...(ball ? [ball] : []),
         ...(plate ? [plate] : []),
+        ...ears.map((e) => e.wall),
       ]) {
         node.style.stroke = sketchOn ? `var(--sketch-ink, ${b.color})` : '';
         node.style.strokeWidth = sketchOn ? '1.6' : '';
@@ -705,7 +771,14 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
-    for (const mk of marks) mk.node.setAttribute('fill', sketchOn ? 'none' : mk.fill);
+    for (const e of ears) {
+      const paint = sketchOn ? 'none' : earFill(b.color);
+      e.wall.setAttribute('fill', paint);
+      e.cap.setAttribute('fill', paint);
+      e.cap.setAttribute('stroke', paint);
+      e.shadow.style.display = sketchOn ? 'none' : '';
+      e.disc.setAttribute('fill', sketchOn ? 'none' : e.ear.inner.fill);
+    }
     tonePlate(pose.left.color);
 
     clipBody.setAttribute('transform', bodyTf);
@@ -717,12 +790,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
     const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
     if (topper && topperWash && spec.topper) {
-      const sway = `translate(${r2(spec.topper.sway * Math.sin((b.turn || 0) + spinYaw))} 0)`;
+      const angle = (b.turn || 0) + spinYaw;
+      const squeeze = Math.hypot(Math.cos(angle), (spec.topper.thin ?? 1) * Math.sin(angle));
+      const sway = `translate(${r2(topperAnchor + spec.topper.sway * Math.sin(angle))} 0) scale(${squeeze.toFixed(3)} 1) translate(${-topperAnchor} 0)`;
       topper.setAttribute('fill', sketchOn ? 'none' : topperFill(b.color));
       topper.setAttribute('transform', sway);
       topperWash.setAttribute('transform', sway);
       topperWash.setAttribute('opacity', washOpacity);
     }
+    for (const e of ears) e.earWash.setAttribute('opacity', washOpacity);
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
     if (b.chill > 0.001) washPaint.tint(b.color);
     setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
