@@ -4,6 +4,7 @@ import { flame } from './characters/flame';
 import { germy } from './characters/germy';
 import { ghosty } from './characters/ghosty';
 import { hexo } from './characters/hexo';
+import { inky } from './characters/inky';
 import { jelo } from './characters/jelo';
 import { mokey } from './characters/mokey';
 import { ninjo } from './characters/ninjo';
@@ -38,6 +39,7 @@ characters.register(flame);
 characters.register(germy);
 characters.register(spiky);
 characters.register(mokey);
+characters.register(inky);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
