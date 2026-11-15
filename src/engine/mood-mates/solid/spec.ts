@@ -34,7 +34,7 @@ export interface SolidSpec {
   stem?: StemShape;
   stemShading?: StemShading;
   plate?: PlateSpec;
-  topper?: { ring: Ring; sway: number };
+  topper?: { ring: Ring; sway: number; thin?: number };
   wrapDecals?: boolean;
   ears?: EarSpec[];
   limbs?: LimbSpec[];

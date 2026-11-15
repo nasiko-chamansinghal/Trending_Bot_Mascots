@@ -211,6 +211,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const topper = spec.topper
     ? (el('path', { fill: palette.body, stroke: 'none', d: polyPath(spec.topper.ring) }) as SVGPathElement)
     : null;
+  const topperAnchor = spec.topper
+    ? (Math.min(...spec.topper.ring.map((p) => p[0])) + Math.max(...spec.topper.ring.map((p) => p[0]))) / 2
+    : 0;
   if (topper) bodyG.appendChild(topper);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
@@ -729,7 +732,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     wash.setAttribute('transform', bodyTf);
     const washOpacity = sketchOn ? '0' : clamp(b.chill, 0, 1).toFixed(3);
     if (topper && topperWash && spec.topper) {
-      const sway = `translate(${r2(spec.topper.sway * Math.sin((b.turn || 0) + spinYaw))} 0)`;
+      const angle = (b.turn || 0) + spinYaw;
+      const squeeze = Math.hypot(Math.cos(angle), (spec.topper.thin ?? 1) * Math.sin(angle));
+      const sway = `translate(${r2(topperAnchor + spec.topper.sway * Math.sin(angle))} 0) scale(${squeeze.toFixed(3)} 1) translate(${-topperAnchor} 0)`;
       topper.setAttribute('fill', sketchOn ? 'none' : topperFill(b.color));
       topper.setAttribute('transform', sway);
       topperWash.setAttribute('transform', sway);

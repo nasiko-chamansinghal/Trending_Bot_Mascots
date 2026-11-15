@@ -11,6 +11,7 @@ const TOPPER_ORIGIN: Point = [122, 67];
 const TOPPER_SMOOTH = 4;
 const NECK = { x: 122, top: 66, bottom: 90, narrow: 9, wide: 32 };
 const TOPPER_SWAY = 10;
+const TOPPER_THIN = 0.3;
 const HULL_POINTS = 1440;
 const HULL_OFFSET = 0.37;
 const MARCH_STEP = 0.5;
@@ -123,7 +124,7 @@ const EAR_SPECS = EARS.map(
 const SPEC: SolidSpec = {
   ...BODY,
   body: { ...BODY.body, ribs: 12 },
-  topper: { ring: topperRing(), sway: TOPPER_SWAY },
+  topper: { ring: topperRing(), sway: TOPPER_SWAY, thin: TOPPER_THIN },
   wrapDecals: true,
   ears: EAR_SPECS,
   plate: {
