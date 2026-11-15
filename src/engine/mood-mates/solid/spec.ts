@@ -17,8 +17,14 @@ export interface PlateSpec {
   inverse?: { top: string; bottom: string };
   tint?: BodyTint;
   darkTint?: BodyTint;
-  marks?: Array<{ ring: Ring; fill: string }>;
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
+}
+
+export interface EarSpec {
+  center: [number, number, number];
+  radius: number;
+  half: number;
+  inner: { radius: number; fill: string };
 }
 
 export interface SolidSpec {
@@ -27,7 +33,9 @@ export interface SolidSpec {
   stem?: StemShape;
   stemShading?: StemShading;
   plate?: PlateSpec;
-  topper?: { ring: Ring; sway: number };
+  topper?: { ring: Ring; sway: number; thin?: number };
+  wrapDecals?: boolean;
+  ears?: EarSpec[];
   limbs?: LimbSpec[];
   rest: SolidAngles;
   scale: number;
