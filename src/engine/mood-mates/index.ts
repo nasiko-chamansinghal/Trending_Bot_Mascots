@@ -1,6 +1,7 @@
 import { bloom } from './characters/bloom';
 import { dewy } from './characters/dewy';
 import { drip } from './characters/drip';
+import { ember } from './characters/ember';
 import { flame } from './characters/flame';
 import { germy } from './characters/germy';
 import { ghosty } from './characters/ghosty';
@@ -44,6 +45,7 @@ characters.register(mokey);
 characters.register(inky);
 characters.register(dewy);
 characters.register(tufty);
+characters.register(ember);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
