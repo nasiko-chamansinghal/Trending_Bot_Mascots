@@ -287,11 +287,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   const plateFill = `url(#${id}plate)`;
   const plateRing = (plateLook?.ring ?? []).map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]);
   let plateKey = '';
-  const marks = (plateLook?.marks ?? []).map((mk) => ({
-    ring: mk.ring.map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]),
-    fill: mk.fill,
-    node: el('path', { fill: mk.fill, stroke: 'none' }) as SVGPathElement,
-  }));
   const plate = plateLook ? el('path', { fill: plateFill, stroke: 'none' }) : null;
   let plateStops: SVGStopElement[] = [];
   if (plate && plateLook) {
@@ -302,7 +297,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     plateStops = Array.from(gradient.children) as SVGStopElement[];
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
-    for (const mk of marks) eyeG.appendChild(mk.node);
   }
   const washPaint = createWash(id, defs);
   const wash = el('path', {
@@ -538,14 +532,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     if (key === plateKey) return;
     plateKey = key;
     const faceMat = follow ? turnFace(m, yaw, pitch, roll) : m;
-    for (const [decal, ring] of [
-      [node, plateRing] as const,
-      ...marks.map((mk) => [mk.node, mk.ring] as const),
-    ]) {
-      const face = projectEye(prep.skin, prep.map, ring, faceMat, spec.edge, !spec.wrapDecals);
-      decal.style.display = face ? '' : 'none';
-      if (face) decal.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
-    }
+    const face = projectEye(prep.skin, prep.map, plateRing, faceMat, spec.edge, !spec.wrapDecals);
+    node.style.display = face ? '' : 'none';
+    if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
   }
 
   let earKey = '';
@@ -685,7 +674,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
     bodyG.setAttribute('transform', bodyTf);
     plate?.setAttribute('transform', bodyTf);
-    for (const mk of marks) mk.node.setAttribute('transform', bodyTf);
     earsUnder.setAttribute('transform', bodyTf);
     earsOver.setAttribute('transform', bodyTf);
 
@@ -717,7 +705,6 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
-    for (const mk of marks) mk.node.setAttribute('fill', sketchOn ? 'none' : mk.fill);
     for (const e of ears) {
       const paint = sketchOn ? 'none' : earFill(b.color);
       e.wall.setAttribute('fill', paint);
