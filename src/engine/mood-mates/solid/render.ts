@@ -41,6 +41,7 @@ const LIMB_SHADE_BLUR = 4;
 const SHADE_DARK_LUMA = 0.15;
 const SHADE_LIGHTEN = 0.5;
 const SHADE_DEEPEN = 0.55;
+const TOPPER_EDGE = 1.4;
 const EAR_WALL_SHADE = '0.14';
 const EAR_CAP_BLEED = '0.6';
 let uid = 0;
@@ -129,6 +130,7 @@ interface ShadeNode {
 }
 
 function shadeColor(spec: ShadeSpec, body: string): string {
+  if (spec.tone === 'fixed') return spec.color;
   const [r, g, b] = hexToRgb(body);
   const dark = clamp(1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255 / SHADE_DARK_LUMA, 0, 1);
   const derived =
@@ -234,12 +236,26 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.appendChild(body);
   const topperFill = createTint(`${id}tp`, defs, spec.tint, palette.body, [prep.restTop, prep.restBottom]);
   const topper = spec.topper
-    ? (el('path', { fill: palette.body, stroke: 'none', d: polyPath(spec.topper.ring) }) as SVGPathElement)
+    ? (el('path', {
+        fill: palette.body,
+        stroke: spec.topper.edge ?? 'none',
+        'stroke-width': TOPPER_EDGE,
+        'stroke-linejoin': 'round',
+        d: polyPath(spec.topper.ring),
+      }) as SVGPathElement)
     : null;
   const topperAnchor = spec.topper
     ? (Math.min(...spec.topper.ring.map((p) => p[0])) + Math.max(...spec.topper.ring.map((p) => p[0]))) / 2
     : 0;
   if (topper) bodyG.appendChild(topper);
+  const topperAccent = spec.topper?.accent
+    ? (el('path', {
+        fill: spec.topper.accent.fill,
+        stroke: 'none',
+        d: polyPath(spec.topper.accent.ring),
+      }) as SVGPathElement)
+    : null;
+  if (topperAccent) bodyG.appendChild(topperAccent);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
   const shading = spec.stemShading;
@@ -793,8 +809,12 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       const angle = (b.turn || 0) + spinYaw;
       const squeeze = Math.hypot(Math.cos(angle), (spec.topper.thin ?? 1) * Math.sin(angle));
       const sway = `translate(${r2(topperAnchor + spec.topper.sway * Math.sin(angle))} 0) scale(${squeeze.toFixed(3)} 1) translate(${-topperAnchor} 0)`;
-      topper.setAttribute('fill', sketchOn ? 'none' : topperFill(b.color));
+      topper.setAttribute('fill', sketchOn ? 'none' : (spec.topper.fill ?? topperFill(b.color)));
       topper.setAttribute('transform', sway);
+      if (topperAccent && spec.topper.accent) {
+        topperAccent.setAttribute('fill', sketchOn ? 'none' : spec.topper.accent.fill);
+        topperAccent.setAttribute('transform', sway);
+      }
       topperWash.setAttribute('transform', sway);
       topperWash.setAttribute('opacity', washOpacity);
     }

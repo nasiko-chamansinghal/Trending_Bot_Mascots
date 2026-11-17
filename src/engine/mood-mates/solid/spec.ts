@@ -22,7 +22,7 @@ export interface PlateSpec {
 
 export interface ShadeSpec {
   color: string;
-  tone: 'light' | 'deep';
+  tone: 'light' | 'deep' | 'fixed';
   from: [number, number];
   to: [number, number];
   stops: Array<[number, number]>;
@@ -43,7 +43,14 @@ export interface SolidSpec {
   stemShading?: StemShading;
   plate?: PlateSpec;
   shades?: ShadeSpec[];
-  topper?: { ring: Ring; sway: number; thin?: number };
+  topper?: {
+    ring: Ring;
+    sway: number;
+    thin?: number;
+    fill?: string;
+    edge?: string;
+    accent?: { ring: Ring; fill: string };
+  };
   wrapDecals?: boolean;
   ears?: EarSpec[];
   limbs?: LimbSpec[];
