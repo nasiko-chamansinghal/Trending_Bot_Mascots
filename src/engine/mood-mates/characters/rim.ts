@@ -1,6 +1,7 @@
 import { EMOTION_SEED } from '../../emotion-ball/emotions';
 import { RINGS } from '../../emotion-ball/rings';
 import type { EyePair, Point, Ring } from '../geometry';
+import { type HeadFollow, headFollowFor } from '../headfollow';
 import { solidRestOutline } from '../solid/render';
 import type { BodyTint, SolidSpec } from '../solid/spec';
 import type { AnimSpec, CharacterRaw, ClipDef, Palette } from '../types';
@@ -220,6 +221,7 @@ export interface RimCharacter {
   rings: Record<string, EyePair>;
   fear?: EyeGrow;
   clips?: Record<string, ClipDef>;
+  headFollow?: HeadFollow;
 }
 
 export function rimCharacter(o: RimCharacter): CharacterRaw {
@@ -241,6 +243,7 @@ export function rimCharacter(o: RimCharacter): CharacterRaw {
     poseDefaults: { body: { turn: 0, pitch: 0 } },
     bounceScale: MOTION,
     gazeRange: [24 * MOTION, 15 * MOTION],
+    headFollow: o.headFollow ?? headFollowFor(o.spec.scale),
     baseAnims: BASE_ANIMS,
     clips: o.clips,
     signatureClips: Object.keys(o.clips ?? {}),

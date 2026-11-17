@@ -1,3 +1,4 @@
+import { headFollowFor } from '../../headfollow';
 import { solidRestOutline } from '../../solid/render';
 import type { CharacterRaw } from '../../types';
 import { fxEmotions, PUMPKIN_SLOTS } from '../fx-emotions';
@@ -26,6 +27,7 @@ export const pumpkin: CharacterRaw = {
   poseDefaults: { body: { turn: 0, pitch: 0 } },
   bounceScale: GROK_MOTION,
   gazeRange: [24 * GROK_MOTION, 15 * GROK_MOTION],
+  headFollow: headFollowFor(PUMPKIN_SPEC.scale),
   emotions: { ...PUMPKIN_GROK_EMOTIONS, ...fxEmotions(PUMPKIN_SLOTS) },
   extraEmotions: [...PUMPKIN_SHOW, ...PUMPKIN_HAPPY],
   emotionGroups: PUMPKIN_GROUPS,
