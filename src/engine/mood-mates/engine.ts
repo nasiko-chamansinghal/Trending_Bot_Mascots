@@ -17,6 +17,7 @@ import { clamp, rand } from '../shared/util';
 import { EMOTION_GROUPS, EMOTION_SEED } from './data/emotions';
 import type { EyePair, Ring } from './geometry';
 import * as GEO from './geometry';
+import { applyHeadFollow, restCentres } from './headfollow';
 import { getMaterial } from './materials';
 import { type BallHandle, createBall } from './render';
 import type {
@@ -75,6 +76,7 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
     blink: raw.blink,
     backFace: raw.backFace || null,
     gazeRange: raw.gazeRange || [24, 15],
+    headFollow: raw.headFollow || null,
     emotions: raw.emotions || null,
     solid: raw.solid || null,
     blinkStyle: raw.blinkStyle || 'ring',
@@ -533,6 +535,7 @@ export interface IdleConfig {
 }
 
 const THEME_FADE_MS = 360;
+const FOLLOW_EASE = 0.12;
 
 export interface EngineOptions {
   character?: string;
@@ -612,6 +615,8 @@ export class EmotionEngine {
   private lastPose: Pose | null = null;
   private prevPose: Pose | null = null;
   private inertia = new Inertia();
+  private restEyes: ReturnType<typeof restCentres>;
+  private followMix = 1;
   private themeFade: { at: number; body: string; eyes: string } | null = null;
   private transStart = 0;
   private transDur = 0;
@@ -637,6 +642,7 @@ export class EmotionEngine {
     const ch = characters.get(chId);
     if (!ch) throw new Error('MoodMates.create: no character registered (register a character first)');
     this.character = ch;
+    this.restEyes = restCentres(ch.defaultEyeRing);
 
     this.ball = createBall(el, {
       ...opts,
@@ -1168,6 +1174,12 @@ export class EmotionEngine {
     pose.left.scaleY = Math.max(pose.left.scaleY, 0.05);
     pose.right.scaleX = Math.max(pose.right.scaleX, 0.05);
     pose.right.scaleY = Math.max(pose.right.scaleY, 0.05);
+
+    const follow = this.character.headFollow;
+    if (follow) {
+      this.followMix += ((this.clip ? 0 : 1) - this.followMix) * (1 - Math.exp(-dt / FOLLOW_EASE));
+      applyHeadFollow(pose, this.restEyes, follow, this.followMix);
+    }
 
     const tt = now - this.transStart;
     if (this.transDur > 0 && tt < this.transDur && this.prevPose) {

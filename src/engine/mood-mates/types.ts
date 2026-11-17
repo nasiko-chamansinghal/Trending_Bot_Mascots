@@ -1,4 +1,5 @@
 import type { BodyDescriptor, CutParams, EyePair, Ring } from './geometry';
+import type { HeadFollow } from './headfollow';
 import type { SolidSpec } from './solid/spec';
 import type { BodyTint } from './tint';
 
@@ -161,6 +162,7 @@ export interface CharacterRaw {
   blink: BlinkStep[];
   backFace?: BackFace;
   gazeRange?: [number, number];
+  headFollow?: HeadFollow;
   emotions?: Record<string, Record<string, unknown>> | null;
   _resolved?: ResolvedCharacter;
 }
@@ -186,6 +188,7 @@ export interface ResolvedCharacter {
   blink: BlinkStep[];
   backFace: BackFace | null;
   gazeRange: [number, number];
+  headFollow: HeadFollow | null;
   emotions: Record<string, Record<string, unknown>> | null;
   solid: SolidSpec | null;
   blinkStyle: 'ring' | 'open';
