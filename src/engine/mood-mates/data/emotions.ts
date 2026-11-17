@@ -39,12 +39,6 @@ export const EMOTION_SEED: EmotionRaw[] = [
     desc: 'Half-closed eyes rotate slowly, each wandering its own way, mouth a tiny dot; a bounce now and then',
   },
   {
-    id: '05',
-    name: 'Booting',
-    group: 'life',
-    desc: 'Eyes light up in slow alternation, like a system initializing step by step',
-  },
-  {
     id: '06',
     name: 'Dormant',
     group: 'life',

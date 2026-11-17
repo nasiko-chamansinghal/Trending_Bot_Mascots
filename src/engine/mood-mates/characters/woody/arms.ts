@@ -45,7 +45,6 @@ const PLANS: Record<string, ArmPlan> = {
   '02': { rest: [0, 0], l: pulse(8, 5600), r: pulse(11, 5200, 1.9) },
   '03': { rest: [-6, 24], r: sine(4, 2400) },
   '04': { rest: [-22, -20], l: sine(5, 5200), r: sine(5, 5200, 2) },
-  '05': { rest: [4, 4], l: sine(9, 800), r: sine(9, 800, OPPOSITE) },
   '06': { rest: [-50, -46] },
   '07': {
     rest: [0, 0],

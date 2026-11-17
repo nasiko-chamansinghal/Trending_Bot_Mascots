@@ -73,16 +73,6 @@ export const NUBBY_EMOTIONS: Record<string, Record<string, unknown>> = {
     eyes: { left: { lookX: -2 }, right: { lookX: 2 } },
     anims: [look('lookX', 'sine', 3, 6800)],
   }),
-  '05': emo({
-    desc: 'Eyes switch on one after the other with a little bounce, like blocks lighting up in order',
-    pool: ['calm'],
-    blinkMs: null,
-    anims: [
-      { target: 'left', prop: 'open', type: 'blink', interval: 1600, dur: 700 },
-      { target: 'right', prop: 'open', type: 'blink', interval: 1600, dur: 700, phaseMs: 800 },
-      { target: 'body', prop: 'scaleY', type: 'pulse', amp: 0.02, period: 800 },
-    ],
-  }),
   '06': emo({
     desc: 'Half-shut domes, colour dimmed, slumped low and barely breathing',
     pool: ['sleepy2'],
