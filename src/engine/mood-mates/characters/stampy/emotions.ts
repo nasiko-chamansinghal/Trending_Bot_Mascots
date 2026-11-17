@@ -74,16 +74,6 @@ export const STAMPY_EMOTIONS: Record<string, Record<string, unknown>> = {
     eyes: { left: { lookX: -2 }, right: { lookX: 2 } },
     anims: [look('lookX', 'sine', 2, 6800)],
   }),
-  '05': emo({
-    desc: 'Eyes switch on one after the other, like a system starting up step by step',
-    pool: ['calm'],
-    blinkMs: null,
-    anims: [
-      { target: 'left', prop: 'open', type: 'blink', interval: 1600, dur: 700 },
-      { target: 'right', prop: 'open', type: 'blink', interval: 1600, dur: 700, phaseMs: 800 },
-      { target: 'eyes', prop: 'scale', type: 'pulse', amp: 0.04, period: 1600 },
-    ],
-  }),
   '06': emo({
     desc: 'Lids nearly shut, colour dimmed, barely breathing',
     pool: ['sleepy'],

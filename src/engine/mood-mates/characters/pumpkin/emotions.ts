@@ -28,7 +28,6 @@ const BODY_COLORS: Record<string, string> = {
 const SCALED = new Set(['x', 'y', 'lookX', 'lookY']);
 
 const AURA: Record<string, string> = {
-  '05': 'swirl',
   '10': 'rainbow',
   '19': 'halo',
   '31': 'waves',

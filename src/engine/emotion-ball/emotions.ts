@@ -87,21 +87,6 @@ export const EMOTION_SEED: EmotionRaw[] = [
     anims: [{ target: 'eyes', prop: 'lookX', type: 'sine', amp: 3, period: 6800 }],
   },
   {
-    id: '05',
-    name: 'Booting',
-    group: 'life',
-    desc: 'Eyes light up in slow alternation, like a system initializing step by step',
-    transition: 480,
-    pool: [0, 8],
-    poolMs: [6000, 10000],
-    blinkMs: null,
-    anims: [
-      { target: 'left', prop: 'open', type: 'blink', interval: 1600, dur: 700 },
-      { target: 'right', prop: 'open', type: 'blink', interval: 1600, dur: 700, phaseMs: 800 },
-      { target: 'eyes', prop: 'scale', type: 'pulse', amp: 0.04, period: 1600 },
-    ],
-  },
-  {
     id: '06',
     name: 'Dormant',
     group: 'life',
