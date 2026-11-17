@@ -5,7 +5,7 @@ import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
 import type { BallHandle, BallOptions } from '../render';
-import { createTint } from '../tint';
+import { createTint, fromHsl, toHsl } from '../tint';
 import type { EyePose, Pose } from '../types';
 import { centroid, clamp, shade as darken, el, r2, ringPath } from '../util';
 import { hullReach, projectEar } from './ears';
@@ -27,7 +27,7 @@ import {
   turnFace,
   type Vec2,
 } from './model';
-import type { ShadeSpec, SolidSpec } from './spec';
+import type { HaloSpec, ShadeSpec, ShadeTone, SolidSpec } from './spec';
 
 const C = 120;
 const LIMB_KNEE = 0.7;
@@ -41,6 +41,9 @@ const LIMB_SHADE_BLUR = 4;
 const SHADE_DARK_LUMA = 0.15;
 const SHADE_LIGHTEN = 0.5;
 const SHADE_DEEPEN = 0.55;
+const VIVID_CHROMA = 18;
+const VIVID_SATURATION = 0.9;
+const TOPPER_EDGE = 1.4;
 const EAR_WALL_SHADE = '0.14';
 const EAR_CAP_BLEED = '0.6';
 let uid = 0;
@@ -128,12 +131,32 @@ interface ShadeNode {
   painted: string;
 }
 
-function shadeColor(spec: ShadeSpec, body: string): string {
+interface HaloNode {
+  node: SVGPathElement;
+  stops: SVGElement[];
+  spec: HaloSpec;
+  painted: string;
+}
+
+function shadeColor(spec: ShadeTone, body: string): string {
+  if (spec.tone === 'fixed') return spec.color;
   const [r, g, b] = hexToRgb(body);
+  if (spec.tone === 'vivid') {
+    if (Math.max(r, g, b) - Math.min(r, g, b) < VIVID_CHROMA) return spec.color;
+    const [h, s] = toHsl(body);
+    return fromHsl([(h + (spec.hue ?? 0) + 360) % 360, Math.max(s, VIVID_SATURATION), spec.amount ?? 0.6]);
+  }
   const dark = clamp(1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255 / SHADE_DARK_LUMA, 0, 1);
   const derived =
     spec.tone === 'light' ? lerpColor(body, '#FFFFFF', SHADE_LIGHTEN) : darken(body, -SHADE_DEEPEN);
   return lerpColor(derived, spec.color, dark);
+}
+
+function paintHalo(halo: HaloNode, body: string): void {
+  const color = shadeColor(halo.spec, body);
+  if (color === halo.painted) return;
+  halo.painted = color;
+  for (const stop of halo.stops) stop.setAttribute('stop-color', color);
 }
 
 function paintShade(shade: ShadeNode, body: string): void {
@@ -224,7 +247,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     defs,
     spec.tint,
     palette.body,
-    spec.limbs?.length ? [prep.restTop, prep.restBottom] : undefined,
+    spec.tintSpan ?? (spec.limbs?.length ? [prep.restTop, prep.restBottom] : undefined),
   );
 
   const stemFront = el('path', { fill: spec.stemColor, stroke: 'none' }) as SVGPathElement;
@@ -232,14 +255,69 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.appendChild(stemRoot);
   bodyG.appendChild(stemBack);
   bodyG.appendChild(body);
-  const topperFill = createTint(`${id}tp`, defs, spec.tint, palette.body, [prep.restTop, prep.restBottom]);
+  const topperFill = createTint(
+    `${id}tp`,
+    defs,
+    spec.tint,
+    palette.body,
+    spec.tintSpan ?? [prep.restTop, prep.restBottom],
+  );
+  const halo = spec.halo
+    ? ({
+        node: el('path', {
+          fill: `url(#${id}hg)`,
+          stroke: `url(#${id}hg)`,
+          'stroke-width': 2 * spec.halo.grow,
+          'stroke-linejoin': 'round',
+          'pointer-events': 'none',
+          filter: `url(#${id}hl)`,
+        }) as SVGPathElement,
+        stops: [] as SVGElement[],
+        spec: spec.halo,
+        painted: spec.halo.color,
+      } satisfies HaloNode)
+    : null;
+  if (halo && spec.halo) {
+    const gradient = el('linearGradient', { id: `${id}hg`, x1: 0, y1: 0, x2: 0, y2: 1 });
+    for (const [offset, opacity] of spec.halo.stops) {
+      const stop = el('stop', { offset, 'stop-color': spec.halo.color, 'stop-opacity': opacity });
+      gradient.appendChild(stop);
+      halo.stops.push(stop);
+    }
+    defs.appendChild(gradient);
+    const blur = el('filter', {
+      id: `${id}hl`,
+      filterUnits: 'userSpaceOnUse',
+      x: '-80',
+      y: '-80',
+      width: '400',
+      height: '400',
+    });
+    blur.appendChild(el('feGaussianBlur', { stdDeviation: spec.halo.blur }));
+    defs.appendChild(blur);
+    bodyG.insertBefore(halo.node, stemRoot);
+  }
   const topper = spec.topper
-    ? (el('path', { fill: palette.body, stroke: 'none', d: polyPath(spec.topper.ring) }) as SVGPathElement)
+    ? (el('path', {
+        fill: palette.body,
+        stroke: spec.topper.edge ?? 'none',
+        'stroke-width': TOPPER_EDGE,
+        'stroke-linejoin': 'round',
+        d: polyPath(spec.topper.ring),
+      }) as SVGPathElement)
     : null;
   const topperAnchor = spec.topper
     ? (Math.min(...spec.topper.ring.map((p) => p[0])) + Math.max(...spec.topper.ring.map((p) => p[0]))) / 2
     : 0;
   if (topper) bodyG.appendChild(topper);
+  const topperAccent = spec.topper?.accent
+    ? (el('path', {
+        fill: spec.topper.accent.fill,
+        stroke: 'none',
+        d: polyPath(spec.topper.accent.ring),
+      }) as SVGPathElement)
+    : null;
+  if (topperAccent) bodyG.appendChild(topperAccent);
   bodyG.appendChild(stemFront);
   bodyG.appendChild(cap);
   const shading = spec.stemShading;
@@ -513,6 +591,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     body.setAttribute('d', bodyD);
     wash.setAttribute('d', bodyD);
     for (const shade of shades) shade.node.setAttribute('d', bodyD);
+    halo?.node.setAttribute('d', bodyD);
     clipBody.setAttribute('d', bodyD);
     for (const shade of limbShades) shade.path.setAttribute('d', bodyD);
     lastLimbKey = '';
@@ -783,6 +862,10 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
 
     clipBody.setAttribute('transform', bodyTf);
     wash.setAttribute('transform', bodyTf);
+    if (halo) {
+      halo.node.style.display = sketchOn ? 'none' : '';
+      paintHalo(halo, b.color);
+    }
     for (const shade of shades) {
       shade.node.setAttribute('transform', bodyTf);
       shade.node.style.display = sketchOn ? 'none' : '';
@@ -793,8 +876,12 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       const angle = (b.turn || 0) + spinYaw;
       const squeeze = Math.hypot(Math.cos(angle), (spec.topper.thin ?? 1) * Math.sin(angle));
       const sway = `translate(${r2(topperAnchor + spec.topper.sway * Math.sin(angle))} 0) scale(${squeeze.toFixed(3)} 1) translate(${-topperAnchor} 0)`;
-      topper.setAttribute('fill', sketchOn ? 'none' : topperFill(b.color));
+      topper.setAttribute('fill', sketchOn ? 'none' : (spec.topper.fill ?? topperFill(b.color)));
       topper.setAttribute('transform', sway);
+      if (topperAccent && spec.topper.accent) {
+        topperAccent.setAttribute('fill', sketchOn ? 'none' : spec.topper.accent.fill);
+        topperAccent.setAttribute('transform', sway);
+      }
       topperWash.setAttribute('transform', sway);
       topperWash.setAttribute('opacity', washOpacity);
     }

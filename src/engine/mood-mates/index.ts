@@ -1,10 +1,13 @@
+import { blaze } from './characters/blaze';
 import { bloom } from './characters/bloom';
+import { cheffy } from './characters/cheffy';
 import { dewy } from './characters/dewy';
 import { drip } from './characters/drip';
 import { ember } from './characters/ember';
 import { flame } from './characters/flame';
 import { germy } from './characters/germy';
 import { ghosty } from './characters/ghosty';
+import { glowy } from './characters/glowy';
 import { hexo } from './characters/hexo';
 import { inky } from './characters/inky';
 import { jelo } from './characters/jelo';
@@ -18,6 +21,7 @@ import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
 import { tufty } from './characters/tufty';
 import { woody } from './characters/woody';
+import { zappy } from './characters/zappy';
 import { compileDesign, sanitizeDesign } from './design';
 import { characters, config, create, EmotionEngine, version } from './engine';
 import { registerSkin } from './fx';
@@ -46,6 +50,10 @@ characters.register(inky);
 characters.register(dewy);
 characters.register(tufty);
 characters.register(ember);
+characters.register(cheffy);
+characters.register(blaze);
+characters.register(glowy);
+characters.register(zappy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);

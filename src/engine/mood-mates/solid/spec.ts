@@ -20,9 +20,20 @@ export interface PlateSpec {
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 
-export interface ShadeSpec {
+export interface ShadeTone {
   color: string;
-  tone: 'light' | 'deep';
+  tone: 'light' | 'deep' | 'fixed' | 'vivid';
+  amount?: number;
+  hue?: number;
+}
+
+export interface HaloSpec extends ShadeTone {
+  blur: number;
+  grow: number;
+  stops: Array<[number, number]>;
+}
+
+export interface ShadeSpec extends ShadeTone {
   from: [number, number];
   to: [number, number];
   stops: Array<[number, number]>;
@@ -39,11 +50,20 @@ export interface EarSpec {
 export interface SolidSpec {
   body: BodyShape;
   tint?: BodyTint;
+  tintSpan?: [number, number];
+  halo?: HaloSpec;
   stem?: StemShape;
   stemShading?: StemShading;
   plate?: PlateSpec;
   shades?: ShadeSpec[];
-  topper?: { ring: Ring; sway: number; thin?: number };
+  topper?: {
+    ring: Ring;
+    sway: number;
+    thin?: number;
+    fill?: string;
+    edge?: string;
+    accent?: { ring: Ring; fill: string };
+  };
   wrapDecals?: boolean;
   ears?: EarSpec[];
   limbs?: LimbSpec[];

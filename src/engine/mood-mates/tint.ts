@@ -6,7 +6,7 @@ export interface BodyTint {
   bottom: [string, number];
 }
 
-type Hsl = [number, number, number];
+export type Hsl = [number, number, number];
 
 interface Shift {
   hue: number;
@@ -17,7 +17,7 @@ interface Shift {
 const HUE_REACH = 15;
 const SAT_FULL = 0.3;
 
-function toHsl(hex: string): Hsl {
+export function toHsl(hex: string): Hsl {
   const [r, g, b] = hexToRgb(hex).map((v) => v / 255) as [number, number, number];
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -29,7 +29,7 @@ function toHsl(hex: string): Hsl {
   return [sector * 60, s, l];
 }
 
-function fromHsl([h, s, l]: Hsl): string {
+export function fromHsl([h, s, l]: Hsl): string {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const channel = (n: number): number => {
     const k = (n + h / 30) % 12;
