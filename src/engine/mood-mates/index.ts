@@ -21,7 +21,6 @@ import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
 import { tufty } from './characters/tufty';
 import { woody } from './characters/woody';
-import { zappy } from './characters/zappy';
 import { compileDesign, sanitizeDesign } from './design';
 import { characters, config, create, EmotionEngine, version } from './engine';
 import { registerSkin } from './fx';
@@ -53,7 +52,6 @@ characters.register(ember);
 characters.register(cheffy);
 characters.register(blaze);
 characters.register(glowy);
-characters.register(zappy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);

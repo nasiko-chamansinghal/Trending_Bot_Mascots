@@ -22,7 +22,7 @@ export interface PlateSpec {
 
 export interface ShadeTone {
   color: string;
-  tone: 'light' | 'deep' | 'fixed' | 'vivid';
+  tone: 'light' | 'deep' | 'vivid';
   amount?: number;
   hue?: number;
 }
