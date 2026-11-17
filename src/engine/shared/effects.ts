@@ -1,5 +1,6 @@
 import { easeOutQuint } from './inertia';
 import { easeInOutCubic } from './math';
+import { nextUid } from './uid';
 
 function clamp(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
@@ -213,12 +214,10 @@ const POWER_SEEDS: ArcSeed[] = Array.from({ length: 5 }, (_, i) => ({
 
 const VORTEX_SEEDS: ArcSeed[] = RING_SEEDS.slice(0, 3).map((seed) => ({ ...seed, speed: 2.5 }));
 
-let gradientId = 0;
-
 function arcSet(layer: SVGGElement, behind: SVGGElement, b: Bounds, seeds: ArcSeed[]) {
   const defs = node('defs', {}, layer);
   const arcs = seeds.map((seed) => {
-    const id = `fxarc${gradientId++}`;
+    const id = `fxarc${nextUid()}`;
     const reach = seed.a * b.r;
     const gx = Math.cos(seed.tilt) * reach;
     const gy = Math.sin(seed.tilt) * reach;
