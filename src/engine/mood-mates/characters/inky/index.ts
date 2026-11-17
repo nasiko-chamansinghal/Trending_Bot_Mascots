@@ -13,8 +13,8 @@ const FIT = SCALE / ORIGIN.reach;
 const CROP = 2.5;
 const EYE_POINTS = 96;
 const EYES = [
-  { x: 171.6, y: 285.6, major: 54.5, minor: 26.1, angle: 85 },
-  { x: 280.1, y: 283.5, major: 62.2, minor: 29.8, angle: -80 },
+  { x: 207.9, y: 284.5, major: 58.35, minor: 27.95, angle: 90 },
+  { x: 316.4, y: 284.5, major: 58.35, minor: 27.95, angle: 90 },
 ];
 
 function view(x: number, y: number): Point {
