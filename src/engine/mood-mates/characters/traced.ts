@@ -44,6 +44,13 @@ export function tracedBodyRing(radii: number[], unit: number): Ring {
   });
 }
 
+export function tracedPolygon(flat: number[], frame: TraceFrame, at: Point = [0, 0]): Ring {
+  const view = traceView(frame);
+  return Array.from({ length: flat.length / 2 }, (_, i): Point => {
+    return view((flat[2 * i] as number) + at[0], (flat[2 * i + 1] as number) + at[1]);
+  });
+}
+
 export function tracedEyeRing(eye: TracedEye, frame: TraceFrame): Ring {
   const fit = traceFit(frame);
   const [cx, cy] = traceView(frame)(eye.x, eye.y);
