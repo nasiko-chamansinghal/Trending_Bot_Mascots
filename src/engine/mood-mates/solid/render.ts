@@ -385,6 +385,20 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   clip.appendChild(clipBody);
   defs.appendChild(clip);
   const eyeG = el('g', { 'clip-path': `url(#${id}clip)` });
+  const decalLooks = spec.decals ?? [];
+  const decalRings = decalLooks.map((look) =>
+    look.ring.map(([x, y]): Vec2 => [(x - CX) / KX, (y - CY) / KY]),
+  );
+  const decals = decalLooks.map((look) => {
+    const node = el('path', {
+      fill: look.fill,
+      'fill-opacity': look.opacity ?? 1,
+      stroke: 'none',
+      'pointer-events': 'none',
+    }) as SVGPathElement;
+    if (!look.front) eyeG.appendChild(node);
+    return node;
+  });
   const shades = (spec.shades ?? []).map((shade, i) => {
     const gradient = el('linearGradient', {
       id: `${id}sd${i}`,
@@ -440,6 +454,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     defs.appendChild(gradient);
     eyeG.appendChild(plate);
   }
+  decals.forEach((node, i) => {
+    if (decalLooks[i]?.front) eyeG.appendChild(node);
+  });
   const washPaint = createWash(id, defs);
   const wash = el('path', {
     fill: washPaint.fill,
@@ -681,6 +698,18 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
   }
 
+  let decalKey = '';
+
+  function setDecals(m: Mat3): void {
+    if (!decals.length || decalKey === lastKey) return;
+    decalKey = lastKey;
+    decals.forEach((node, i) => {
+      const face = projectEye(prep.skin, prep.map, decalRings[i] as Vec2[], m, spec.edge, !spec.wrapDecals);
+      node.style.display = face ? '' : 'none';
+      if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+    });
+  }
+
   let earKey = '';
 
   function setEars(m: Mat3): void {
@@ -812,12 +841,14 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
     if (limbs.length) setLimbs(m, [b.armL ?? 0, b.armR ?? 0]);
     if (plate) setPlate(plate, m, pose);
+    setDecals(m);
     setEars(m);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - sqy) * b.scale * (prep.restBottom - C))}) rotate(${r2(b.rotate || 0)}) scale(${r2(b.scale * sqx)} ${r2(b.scale * sqy)}) translate(${-C} ${-C})`;
     bodyG.setAttribute('transform', bodyTf);
     plate?.setAttribute('transform', bodyTf);
+    for (const node of decals) node.setAttribute('transform', bodyTf);
     earsUnder.setAttribute('transform', bodyTf);
     earsOver.setAttribute('transform', bodyTf);
 
@@ -849,6 +880,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
+    for (const node of decals) node.style.visibility = sketchOn ? 'hidden' : '';
     for (const e of ears) {
       const paint = sketchOn ? 'none' : earFill(b.color);
       e.wall.setAttribute('fill', paint);
