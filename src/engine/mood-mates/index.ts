@@ -20,6 +20,7 @@ import { pumpkin } from './characters/pumpkin';
 import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
 import { tufty } from './characters/tufty';
+import { wispy } from './characters/wispy';
 import { woody } from './characters/woody';
 import { compileDesign, sanitizeDesign } from './design';
 import { characters, config, create, EmotionEngine, version } from './engine';
@@ -52,6 +53,7 @@ characters.register(ember);
 characters.register(cheffy);
 characters.register(blaze);
 characters.register(glowy);
+characters.register(wispy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
