@@ -20,6 +20,13 @@ export interface PlateSpec {
   follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
 }
 
+export interface DecalSpec {
+  ring: Ring;
+  fill: string;
+  opacity?: number;
+  front?: boolean;
+}
+
 export interface ShadeTone {
   color: string;
   tone: 'light' | 'deep' | 'vivid';
@@ -55,6 +62,7 @@ export interface SolidSpec {
   stem?: StemShape;
   stemShading?: StemShading;
   plate?: PlateSpec;
+  decals?: DecalSpec[];
   shades?: ShadeSpec[];
   topper?: {
     ring: Ring;
