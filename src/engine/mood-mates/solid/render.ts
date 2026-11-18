@@ -673,26 +673,32 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     return lean * clamp(stretch * 2, 0, 1) * clamp((1.05 - Math.abs(lean)) / 0.45, 0, 1);
   }
 
-  function setPlate(node: SVGPathElement, m: Mat3, pose: Pose): void {
+  function faceTurn(pose: Pose): [number, number, number] {
     const follow = plateLook?.follow;
-    let yaw = 0;
-    let pitch = 0;
-    let roll = 0;
-    if (follow) {
-      const [lx, ly] = eyeCentre(pose.left);
-      const [rx, ry] = eyeCentre(pose.right);
-      const [maxYaw, maxPitch, maxRoll] = follow.limit;
-      const across = (follow.gain * ((lx + rx) / 2 - follow.anchor[0])) / KX;
-      const up = (follow.gain * (follow.anchor[1] - (ly + ry) / 2)) / KY;
-      const lean = (eyeLean(pose.left) + eyeLean(pose.right)) / 2;
-      yaw = clamp(Math.asin(clamp(across, -1, 1)), -maxYaw, maxYaw);
-      pitch = clamp(Math.asin(clamp(up, -1, 1)), -maxPitch, maxPitch);
-      roll = clamp(Math.atan2(ry - ly, rx - lx) + follow.lean * lean, -maxRoll, maxRoll);
-    }
-    const key = `${lastKey}:${Math.round(yaw * 573)}:${Math.round(pitch * 573)}:${Math.round(roll * 573)}`;
+    if (!follow) return [0, 0, 0];
+    const [lx, ly] = eyeCentre(pose.left);
+    const [rx, ry] = eyeCentre(pose.right);
+    const [maxYaw, maxPitch, maxRoll] = follow.limit;
+    const across = (follow.gain * ((lx + rx) / 2 - follow.anchor[0])) / KX;
+    const up = (follow.gain * (follow.anchor[1] - (ly + ry) / 2)) / KY;
+    const lean = (eyeLean(pose.left) + eyeLean(pose.right)) / 2;
+    return [
+      clamp(Math.asin(clamp(across, -1, 1)), -maxYaw, maxYaw),
+      clamp(Math.asin(clamp(up, -1, 1)), -maxPitch, maxPitch),
+      clamp(Math.atan2(ry - ly, rx - lx) + follow.lean * lean, -maxRoll, maxRoll),
+    ];
+  }
+
+  function turnKey(turn: [number, number, number]): string {
+    return `${lastKey}:${Math.round(turn[0] * 573)}:${Math.round(turn[1] * 573)}:${Math.round(turn[2] * 573)}`;
+  }
+
+  function setPlate(node: SVGPathElement, m: Mat3, turn: [number, number, number]): void {
+    const follow = plateLook?.follow;
+    const key = turnKey(turn);
     if (key === plateKey) return;
     plateKey = key;
-    const faceMat = follow ? turnFace(m, yaw, pitch, roll) : m;
+    const faceMat = follow ? turnFace(m, turn[0], turn[1], turn[2]) : m;
     const face = projectEye(prep.skin, prep.map, plateRing, faceMat, spec.edge, !spec.wrapDecals);
     node.style.display = face ? '' : 'none';
     if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
@@ -700,11 +706,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
 
   let decalKey = '';
 
-  function setDecals(m: Mat3): void {
-    if (!decals.length || decalKey === lastKey) return;
-    decalKey = lastKey;
+  function setDecals(m: Mat3, turn: [number, number, number]): void {
+    if (!decals.length) return;
+    const key = turnKey(turn);
+    if (decalKey === key) return;
+    decalKey = key;
+    const turned = plateLook?.follow ? turnFace(m, turn[0], turn[1], turn[2]) : m;
     decals.forEach((node, i) => {
-      const face = projectEye(prep.skin, prep.map, decalRings[i] as Vec2[], m, spec.edge, !spec.wrapDecals);
+      const mat = decalLooks[i]?.follow ? turned : m;
+      const face = projectEye(prep.skin, prep.map, decalRings[i] as Vec2[], mat, spec.edge, !spec.wrapDecals);
       node.style.display = face ? '' : 'none';
       if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
     });
@@ -840,8 +850,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const spinYaw = b.yaw || 0;
     const m = setGeometry((b.turn || 0) + spinYaw, b.pitch || 0);
     if (limbs.length) setLimbs(m, [b.armL ?? 0, b.armR ?? 0]);
-    if (plate) setPlate(plate, m, pose);
-    setDecals(m);
+    const turn = faceTurn(pose);
+    if (plate) setPlate(plate, m, turn);
+    setDecals(m, turn);
     setEars(m);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;

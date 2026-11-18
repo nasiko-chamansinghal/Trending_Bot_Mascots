@@ -49,8 +49,9 @@ function cheek(x: number, angle: number): number[] {
 
 const DECALS: DecalSpec[] = CHEEKS.map((c) => ({
   ring: tracedPolygon(cheek(c.x, c.angle), FRAME),
-  fill: '#E88D8C',
+  fill: '#F59A98',
   front: true,
+  follow: true,
 }));
 
 const SPEC: SolidSpec = {
@@ -61,13 +62,13 @@ const SPEC: SolidSpec = {
     puff: 2,
     sigma: 6,
     edge: 0,
-    tint: { top: ['#7A1C10', 0.05], bottom: ['#7A1C10', 0.12] },
+    tint: { top: ['#FF8A70', 0.1], bottom: ['#B3121C', 0.12] },
     scale: FRAME.scale,
     center: FRAME.center,
   }),
   shades: [
     {
-      color: '#7A1C10',
+      color: '#B3121C',
       tone: 'deep',
       from: [0, 0],
       to: [0, 1],
@@ -115,9 +116,9 @@ export const cheeky = rimCharacter({
   desc: 'A round red body with a wide white face patch, pink cheeks and two black eyes that stay in the patch, built as a solid that turns in 3D',
   spec: SPEC,
   palette: palette(
-    '#D04C39',
+    '#EE3B32',
     '#151213',
-    { dim: '#B03C2B', soft: '#E86A55', blush: '#F08A80', angry: '#B22A1C', alert: '#F27A3A', off: '#A07A74' },
+    { dim: '#C9302A', soft: '#FF6F62', blush: '#FF8A80', angry: '#C4141E', alert: '#FF8A3A', off: '#B08A86' },
     '#F09A8C',
   ),
   rings: FACE,

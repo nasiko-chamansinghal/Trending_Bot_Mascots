@@ -25,6 +25,7 @@ export interface DecalSpec {
   fill: string;
   opacity?: number;
   front?: boolean;
+  follow?: boolean;
 }
 
 export interface ShadeTone {
