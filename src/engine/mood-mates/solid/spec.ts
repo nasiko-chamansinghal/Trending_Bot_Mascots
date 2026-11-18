@@ -29,7 +29,7 @@ export interface DecalSpec {
 
 export interface ShadeTone {
   color: string;
-  tone: 'light' | 'deep' | 'vivid';
+  tone: 'light' | 'deep' | 'vivid' | 'fixed';
   amount?: number;
   hue?: number;
 }

@@ -139,6 +139,7 @@ interface HaloNode {
 }
 
 function shadeColor(spec: ShadeTone, body: string): string {
+  if (spec.tone === 'fixed') return spec.color;
   const [r, g, b] = hexToRgb(body);
   if (spec.tone === 'vivid') {
     if (Math.max(r, g, b) - Math.min(r, g, b) < VIVID_CHROMA) return spec.color;
