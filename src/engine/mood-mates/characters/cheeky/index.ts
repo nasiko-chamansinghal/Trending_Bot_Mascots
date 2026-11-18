@@ -51,6 +51,7 @@ const DECALS: DecalSpec[] = CHEEKS.map((c) => ({
   ring: tracedPolygon(cheek(c.x, c.angle), FRAME),
   fill: '#E88D8C',
   front: true,
+  follow: true,
 }));
 
 const SPEC: SolidSpec = {
