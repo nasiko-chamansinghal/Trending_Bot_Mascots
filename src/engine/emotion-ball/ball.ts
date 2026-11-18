@@ -1,12 +1,12 @@
 import { createShiver, createWash } from '../shared/fear';
 import { createRibbons } from '../shared/ribbons';
+import { nextUid } from '../shared/uid';
 import { centroid, clamp, el, type Point, type Ring, r2, rand, shade } from '../shared/util';
 import { RINGS } from './rings';
 import type { EyePose, Pose } from './types';
 
 const RD = RINGS;
 const TAU = Math.PI * 2;
-let uid = 0;
 
 const HEAD_C = RD.HEAD_C;
 const EYE_HALF = RD.EYE_HALF;
@@ -69,7 +69,7 @@ export interface BallHandle {
 }
 
 export function createBall(container: HTMLElement, opts: BallOptions = {}): BallHandle {
-  const id = `eb${uid++}`;
+  const id = `eb${nextUid()}`;
   const lite = !!opts.lite;
   const shape = RD.SHAPES[opts.shape as string] || (RD.SHAPES.blob as (typeof RD.SHAPES)[string]);
   const face = shape.face;
@@ -205,7 +205,7 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     front: fxFront,
     centerX: HEAD_C,
     centerY: HEAD_C,
-    nextUid: () => uid++,
+    nextUid,
   });
   let prevNow = 0;
   const confPieces: ConfPiece[] = [];

@@ -1,5 +1,6 @@
 import { createShiver, createWash } from '../shared/fear';
 import { createRibbons } from '../shared/ribbons';
+import { nextUid } from '../shared/uid';
 import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
@@ -44,8 +45,6 @@ export interface BallHandle {
   destroy: () => void;
 }
 
-let uid = 0;
-
 function ringBBox(ring: Ring): BBox {
   let minX = 1e9;
   let maxX = -1e9;
@@ -63,7 +62,7 @@ function ringBBox(ring: Ring): BBox {
 
 export function createBall(container: HTMLElement, opts: BallOptions): BallHandle {
   if (opts.character.solid) return createSolidBall(container, opts);
-  const id = `mm${uid++}`;
+  const id = `mm${nextUid()}`;
   const lite = !!opts.lite;
   const ch = opts.character;
   const face = ch.face;
@@ -263,7 +262,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
         front: fxFront,
         centerX: C,
         centerY: C,
-        nextUid: () => uid++,
+        nextUid,
       })
     : null;
 

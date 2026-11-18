@@ -1,6 +1,7 @@
 import { createShiver, createWash } from '../../shared/fear';
 import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
+import { nextUid } from '../../shared/uid';
 import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
@@ -46,8 +47,6 @@ const VIVID_SATURATION = 0.9;
 const TOPPER_EDGE = 1.4;
 const EAR_WALL_SHADE = '0.14';
 const EAR_CAP_BLEED = '0.6';
-let uid = 0;
-
 function radiusAt(table: Float64Array, angle: number): number {
   const f = ((angle + Math.PI) / TAU) * RADIUS_BINS - 0.5;
   const i = Math.floor(f);
@@ -194,7 +193,7 @@ interface EyeNode {
 }
 
 export function createSolidBall(container: HTMLElement, opts: BallOptions): BallHandle {
-  const id = `ms${uid++}`;
+  const id = `ms${nextUid()}`;
   const lite = !!opts.lite;
   const ch = opts.character;
   const spec = ch.solid as SolidSpec;
@@ -567,7 +566,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         front: fxFront,
         centerX: CX,
         centerY: CY,
-        nextUid: () => uid++,
+        nextUid,
         trailRadius: K * 1.08,
         orbitRadius: K * 1.16,
         width: K / 110,
