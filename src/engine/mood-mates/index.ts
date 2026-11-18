@@ -1,5 +1,6 @@
 import { blaze } from './characters/blaze';
 import { bloom } from './characters/bloom';
+import { cheeky } from './characters/cheeky';
 import { cheffy } from './characters/cheffy';
 import { dewy } from './characters/dewy';
 import { drip } from './characters/drip';
@@ -54,6 +55,7 @@ characters.register(cheffy);
 characters.register(blaze);
 characters.register(glowy);
 characters.register(wispy);
+characters.register(cheeky);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
