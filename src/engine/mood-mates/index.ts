@@ -1,6 +1,7 @@
 import { blaze } from './characters/blaze';
 import { blobby } from './characters/blobby';
 import { bloom } from './characters/bloom';
+import { bunni } from './characters/bunni';
 import { cheeky } from './characters/cheeky';
 import { cheffy } from './characters/cheffy';
 import { dewy } from './characters/dewy';
@@ -54,6 +55,7 @@ characters.register(dewy);
 characters.register(tufty);
 characters.register(ember);
 characters.register(cheffy);
+characters.register(bunni);
 characters.register(blaze);
 characters.register(glowy);
 characters.register(wispy);
