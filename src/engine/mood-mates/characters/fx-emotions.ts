@@ -112,7 +112,6 @@ export function fxEmotions(s: EyeSlots, grow: EyeGrow = FEAR_GROW): Record<strin
       end: 480,
       glance: { rotate: -5, turn: 0.12, lookX: 5, lookY: -6 },
     }),
-    '60': collapsing({ pool: [s.calm], lift: 0, steps: SLOW_COLLAPSE, end: 480 }),
     '61': collapsing({ transition: 220, pool: [s.wide], lift: -4, steps: QUICK_COLLAPSE, end: 380 }),
     '62': emotion({
       transition: 360,
@@ -143,7 +142,6 @@ export function fxEmotions(s: EyeSlots, grow: EyeGrow = FEAR_GROW): Record<strin
       blinkMs: null,
       anims: [{ target: 'body', prop: 'rotate', type: 'turns', amp: 720, period: 3400, speed: 1700 }],
     }),
-    '66': collapsing({ transition: 220, pool: [s.wide], lift: -4, steps: QUICK_COLLAPSE, end: 380 }),
     '67': emotion({
       transition: 300,
       gaze: false,
