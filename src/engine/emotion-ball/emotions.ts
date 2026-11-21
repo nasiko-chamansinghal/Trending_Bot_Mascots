@@ -1,4 +1,11 @@
-import type { EmotionGroup, EmotionRaw } from './types';
+import {
+  DONE_PREVIEW,
+  doneFrames,
+  WORK_LOOP_FROM_MS,
+  WORK_PREVIEW,
+  workFrames,
+} from '../shared/agent-frames';
+import type { EmotionGroup, EmotionRaw, SequenceFrameSpec } from './types';
 
 export const EMOTION_GROUPS: EmotionGroup[] = [
   { key: 'life', name: 'Lifecycle' },
@@ -373,36 +380,41 @@ export const EMOTION_SEED: EmotionRaw[] = [
     id: '32',
     name: 'Busy',
     group: 'agent',
-    desc: 'Focused rings rotate while the gaze loops in tight little circuits',
+    desc: 'Squinting and bobbing as the eyes dart over the work, and every few seconds a band of ribbons sweeps once round the body',
     transition: 360,
-    pool: [7, 16, 11, 10],
-    poolMs: [1800, 3200],
+    gaze: false,
+    pool: [7],
     blinkMs: [2800, 5500],
     body: { breathe: 0.008 },
     anims: [
-      { target: 'eyes', prop: 'lookX', type: 'sine', amp: 6, period: 1200 },
-      { target: 'eyes', prop: 'lookY', type: 'sine', amp: 4, period: 900, phase: 0.8 },
+      { target: 'body', prop: 'y', type: 'sine', amp: 0.9, period: 700 },
+      { target: 'eyes', prop: 'lookX', type: 'glance', amp: 4, period: 1240 },
+      { target: 'eyes', prop: 'lookY', type: 'sine', amp: 2, period: 1700 },
     ],
+    preview: WORK_PREVIEW,
+    sequence: {
+      settle: 'hold',
+      interp: 'linear',
+      loopFrom: WORK_LOOP_FROM_MS,
+      frames: workFrames() as SequenceFrameSpec[],
+    },
   },
   {
     id: '33',
     name: 'Done',
     group: 'agent',
-    desc: 'Smiling rings, a celebratory ribbon spin and a burst of confetti',
-    transition: 240,
+    desc: 'The body turns three times while nine ribbons fly round it in a cage, then it rests and turns the other way',
+    transition: 300,
     pool: [2, 8, 17],
     poolMs: [1400, 2600],
     blinkMs: [2200, 4500],
-    body: { ribbons: 1, confetti: 0.95 },
     eyes: { both: { y: -3 } },
+    preview: DONE_PREVIEW,
     sequence: {
-      settle: 'base',
-      frames: [
-        { at: 0, body: { y: 0 } },
-        { at: 300, eyes: { both: { scaleX: 1.1, scaleY: 1.1, y: -5 } }, body: { y: -6 } },
-        { at: 700, eyes: { both: { scaleX: 1.05, scaleY: 1.05, y: -4 } }, body: { y: -2 } },
-        { at: 1100, body: { y: 0 } },
-      ],
+      settle: 'hold',
+      interp: 'linear',
+      loopFrom: 0,
+      frames: doneFrames() as SequenceFrameSpec[],
     },
   },
   {

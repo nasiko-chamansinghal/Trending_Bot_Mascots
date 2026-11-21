@@ -144,13 +144,13 @@ export const EMOTION_SEED: EmotionRaw[] = [
     id: '32',
     name: 'Busy',
     group: 'agent',
-    desc: 'Focused eyes rotate while the gaze loops in tight little circuits',
+    desc: 'Squinting and bobbing as the eyes dart over the work, and every few seconds a band of ribbons sweeps once round the body',
   },
   {
     id: '33',
     name: 'Done',
     group: 'agent',
-    desc: 'Smiling eyes and a grin, a celebratory particle spin and a burst of confetti',
+    desc: 'The body turns three times while nine ribbons fly round it in a cage, then it rests and turns the other way',
   },
   {
     id: '34',

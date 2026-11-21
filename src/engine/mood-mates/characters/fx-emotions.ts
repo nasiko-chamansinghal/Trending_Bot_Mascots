@@ -1,3 +1,5 @@
+import { agentStates } from './agent-states';
+
 export interface EyeSlots {
   calm: string;
   wide: string;
@@ -96,6 +98,7 @@ function fearEmotion(calm: string, [growX, growY]: EyeGrow): Record<string, unkn
 
 export function fxEmotions(s: EyeSlots, grow: EyeGrow = FEAR_GROW): Record<string, Record<string, unknown>> {
   return {
+    ...agentStates(s),
     '22': fearEmotion(s.calm, grow),
     '60': collapsing({ pool: [s.calm], lift: 0, steps: SLOW_COLLAPSE, end: 480 }),
     '61': collapsing({ transition: 220, pool: [s.wide], lift: -4, steps: QUICK_COLLAPSE, end: 380 }),
