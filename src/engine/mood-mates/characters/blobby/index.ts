@@ -6,7 +6,7 @@ import { BLOBBY_RADII } from './radii';
 
 const UNIT = 100;
 const EYE_POINTS = 96;
-const FRAME: TraceFrame = { origin: [97, 158], reach: 53.72, center: [121, 131.7], scale: 103 };
+const FRAME: TraceFrame = { origin: [95.84, 158], reach: 53.67, center: [121, 131.7], scale: 103 };
 const FIT = traceFit(FRAME);
 const view = traceView(FRAME);
 const EYES: Array<[number, number, number]> = [
