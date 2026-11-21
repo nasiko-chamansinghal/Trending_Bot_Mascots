@@ -132,7 +132,8 @@ export const EMOTION_SEED: EmotionRaw[] = [
     id: '30',
     name: 'Thinking',
     group: 'agent',
-    desc: 'Thinking eyes rotate, gaze patrolling upward, a ring of glow motes orbiting the head',
+    effect: 'think',
+    desc: 'It glances up and away as the body gives way to three dots that hop one after another',
   },
   {
     id: '31',
@@ -144,13 +145,13 @@ export const EMOTION_SEED: EmotionRaw[] = [
     id: '32',
     name: 'Busy',
     group: 'agent',
-    desc: 'Focused eyes rotate while the gaze loops in tight little circuits',
+    desc: 'Squinting and bobbing as the eyes dart over the work, and every few seconds a band of ribbons sweeps once round the body',
   },
   {
     id: '33',
     name: 'Done',
     group: 'agent',
-    desc: 'Smiling eyes and a grin, a celebratory particle spin and a burst of confetti',
+    desc: 'The body turns three times while nine ribbons fly round it in a cage, then it rests and turns the other way',
   },
   {
     id: '34',
@@ -205,7 +206,7 @@ export const EMOTION_SEED: EmotionRaw[] = [
     name: 'Loading Blocks',
     group: 'custom',
     effect: 'loading',
-    desc: 'The body shrinks into the middle dot and two more dots pulse beside it, one after another',
+    desc: 'The body gives way to three dots that hop one after another',
   },
   {
     id: '61',

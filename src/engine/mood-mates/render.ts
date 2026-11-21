@@ -1,4 +1,5 @@
 import { createShiver, createWash } from '../shared/fear';
+import { createHoops, hashString } from '../shared/hoops';
 import { createRibbons } from '../shared/ribbons';
 import { nextUid } from '../shared/uid';
 import { createFx, type FxHandle } from './fx';
@@ -265,6 +266,15 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
         nextUid,
       })
     : null;
+  const hoops = createHoops({
+    id,
+    defs,
+    back: fxBack,
+    front: fxFront,
+    nextUid,
+    outline: () => headRing,
+    seed: hashString(ch.id),
+  });
 
   const shiver = lite ? null : createShiver(fxBack, headRing);
 
@@ -537,6 +547,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
     if (b.chill > 0.001) washPaint.tint(b.color);
 
+    hoops.update(b.hoops || 0, b.sweep || 0, b.cage || 0, b.color);
     if (lite) return;
 
     const dt = prevNow ? clamp((now - prevNow) / 1000, 0.001, 0.05) : 1 / 60;
@@ -573,7 +584,8 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     if (fx) {
       fx.update(dt, now, { yaw, dYaw, vel });
     }
-    if (ribbons) ribbons.update(dt, now, yaw, (b.orbit || 0) > 0);
+    const hooped = (b.hoops || 0) > 0 || (b.cage || 0) > 0;
+    if (ribbons) ribbons.update(dt, now, hooped ? 0 : yaw, (b.orbit || 0) > 0);
   }
 
   function burst(count?: number): void {

@@ -28,6 +28,9 @@ export interface BodyPose {
   confetti?: number;
   orbit?: number;
   aura?: string;
+  hoops?: number;
+  sweep?: number;
+  cage?: number;
 }
 
 export interface EyePose {
@@ -234,6 +237,7 @@ export interface EmotionRaw extends PoseSpec {
   name: string;
   group: string;
   desc?: string;
+  preview?: PoseSpec;
   effect?: string;
   transition?: number;
   gaze?: boolean;

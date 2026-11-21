@@ -16,6 +16,7 @@ interface ArmPlan {
   l?: Swing;
   r?: Swing;
   keys?: Array<[number, number]>;
+  follow?: (body: Record<string, number>) => [number, number];
 }
 
 const OPPOSITE = Math.PI;
@@ -98,12 +99,10 @@ const PLANS: Record<string, ArmPlan> = {
     rest: [22, 22],
     l: sine(7, 900),
     r: sine(7, 900, OPPOSITE),
-    keys: [
-      [0, 0],
-      [58, 56],
-      [38, 36],
-      [22, 22],
-    ],
+    follow: (body) => {
+      const lift = -(body.y ?? 0) / 5;
+      return [22 + 36 * lift, 22 + 34 * lift];
+    },
   },
   '34': { rest: [30, 26], l: jitter(10, 12), r: jitter(10, 12) },
   '35': { rest: [36, -6], l: sine(3, 2200) },
@@ -145,7 +144,17 @@ function armed(id: string, emotion: Emotion, plan: ArmPlan): Emotion {
   if (added.length) out.anims = [...((emotion.anims as AnimSpec[] | undefined) ?? []), ...added];
   const sequence = emotion.sequence as { frames: Array<Record<string, unknown>> } | undefined;
   const keys = plan.keys;
-  if (keys && sequence) {
+  const follow = plan.follow;
+  if (follow && sequence) {
+    out.sequence = {
+      ...sequence,
+      frames: sequence.frames.map((frame) => {
+        const body = (frame.body ?? {}) as Record<string, number>;
+        const [armL, armR] = follow(body);
+        return { ...frame, body: { ...body, armL, armR } };
+      }),
+    };
+  } else if (keys && sequence) {
     if (keys.length !== sequence.frames.length) {
       throw new Error(`[MoodMates] Woody arm keys for emotion ${id} do not match its frames`);
     }

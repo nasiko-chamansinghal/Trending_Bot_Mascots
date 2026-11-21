@@ -1,4 +1,5 @@
 import { createShiver, createWash } from '../../shared/fear';
+import { createHoops, hashString } from '../../shared/hoops';
 import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { nextUid } from '../../shared/uid';
@@ -589,6 +590,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         width: K / 110,
       })
     : null;
+  const hoops = createHoops({
+    id,
+    defs,
+    back: fxBack,
+    front: fxFront,
+    nextUid,
+    outline: () => solidRestOutline(spec, 360),
+    seed: hashString(ch.id),
+  });
 
   let lastKey = '';
   let lastM: Mat3 = rotation(spec.rest);
@@ -944,6 +954,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
 
     if (props) props.apply(pose.props, { body: b.color, eye: pose.left.color, sketch: sketchOn });
+    hoops.update(b.hoops || 0, b.sweep || 0, b.cage || 0, b.color);
     if (lite) return;
 
     const dt = prevNow ? clamp((now - prevNow) / 1000, 0.001, 0.05) : 1 / 60;
@@ -970,7 +981,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
 
     shiver?.(b.shiver, now);
 
-    if (ribbons) ribbons.update(dt, now, spinYaw, b.aura ? (AURAS[b.aura] ?? null) : (b.orbit || 0) > 0);
+    const hooped = (b.hoops || 0) > 0 || (b.cage || 0) > 0;
+    if (ribbons)
+      ribbons.update(dt, now, hooped ? 0 : spinYaw, b.aura ? (AURAS[b.aura] ?? null) : (b.orbit || 0) > 0);
     if (fx) fx.update(dt, now, { yaw: 0, dYaw: 0, vel: 0 });
   }
 

@@ -17,6 +17,9 @@ export interface BodyPose {
   shiver: number;
   orbit: number;
   yaw?: number;
+  hoops?: number;
+  sweep?: number;
+  cage?: number;
 }
 
 export interface EyePose {
@@ -91,6 +94,7 @@ export interface SequenceFrameSpec extends PoseSpec {
 export interface SequenceSpec {
   settle?: 'base' | 'hold' | { next: string };
   interp?: 'ease' | 'linear';
+  loopFrom?: number;
   frames: SequenceFrameSpec[];
 }
 
@@ -105,6 +109,7 @@ export interface EmotionRaw extends PoseSpec {
   group: string;
   desc?: string;
   effect?: string;
+  preview?: PoseSpec;
   transition?: number;
   gaze?: boolean;
   pool?: number[];

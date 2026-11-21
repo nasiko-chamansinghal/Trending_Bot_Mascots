@@ -1,3 +1,5 @@
+import { agentStates } from './agent-states';
+
 export interface EyeSlots {
   calm: string;
   wide: string;
@@ -51,9 +53,10 @@ interface Collapse {
   lift: number;
   steps: Array<[number, number]>;
   end: number;
+  glance?: { rotate: number; turn: number; lookX: number; lookY: number };
 }
 
-function collapsing({ transition, pool, lift, steps, end }: Collapse): Record<string, unknown> {
+function collapsing({ transition, pool, lift, steps, end, glance }: Collapse): Record<string, unknown> {
   return emotion({
     bare: true,
     gaze: false,
@@ -66,7 +69,11 @@ function collapsing({ transition, pool, lift, steps, end }: Collapse): Record<st
       settle: 'hold',
       interp: 'linear',
       frames: [
-        { at: 0, body: { scale: 1, y: lift }, eyes: { both: OPEN_EYES } },
+        {
+          at: 0,
+          body: { scale: 1, y: lift, ...(glance && { rotate: glance.rotate, turn: glance.turn }) },
+          eyes: { both: { ...OPEN_EYES, ...(glance && { lookX: glance.lookX, lookY: glance.lookY }) } },
+        },
         ...steps.map(([at, scale]) => ({ at, body: { scale } })),
         { at: end },
       ],
@@ -96,7 +103,15 @@ function fearEmotion(calm: string, [growX, growY]: EyeGrow): Record<string, unkn
 
 export function fxEmotions(s: EyeSlots, grow: EyeGrow = FEAR_GROW): Record<string, Record<string, unknown>> {
   return {
+    ...agentStates(s),
     '22': fearEmotion(s.calm, grow),
+    '30': collapsing({
+      pool: [s.up],
+      lift: 0,
+      steps: SLOW_COLLAPSE,
+      end: 480,
+      glance: { rotate: -5, turn: 0.12, lookX: 5, lookY: -6 },
+    }),
     '60': collapsing({ pool: [s.calm], lift: 0, steps: SLOW_COLLAPSE, end: 480 }),
     '61': collapsing({ transition: 220, pool: [s.wide], lift: -4, steps: QUICK_COLLAPSE, end: 380 }),
     '62': emotion({
