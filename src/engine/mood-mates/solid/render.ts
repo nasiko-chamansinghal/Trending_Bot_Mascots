@@ -1,5 +1,5 @@
 import { createShiver, createWash } from '../../shared/fear';
-import { createHoops, hashString } from '../../shared/hoops';
+import { createHoops, hashString, unionOutline } from '../../shared/hoops';
 import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { nextUid } from '../../shared/uid';
@@ -596,7 +596,10 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     back: fxBack,
     front: fxFront,
     nextUid,
-    outline: () => solidRestOutline(spec, 360),
+    outline: () =>
+      spec.topper
+        ? unionOutline([solidRestOutline(spec, 360), spec.topper.ring])
+        : solidRestOutline(spec, 360),
     seed: hashString(ch.id),
   });
 
