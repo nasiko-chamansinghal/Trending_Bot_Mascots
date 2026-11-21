@@ -935,7 +935,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
         topperAccent.setAttribute('transform', sway);
       }
       topperWash.setAttribute('transform', sway);
-      topperWash.setAttribute('opacity', washOpacity);
+      topperWash.setAttribute('opacity', spec.topper.fill ? '0' : washOpacity);
     }
     for (const e of ears) e.earWash.setAttribute('opacity', washOpacity);
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
