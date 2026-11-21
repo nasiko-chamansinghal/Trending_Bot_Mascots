@@ -132,7 +132,8 @@ export const EMOTION_SEED: EmotionRaw[] = [
     id: '30',
     name: 'Thinking',
     group: 'agent',
-    desc: 'Thinking eyes rotate, gaze patrolling upward, a ring of glow motes orbiting the head',
+    effect: 'think',
+    desc: 'It glances up and away as the body gives way to three dots that hop one after another',
   },
   {
     id: '31',
@@ -205,7 +206,7 @@ export const EMOTION_SEED: EmotionRaw[] = [
     name: 'Loading Blocks',
     group: 'custom',
     effect: 'loading',
-    desc: 'The body shrinks into the middle dot and two more dots pulse beside it, one after another',
+    desc: 'The body gives way to three dots that hop one after another',
   },
   {
     id: '61',
