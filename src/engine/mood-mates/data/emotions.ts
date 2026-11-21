@@ -202,13 +202,6 @@ export const EMOTION_SEED: EmotionRaw[] = [
     desc: 'Closing eyes shrink to half-closed and quietly freeze',
   },
   {
-    id: '60',
-    name: 'Loading Blocks',
-    group: 'custom',
-    effect: 'loading',
-    desc: 'The body gives way to three dots that hop one after another',
-  },
-  {
     id: '61',
     name: 'Alert',
     group: 'custom',
@@ -242,13 +235,6 @@ export const EMOTION_SEED: EmotionRaw[] = [
     group: 'custom',
     effect: 'orbit',
     desc: 'The body spins two full turns while six rainbow arcs circle it',
-  },
-  {
-    id: '66',
-    name: 'Exclamation',
-    group: 'custom',
-    effect: 'exclaim',
-    desc: 'The body shrinks into an upright exclamation mark and holds still',
   },
   {
     id: '67',
