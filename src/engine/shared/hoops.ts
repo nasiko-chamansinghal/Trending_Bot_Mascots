@@ -90,6 +90,37 @@ function reachAlong(outline: Pair[], cx: number, cy: number, angle: number): num
   return far;
 }
 
+function rayReach(outline: Pair[], cx: number, cy: number, angle: number): number {
+  const ux = Math.cos(angle);
+  const uy = Math.sin(angle);
+  let far = 0;
+  for (let i = 0; i < outline.length; i++) {
+    const [x1, y1] = outline[i] as Pair;
+    const [x2, y2] = outline[(i + 1) % outline.length] as Pair;
+    const ex = x2 - x1;
+    const ey = y2 - y1;
+    const den = ux * ey - uy * ex;
+    if (Math.abs(den) < 1e-12) continue;
+    const t = ((x1 - cx) * ey - (y1 - cy) * ex) / den;
+    const s = ((x1 - cx) * uy - (y1 - cy) * ux) / den;
+    if (t > 0 && s >= 0 && s <= 1) far = Math.max(far, t);
+  }
+  return far;
+}
+
+export function unionOutline(shapes: Pair[][], steps = 360): Pair[] {
+  const points = shapes.flat();
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return Array.from({ length: steps }, (_, i): Pair => {
+    const angle = (2 * Math.PI * i) / steps;
+    const reach = Math.max(...shapes.map((shape) => rayReach(shape, cx, cy, angle)));
+    return [cx + reach * Math.cos(angle), cy + reach * Math.sin(angle)];
+  });
+}
+
 function rimOf(outline: Pair[], cx: number, cy: number): Rim {
   const at = (angle: number): number => reachAlong(outline, cx, cy, angle);
   const steps = Array.from({ length: RIM_STEPS }, (_, k) => at((k * Math.PI) / RIM_STEPS));
