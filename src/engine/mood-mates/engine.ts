@@ -973,6 +973,11 @@ export class EmotionEngine {
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
+    const preview = this.def?.raw.preview;
+    if (preview && this.lastPose) {
+      this.lastPose = applySpec(clonePose(this.lastPose), preview);
+      this.ball.applyPose(this.lastPose);
+    }
     this.effects.still(this.lastPose?.body.color ?? '#FFFFFF', this.lastPose?.body.scale ?? 1);
     this.seq = seq;
   }
@@ -1091,7 +1096,7 @@ export class EmotionEngine {
         }
       }
     }
-    pose.body.yaw = this.spinState ? this.spinState.x : 0;
+    pose.body.yaw = (pose.body.yaw || 0) + (this.spinState ? this.spinState.x : 0);
 
     if (this.bounceAt >= 0) {
       const be = (now - this.bounceAt) / 1000;

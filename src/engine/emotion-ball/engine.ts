@@ -182,7 +182,12 @@ export interface EmotionDef {
   antics: boolean;
   base: Pose;
   anims: AnimSpec[];
-  sequence: { frames: PoseFrame[]; settle: SequenceSpec['settle']; linear: boolean } | null;
+  sequence: {
+    frames: PoseFrame[];
+    settle: SequenceSpec['settle'];
+    linear: boolean;
+    loopFrom: number | null;
+  } | null;
   raw: EmotionRaw;
 }
 
@@ -245,6 +250,7 @@ function normalize(raw: EmotionRaw): EmotionDef {
       frames,
       settle: raw.sequence.settle || 'base',
       linear: raw.sequence.interp === 'linear',
+      loopFrom: raw.sequence.loopFrom != null ? raw.sequence.loopFrom : null,
     };
   }
   return def;
@@ -369,6 +375,7 @@ interface SeqState {
   frames: PoseFrame[];
   settle: SequenceSpec['settle'];
   linear: boolean;
+  loopFrom: number | null;
   done: boolean;
 }
 
@@ -510,6 +517,7 @@ export class EmotionEngine {
           frames: def.sequence.frames,
           settle: def.sequence.settle,
           linear: def.sequence.linear,
+          loopFrom: def.sequence.loopFrom,
           done: false,
         }
       : null;
@@ -678,6 +686,11 @@ export class EmotionEngine {
     const seq = this.seq;
     this.seq = null;
     this.tick(performance.now());
+    const preview = this.def?.raw.preview;
+    if (preview && this.lastPose) {
+      this.lastPose = applySpec(clonePose(this.lastPose), preview);
+      this.ball.applyPose(this.lastPose);
+    }
     this.effects.still(this.lastPose?.body.color ?? '#FFFFFF', this.lastPose?.body.scale ?? 1);
     this.seq = seq;
   }
@@ -783,7 +796,7 @@ export class EmotionEngine {
         }
       }
     }
-    pose.body.yaw = this.spinState ? this.spinState.x : 0;
+    pose.body.yaw = (pose.body.yaw || 0) + (this.spinState ? this.spinState.x : 0);
 
     if (this.bounceAt >= 0) {
       const be = (now - this.bounceAt) / 1000;
@@ -876,7 +889,11 @@ export class EmotionEngine {
     const frames = seq.frames;
     const last = frames[frames.length - 1] as PoseFrame;
 
-    if (t >= last.at) {
+    if (seq.loopFrom != null && t >= last.at) {
+      t = seq.loopFrom + ((t - seq.loopFrom) % (last.at - seq.loopFrom));
+    }
+
+    if (seq.loopFrom == null && t >= last.at) {
       if (!seq.done) {
         seq.done = true;
         const s = seq.settle;

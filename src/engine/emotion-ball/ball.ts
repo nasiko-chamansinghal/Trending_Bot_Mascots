@@ -1,4 +1,5 @@
 import { createShiver, createWash } from '../shared/fear';
+import { createHoops, hashString } from '../shared/hoops';
 import { createRibbons } from '../shared/ribbons';
 import { nextUid } from '../shared/uid';
 import { centroid, clamp, el, type Point, type Ring, r2, rand, shade } from '../shared/util';
@@ -207,6 +208,15 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     centerY: HEAD_C,
     nextUid,
   });
+  const hoops = createHoops({
+    id,
+    defs,
+    back: fxBack,
+    front: fxFront,
+    nextUid,
+    outline: () => headRing,
+    seed: hashString('ball'),
+  });
   let prevNow = 0;
   const confPieces: ConfPiece[] = [];
 
@@ -345,6 +355,7 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
     if (b.chill > 0.001) washPaint.tint(b.color);
 
+    hoops.update(b.hoops || 0, b.sweep || 0, b.cage || 0, b.color);
     if (lite) return;
 
     const dt = prevNow ? clamp((now - prevNow) / 1000, 0.001, 0.05) : 1 / 60;
@@ -371,7 +382,8 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
 
     shiver?.(b.shiver, now);
 
-    ribbons.update(dt, now, yaw, (b.orbit || 0) > 0);
+    const hooped = (b.hoops || 0) > 0 || (b.cage || 0) > 0;
+    ribbons.update(dt, now, hooped ? 0 : yaw, (b.orbit || 0) > 0);
 
     for (let ci = confPieces.length - 1; ci >= 0; ci--) {
       const pc = confPieces[ci] as ConfPiece;
