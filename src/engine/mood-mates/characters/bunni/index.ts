@@ -1,5 +1,4 @@
 import type { EyePair, Point } from '../../geometry';
-import type { SolidSpec } from '../../solid/spec';
 import { normalizeRing } from '../grok-rings';
 import { palette, rimCharacter, rimEyes, rimSpec } from '../rim';
 import { tiltEyes } from '../tilt';
@@ -12,10 +11,13 @@ const FRAME: TraceFrame = { origin: [225.5, 212.3], reach: 182.62, center: [120,
 const FIT = traceFit(FRAME);
 const view = traceView(FRAME);
 
+const MIRROR_AXIS = 2 * FRAME.origin[0];
+
 const EYES: Array<[number, number, number]> = [
-  [132.7, 254.2, 16.6],
-  [197.2, 277.9, 16.6],
+  [MIRROR_AXIS - 197.2, 277.9, 16.6],
+  [MIRROR_AXIS - 132.7, 254.2, 16.6],
 ];
+const RADII = BUNNI_RADII.map((_, j, all) => all[(all.length / 2 - j + all.length) % all.length] as number);
 const SPAN: Point = [EYES[1][0] - EYES[0][0], EYES[1][1] - EYES[0][1]];
 const MID: Point = [(EYES[0][0] + EYES[1][0]) / 2, (EYES[0][1] + EYES[1][1]) / 2];
 const TILT = Math.atan2(SPAN[1], SPAN[0]);
@@ -27,42 +29,17 @@ function disc([x, y, r]: [number, number, number]): number[] {
   }).flat();
 }
 
-const SPEC: SolidSpec = {
-  ...rimSpec({
-    ring: tracedBodyRing(BUNNI_RADII, UNIT),
-    unit: UNIT,
-    depth: 0.8,
-    puff: 2,
-    sigma: 3,
-    edge: 0,
-    tint: { top: ['#7B5BFF', 0.45], bottom: ['#52D0FF', 0.5] },
-    scale: FRAME.scale,
-    center: FRAME.center,
-  }),
-  shades: [
-    {
-      color: '#7B4DFF',
-      tone: 'fixed',
-      from: [0.6, 0.75],
-      to: [0.6, 0.38],
-      stops: [
-        [0, 0],
-        [1, 0.9],
-      ],
-    },
-    {
-      color: '#FFC52A',
-      tone: 'fixed',
-      from: [0.6, 0.5],
-      to: [0.6, 0.08],
-      stops: [
-        [0, 0],
-        [0.35, 0],
-        [1, 0.92],
-      ],
-    },
-  ],
-};
+const BODY = rimSpec({
+  ring: tracedBodyRing(RADII, UNIT),
+  unit: UNIT,
+  depth: 0.8,
+  puff: 2,
+  sigma: 3,
+  edge: 0,
+  tint: { top: ['#FF7AD5', 0.25], bottom: ['#C0239A', 0.25] },
+  scale: FRAME.scale,
+  center: FRAME.center,
+});
 
 const anchor = view(MID[0], MID[1]);
 
@@ -87,13 +64,13 @@ const FACE: Record<string, EyePair> = {
 export const bunni = rimCharacter({
   id: 'bunni',
   name: 'Bunni',
-  desc: 'A soft blue bunny head with two tall ears that fade from violet to gold and two small white dot eyes, built as a solid that turns in 3D',
-  spec: SPEC,
+  desc: 'A magenta bunny head facing right, with two tall ears and two small white dot eyes, built as a solid that turns in 3D',
+  spec: BODY,
   palette: palette(
-    '#6B8CFF',
+    '#E23FB5',
     '#FFFFFF',
-    { dim: '#5671D6', soft: '#9DB4FF', blush: '#C79BFF', angry: '#E0559A', alert: '#FFC52A', off: '#9AA4C8' },
-    '#B4C4FF',
+    { dim: '#B82E94', soft: '#FF8AD8', blush: '#FFA3E0', angry: '#D6202A', alert: '#FFC52A', off: '#B896B0' },
+    '#FFB0E6',
   ),
   rings: FACE,
   fear: [1.1, 1.1],
