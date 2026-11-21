@@ -1,16 +1,17 @@
 <div align="center">
 
-# Trending Grokbot Mascots
+# Trending Bot Mascots
 
-**Animated SVG mascots for AI assistants.**
+**Animated 3D mascots for AI assistants.**
 Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
-![Characters](https://img.shields.io/badge/characters-9-f97316)
 
-<img src="docs/screenshots/studio-light.png" alt="Mascot Studio in light mode, showing the Ghosty mascot with its character and emotion pickers" width="880">
+[Mascots](#meet-the-mascots) · [Try it](#try-it) · [Design your own](#design-your-own-mascot) · [Build one from an image](#build-one-from-an-image) · [Use in your app](#use-it-in-your-app)
+
+<img src="docs/screenshots/studio-light.png" alt="Mascot Studio in light mode with the character and emotion pickers" width="880">
 
 </div>
 
@@ -18,286 +19,149 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="170"><br><b>Ball</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="170"><br><b>Nubby</b><br><sub>54 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="170"><br><b>Stampy</b><br><sub>52 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="170"><br><b>Pumpy</b><br><sub>57 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="170"><br><b>Woody</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="170"><br><b>Peaky</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/ball.png" alt="Ball" width="150"><br><b>Ball</b></td>
+    <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="150"><br><b>Nubby</b></td>
+    <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="150"><br><b>Stampy</b></td>
+    <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="150"><br><b>Pumpy</b></td>
+    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="150"><br><b>Woody</b></td>
+    <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="150"><br><b>Peaky</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="170"><br><b>Ghosty</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="170"><br><b>Bloom</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="170"><br><b>Hexo</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/ninjo.png" alt="Ninjo" width="170"><br><b>Ninjo</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="170"><br><b>Jelo</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="170"><br><b>Drip</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="150"><br><b>Ghosty</b></td>
+    <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="150"><br><b>Bloom</b></td>
+    <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="150"><br><b>Hexo</b></td>
+    <td align="center"><img src="docs/screenshots/ninjo.png" alt="Ninjo" width="150"><br><b>Ninjo</b></td>
+    <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="150"><br><b>Jelo</b></td>
+    <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="150"><br><b>Drip</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="170"><br><b>Flame</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="170"><br><b>Germy</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/spiky.png" alt="Spiky" width="170"><br><b>Spiky</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/mokey.png" alt="Mokey" width="170"><br><b>Mokey</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/inky.png" alt="Inky" width="170"><br><b>Inky</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/dewy.png" alt="Dewy" width="170"><br><b>Dewy</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="150"><br><b>Flame</b></td>
+    <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="150"><br><b>Germy</b></td>
+    <td align="center"><img src="docs/screenshots/spiky.png" alt="Spiky" width="150"><br><b>Spiky</b></td>
+    <td align="center"><img src="docs/screenshots/mokey.png" alt="Mokey" width="150"><br><b>Mokey</b></td>
+    <td align="center"><img src="docs/screenshots/inky.png" alt="Inky" width="150"><br><b>Inky</b></td>
+    <td align="center"><img src="docs/screenshots/dewy.png" alt="Dewy" width="150"><br><b>Dewy</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/tufty.png" alt="Tufty" width="170"><br><b>Tufty</b><br><sub>45 emotions</sub></td>
-    <td align="center"><img src="docs/screenshots/ember.png" alt="Ember" width="170"><br><b>Ember</b><br><sub>45 emotions</sub></td>
+    <td align="center"><img src="docs/screenshots/tufty.png" alt="Tufty" width="150"><br><b>Tufty</b></td>
+    <td align="center"><img src="docs/screenshots/ember.png" alt="Ember" width="150"><br><b>Ember</b></td>
+    <td align="center"><img src="docs/screenshots/cheffy.png" alt="Cheffy" width="150"><br><b>Cheffy</b></td>
+    <td align="center"><img src="docs/screenshots/blaze.png" alt="Blaze" width="150"><br><b>Blaze</b></td>
+    <td align="center"><img src="docs/screenshots/glowy.png" alt="Glowy" width="150"><br><b>Glowy</b></td>
+    <td align="center"><img src="docs/screenshots/wispy.png" alt="Wispy" width="150"><br><b>Wispy</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/cheeky.png" alt="Cheeky" width="150"><br><b>Cheeky</b></td>
+    <td align="center"><img src="docs/screenshots/blobby.png" alt="Blobby" width="150"><br><b>Blobby</b></td>
   </tr>
 </table>
 
-| Mascot | Engine | What makes it special |
+<p align="center">Every mascot turns in 3D, follows your cursor and shares the same emotions. New ones are added all the time.</p>
+
+## Try it
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:5173/` (Node `^20.19.0` or `>=22.12.0`). Mascot Studio has three tabs:
+
+- **Customise:** pick a mascot, recolour it and play any emotion.
+- **Design:** shape your own mascot. [More below.](#design-your-own-mascot)
+- **Animation:** chain 2-second clips into a timeline and export it.
+
+Every tab exports a PNG, SVG, GIF or MP4 video, or a one-paste embed code.
+
+### Emotions made for AI agents
+
+One `emotionId` is all your AI needs to send. These are the ones agents use most:
+
+| Moment | ID | What the mascot does |
 | --- | --- | --- |
-| Ball | `src/engine/emotion-ball` | The Grok bot ball, with blob, wedge and gem shapes |
-| Nubby | `src/engine/mood-mates` | A stair-stepped block on stubby legs, 9 video states, Peekaboo Pop and Marble Eyes click animations |
-| Stampy | `src/engine/mood-mates` | A perforated postage stamp, 6 video states, corner peel and card flip click animations |
-| Pumpy | `src/engine/mood-mates` | A carved pumpkin that turns like a 3D head, its eyes wrap around the curve, 8 click animations |
-| Woody | `src/engine/mood-mates` | An orange wooden slab with raised arms and cut-notch eyes, a different arm pose for every emotion, Wave, Cheer and Timber click animations |
-| Peaky | `src/engine/mood-mates` | A pink-to-peach mountain with a three-peak crown, built as a soft pillow-shaped 3D solid, Rumble, Survey and Wring click animations |
-| Ghosty | `src/engine/mood-mates` | A white-and-lavender ghost leaning like a tilted teardrop, with a tail of three soft lobes, built as a smooth 3D solid |
-| Bloom | `src/engine/mood-mates` | An orange flower with eight petals of different lengths, two tall ones leaning up, built as a puffy 3D solid |
-| Hexo | `src/engine/mood-mates` | A glossy dark rounded hexagon with bright eyes, built as a chunky 3D solid |
-| Ninjo | `src/engine/mood-mates` | A round black ninja-bot with a white visor, Grok-style capsule eyes and a shaded 3D antenna, built as a smooth 3D solid |
-| Jelo | `src/engine/mood-mates` | A glossy blue jelly dome with two tall oval eyes and five leaf-shaped legs tucked behind it, each leg fitted to the reference image |
-| Drip | `src/engine/mood-mates` | A pale mint bubble with two small oval eyes and a smooth drip tail, built as a round solid that stays slim from every side |
-| Flame | `src/engine/mood-mates` | A tilted J-curve flame in glowing orange with a bright yellow face area that turns with its eyes, built as a 3D solid whose tip stays pointed from every side |
-| Germy | `src/engine/mood-mates` | A round green germ with a fuzzy ring of 26 tiny spikes traced from the reference, a few dark spots and two big round eyes, built as a 3D solid |
-| Spiky | `src/engine/mood-mates` | A red blob with a spiky crown and little side bumps traced from the reference, with two tall tilted capsule eyes, built as a 3D solid |
-| Mokey | `src/engine/mood-mates` | A red monkey head with round ears that have white centres, a white face with two big dark eyes and a small banana growing out of the top, built as a 3D solid |
-| Inky | `src/engine/mood-mates` | A glossy ink-black cat head with two pointed ears, traced from a reference video, with a soft rim light and purple glow that follow its colour, two tall tilted white eyes and a Perk click animation copied from the video, built as a 3D solid |
-| Dewy | `src/engine/mood-mates` | A soft blue water drop with a curled tip, traced from a reference image, with two tall white eyes that lean slightly towards each other, built as a 3D solid |
-| Tufty | `src/engine/mood-mates` | A sunny yellow boxy head with a spiky tuft and two little fangs, traced from a reference image, with two sleepy half-moon eyes (one with a tilted lid), built as a 3D solid |
-| Ember | `src/engine/mood-mates` | A violet flame with three curled tips, traced from a reference image, with two tall kidney-shaped eyes that each have a small notch, built as a 3D solid |
+| Thinking | `30` | Glances up and away, then turns into three hopping dots |
+| Working (shown as Busy) | `32` | Squints and bobs; every few seconds ribbons sweep round it |
+| Done | `33` | Turns three times inside a cage of nine ribbons, then rests |
+| Error | `34` | Flashes alarm red |
 
-The emotion counts are what Mascot Studio shows for each character.
+The ribbons always take their colour from the mascot, so recolouring a mascot recolours them too. Browse the rest in the studio.
 
-## Design your own mascot in the browser
+## Design your own mascot
 
 <div align="center">
 
 **No code, no account. Shape it, colour it, export it.**
 
-<img src="docs/screenshots/design-light.png" alt="The Design tab with a custom star mascot, its saved mascots, shape picker and export controls" width="880">
+<img src="docs/screenshots/design-light.png" alt="The Design tab with a custom star mascot" width="800">
 
 </div>
 
-Open the **Design** tab (`http://localhost:5173/#design`) and pick a starting shape. Every slider updates the 3D preview live, and your mascot gets all 45 emotions the built-in characters have.
-
-1. **Pick a template:** Blob, Squircle, Polygon, Star, Flower, Ghost or Drop.
-2. **Sculpt it** with the controls below.
-3. **Preview any emotion** from the dropdown, or press **Random emotion**.
-4. **Export it** as a PNG, SVG, GIF, video, emotion sheet or embed code, or press **Use in Customise** to recolour it and build an animation timeline with it.
-
-| Section | What you can change |
-| --- | --- |
-| Shape | The base template. Your colours and other settings carry over when you switch |
-| Outline | Corners, points, petals or tail lobes; wobble, squareness, point or petal depth; roundness; width; height; tilt. Blob has a **Shuffle** button for a new random wobble |
-| Body | Size, thickness and puffiness of the 3D body |
-| Colour | Body colour (swatches or any colour), plus the top and bottom of the gradient. **Auto gradient** rebuilds them from the body colour |
-| Eyes | Colour, left/right and up/down position, spacing, size, and tall or wide |
-
-<div align="center">
-<img src="docs/screenshots/design-love-strike.gif" alt="An animated GIF of a custom star mascot playing the Love Strike emotion, exported from the Design tab" width="240">
-<br><sub>Exported straight from the Design tab: <b>Animated GIF</b>, Love Strike, 4 seconds.</sub>
-</div>
-
-**Saved in your browser.** Designs are stored in `localStorage` under `mascot-studio.designs.v1`, so they are still there after a reload with no login. Up to 40 designs fit, and each can be duplicated or deleted (Delete asks for a second click). Clearing site data or using a private window starts you fresh, so download the ones you want to keep.
-
-**Share a design.** **Download design** saves a small `.mascot.json` file. **Import** loads one back as a new mascot and never overwrites an existing one.
-
-> [!NOTE]
-> Designed mascots live in the studio. To ship one in your own app through `pnpm build:lib`, turn it into a character file with the Claude Code prompt in the next section, or follow `characters/hexo` (the same outline, gradient and eye settings map onto `rimSpec` and `rimEyes`).
-
-## Build your own mascot from one image
-
-<div align="center">
-
-**Bring one picture. Get a fully animated 3D mascot.**
-
-Smooth edges, a real gradient, a body that turns in 3D and all 45 emotions, built by Claude from your image alone.
-
-</div>
-
-> [!TIP]
-> This is how Ghosty, Bloom and Hexo were made. You need Claude Code, this repo and one image.
-
-**1. Set up the repo**
-
-```bash
-pnpm install
-pnpm dev
-```
-
-**2. Open the repo in Claude Code** and drag your image into the prompt box.
-
-**3. Paste this prompt and send it**
-
-```text
-Build one new mascot for this repo (Mascot Studio: Vite + React + TypeScript) from the image I attached.
-It must match the image's silhouette, colours and eye position exactly, look fully 3D with smooth edges and a gradient, and support every emotion the repo already has.
-
-First read src/engine/mood-mates/characters/rim.ts and one finished example: characters/ghosty (traced outline) or characters/hexo (simple geometric shape). Copy their patterns and do not guess any API. Before coding, tell me in two lines what you see: shape, body colour, eye colour, eye positions.
-
-1. Silhouette: trace it from the image pixels, never by eye. With Playwright (already installed, channel 'chrome'), draw the image on a canvas, mask the character (ignore background and alpha), take its centroid, and cast 240 rays at equal angles from +x going clockwise on screen (y down). Store each ray's farthest character pixel divided by the largest radius in characters/<id>/radii.ts. Re-trace and compare to prove it matches. Simple shapes (hexagon, rounded square) can use roundedOutline instead.
-2. Smooth: radialRing(radii, 100), then smoothContour or the windowed smoothing in ghosty/bloom until there are no dips, wiggles or flat tips that the image does not have.
-3. 3D: rimSpec({ ring, unit: 100, depth, puff, sigma, edge, tint, scale, center }). Start from depth 0.6-0.8, puff 2.2-2.4, sigma 30-40, scale 66-80 and center [120,124], so the body fills about 70% of the 240 view.
-4. Gradient: tint { top: [lighter, 0.5], bottom: [deeper, 0.55] }. Same hue family, lighter and warmer on top, deeper and richer at the bottom, like the other characters.
-5. Eyes: rimEyes anchored at the image's eye position, converted into the 240 view (offset from the centroid divided by the max radius, times scale). Start from ghosty's values. Eyes must stay inside the body at every turn angle.
-6. Emotions: rimCharacter gives all 45 emotions (sleep, moods, AI states, effects) for free. Fill palette(...) with state colours in the same hue family (blush pink, angry red, off grey). If I attached an expression sheet, match those eye shapes too.
-7. Register: add the import and characters.register(...) in src/engine/mood-mates/index.ts. The studio picks it up on its own.
-8. Verify with scratch scripts in /tmp against pnpm dev, and delete them afterwards: a contact sheet of all emotions; the body turned from -70 to 70 degrees; recolouring with the studio swatches (Rose, Sky, Pink, Emerald) and Reset; eyes inside the outline; then pnpm typecheck && pnpm lint && pnpm build && pnpm build:lib. Show me the images and numbers. Do not say done without them.
-
-Rules: no click animations unless I ask. Do not change existing characters or shared engine files; if one needs changing, stop and ask me. Match the existing code style. Add the character's card to this README and its screenshot to docs/screenshots/<id>.png, then commit it all as one commit.
-```
-
-**4. Open `http://localhost:5173/`.** Your character is in the picker, with every emotion ready.
+Open the **Design** tab, pick a template (Blob, Squircle, Polygon, Star, Flower, Ghost or Drop), then sculpt the outline, body, colours and eyes with live 3D preview. Your design gets every emotion the built-in mascots have.
 
 <details>
-<summary><b>Tips for a better result</b></summary>
+<summary><b>Exports and saving</b></summary>
 
-- Use one character per image, front view, on a plain or transparent background, with both eyes visible.
-- Want custom expressions? Attach a second image of the expressions you want and the prompt will match those eye shapes.
-- Want click animations? Add "also build three click animations" to the prompt. Without it, the character gets the body animation only.
-- Not happy with a detail? Say so in plain words, for example "smooth the dip on the left side" or "make the top lighter".
+- **Export menu:** PNG (1024 × 1024, transparent), SVG, GIF (512 × 512) or transparent GIF, and copy image or SVG code.
+- **Download video:** an MP4 (512 × 512, 30 fps) of the current emotion, or your whole Animation timeline. Needs a browser that can encode video, such as Chrome.
+- **Copy embed code:** one snippet that puts the live mascot on any website.
+- **Emotion sheet** and **Animated GIF** (Design tab): every emotion on one PNG, or a GIF with your own length, size and background.
+- Designs are saved in your browser. **Download design** saves a `.mascot.json` file and **Import** loads it back.
+
+<div align="center">
+<img src="docs/screenshots/design-love-strike.gif" alt="A custom star mascot playing Love Strike" width="220">
+</div>
 
 </details>
 
-## Mascot Studio
+## Build one from an image
 
-A React app for trying every mascot before you wire one into your product.
+Bring one picture and let Claude Code build a fully animated 3D mascot from it, with smooth edges, a gradient and every emotion.
 
-- **Customise:** pick a character, an eye colour and any of its emotions, and recolour the body.
-- **Design:** build your own mascot from a template with live 3D preview. It is saved in your browser and works everywhere in the studio. See [Design your own mascot in the browser](#design-your-own-mascot-in-the-browser).
-- **Animation:** build a timeline of 2-second clips, play it back, and export the whole timeline as a GIF or video.
-- **Export:** on every tab, download a PNG, SVG, GIF or MP4 video, copy the image or SVG code, or copy a one-paste embed code. See [Exports](#exports).
-- **Themes:** light and dark.
+1. Run `pnpm install && pnpm dev`, open the repo in Claude Code and drag your image into the prompt box.
+2. Paste the prompt below and send it.
+3. Open `http://localhost:5173/`. Your mascot is in the picker.
 
-<div align="center">
-<img src="docs/screenshots/studio-dark.png" alt="Mascot Studio in dark mode with Woody selected" width="440">
-<img src="docs/screenshots/animation-dark.png" alt="The Animation tab with the clip timeline" width="440">
-</div>
+<details>
+<summary><b>The prompt</b></summary>
 
-### Exports
+```text
+Build one new mascot for this repo from the image I attached. It must match the image's silhouette, colours and eye position exactly, look fully 3D with smooth edges and a gradient, and support every emotion the repo already has.
 
-Customise, Design and Animation all end in the same row: an export menu for images and GIFs, then **Download video** and **Copy embed code**.
+First read src/engine/mood-mates/characters/rim.ts and one finished example: characters/ghosty (traced outline) or characters/hexo (simple shape). Copy their patterns and do not guess any API. Before coding, tell me in two lines what you see: shape, body colour, eye colour, eye positions.
 
-| Button | What you get |
-| --- | --- |
-| **Export menu** | The main button exports a PNG (Customise and Design) or a GIF (Animation). The arrow beside it opens the rest: **Download PNG** (1024 × 1024, transparent), **Download SVG** (vector, sharp at any size), **Download GIF** (512 × 512, 25 fps, on the studio's light or dark background), **Transparent GIF**, **Copy image** and **Copy SVG code**. GIFs loop 4 seconds of the current emotion on Customise and Design, and play your whole timeline on Animation. |
-| **Download video** | An MP4 (H.264, 512 × 512, 30 fps) that plays in any browser, phone, Slack, WhatsApp, PowerPoint or video player. Customise and Design record 4 seconds of the character, colours and emotion you have selected. Animation records your whole timeline, every clip in order, transitions and effects included. The background follows the studio theme. |
-| **Copy embed code** | One snippet that puts the live mascot on any website, with the same character, colours and emotion. On the Animation tab it plays your timeline on a loop. You can switch emotions yourself with `bot.setEmotion('10')`. |
-| **Emotion sheet** (Design) | One PNG with every emotion's pose, labelled with its name and ID. Pick a white, dark or transparent background first. |
-| **Animated GIF** (Design) | A GIF with your own settings: 2, 4 or 6 seconds; 240, 360 or 480 px; white, dark or transparent background. |
+1. Silhouette: trace it from the image pixels, never by eye, and store the radii in characters/<id>/radii.ts. Compare a render with the image to prove it matches.
+2. Smooth: no dips, wiggles or bumps that the image does not have.
+3. 3D and gradient: use rimSpec with a tint that is lighter on top and deeper at the bottom, like the other characters.
+4. Eyes: rimEyes anchored at the image's eye position. Eyes must stay inside the body at every turn angle.
+5. Emotions: rimCharacter gives every emotion for free. Fill palette(...) with state colours in the same hue family.
+6. Register it in src/engine/mood-mates/index.ts.
+7. Verify in the browser and show me the images and numbers, then run pnpm typecheck && pnpm lint && pnpm build. Do not say done without them.
 
-```html
-<div id="mascot-x7k2p" style="width:240px;height:240px"></div>
-<script src="https://your-studio.example.com/mood-mates.js"></script>
-<script>
-  var bot = MoodMates.create(document.getElementById('mascot-x7k2p'), {
-    character: 'pumpkin',
-    color: '#E11D48'
-  });
-  bot.setEmotion('10');
-</script>
+Rules: no click animations unless I ask. Do not change existing characters or shared engine files; if one needs changing, stop and ask me. Delete any scratch files afterwards.
 ```
 
-An Animation timeline with several clips becomes `bot.startTour(['10', '30', '33'], 2000)` instead, which plays the clips in order, 2 seconds each, and repeats.
+**Tips:** use one character per image, front view, on a plain or transparent background, with both eyes visible. Not happy with a detail? Say so in plain words, such as "smooth the dip on the left side".
 
-Each copy gets its own id, so you can paste several mascots on one page. The studio serves its own copy of the libraries at `/mood-mates.js` and `/emotion-ball.js`, so the snippet works as soon as the studio is deployed. For production, copy those files next to your site and change the `src`: otherwise your mascot stops if the studio goes offline. Mascots from the Design tab work the same way: the snippet carries the design as a few hundred characters of JSON.
+</details>
 
-**In React or Next.js**, do not paste the snippet into JSX (scripts inside JSX never run). Load the library once and create the mascot in an effect. Call `destroy()` in the cleanup, otherwise `StrictMode` shows two mascots:
+## Use it in your app
 
-```jsx
-import { useEffect, useRef } from 'react';
-
-const LIBRARY = 'https://your-studio.example.com/mood-mates.js';
-let loading;
-
-function loadLibrary() {
-  loading ??= new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = LIBRARY;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-  return loading;
-}
-
-export function Mascot({ character = 'pumpkin', color, emotion = '10' }) {
-  const host = useRef(null);
-
-  useEffect(() => {
-    let bot;
-    let stopped = false;
-    loadLibrary().then(() => {
-      if (stopped) return;
-      bot = window.MoodMates.create(host.current, { character, color });
-      bot.setEmotion(emotion);
-    });
-    return () => {
-      stopped = true;
-      bot?.destroy();
-    };
-  }, [character, color, emotion]);
-
-  return <div ref={host} style={{ width: 240, height: 240 }} />;
-}
-```
-
-A site with a strict Content Security Policy must allow the script's address and an inline `style` on the container, or give the container its size from a CSS class instead.
-
-Videos and GIFs are recorded off-screen on a fixed clock, so they look the same however busy the page is, and they keep your recolour and eye colour. Recording video needs a browser that can encode video with WebCodecs (tested in Chrome). If yours cannot, the studio says so and the GIF and embed code still work. For a transparent background, use the PNG, SVG, Transparent GIF or embed code. Transparent GIFs only support fully clear or fully solid pixels, so their edges are a little jagged. GIFs are also larger than videos, about 1.4 MB for a 4-second loop. **Download design** on the Design tab saves a small `.mascot.json` file you can import again.
-
-
-## Quick start
-
-```bash
-pnpm install
-pnpm dev
-```
-
-Open `http://localhost:5173/`. You need Node `^20.19.0` or `>=22.12.0`.
-
-## Use in your app
-
-Build the script-tag bundles with `pnpm build:lib`, then:
+Build the script-tag bundles with `pnpm build:lib`, or press **Copy embed code** in the studio.
 
 ```html
 <script src="dist-lib/mood-mates.iife.js"></script>
 <div id="bot" style="width:200px;height:200px"></div>
 <script>
-  const bot = MoodMates.create(document.getElementById('bot'), { character: 'nubby', emotion: '02', idle: true });
+  const bot = MoodMates.create(document.getElementById('bot'), { character: 'nubby', emotion: '02' });
   bot.handleAIMessage('{"emotionId":"30","tips":"thinking"}');
 </script>
 ```
 
-- `MoodMates.create` takes `character`: `nubby`, `stampy`, `pumpkin`, `woody`, `peak`, `ghosty`, `bloom`, `hexo`, `ninjo`, `jelo`, `drip`, `flame`, `germy`, `spiky`, `mokey`, `inky`, `dewy`, `tufty` or `ember`.
-- For the ball, load `dist-lib/emotion-ball.iife.js` and call `EmotionBall.create(el, { shape: 'blob' })`.
-- In React, mount any mascot through `src/app/components/Mascot.tsx`.
+- `character` is the lowercase mascot name, such as `cheeky`. Two differ from their display names: Peaky is `peak` and Pumpy is `pumpkin`.
+- The Ball uses `dist-lib/emotion-ball.iife.js` and `EmotionBall.create(el, { shape: 'blob' })`.
+- Every mascot shares the same emotion IDs, so one mapping works for all of them.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
-- `tips` is surfaced through the `tips` event.
-- Every character shares the same emotion IDs, so one mapping works for all of them. Open the studio to browse them.
 
-## Project layout
+## Credits
 
-```
-src/engine/emotion-ball/       Grok bot ball engine
-src/engine/mood-mates/         engine for Nubby, Stampy, Pumpy, Woody, Peaky, Ghosty, Bloom, Hexo, Ninjo, Jelo, Drip, Flame, Germy, Spiky, Mokey, Inky, Dewy, Tufty and Ember
-  characters/<name>/           one folder per character: shape, eyes, emotions, clips
-  characters/rim.ts            shared recipe for outline-based 3D characters (Peaky, Ghosty, Bloom, Hexo, Ninjo)
-  design.ts                    compiles a Design-tab mascot into a character; also used by the embed library
-  solid/                       shared 3D solid renderer (slabs, limbs, inflated outlines)
-src/engine/shared/             code shared by both engines
-src/app/                       Mascot Studio (React): App, components, export, theme
-  designer/                    Design tab: browser storage for saved designs
-  recorder.ts                  hidden engine on a fixed clock, shared by the video, GIF and emotion sheet exports
-  videoExport.ts               off-screen MP4 recorder
-  mediaExport.ts               GIF and emotion sheet renderer
-  exportImage.ts               PNG and SVG export and copy
-  embed.ts                     builds the copy-paste embed code
-scripts/publish-embed.mjs      copies the two libraries into dist so the studio serves them
-src/styles/app.css             the studio's styles, light and dark tokens
-docs/screenshots/              images used in this README
-```
+The ribbons, the three hopping dots and the Working and Done motion follow [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) (MIT). See `THIRD_PARTY_NOTICES.txt`.
