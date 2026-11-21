@@ -116,26 +116,6 @@ const alert: EffectDef = {
   },
 };
 
-const exclaim: EffectDef = {
-  duration: Number.POSITIVE_INFINITY,
-  still: 1,
-  build(layer, b) {
-    const glyph = node('g', { stroke: OUTLINE, 'stroke-width': 0.012 }, layer);
-    const bar = node('rect', { x: -0.085, y: -0.4, width: 0.17, height: 0.5, rx: 0.085 }, glyph);
-    const dot = node('circle', { cx: 0, cy: 0.27, r: 0.1 }, glyph);
-    return {
-      frame(t, color) {
-        const entry = clamp((t - 0.1) / 0.4);
-        const pop = easeOutQuint(entry) + 0.1 * Math.sin(Math.PI * entry);
-        glyph.setAttribute('transform', `translate(${b.cx} ${b.cy - b.r * 0.04}) scale(${b.r * 1.15 * pop})`);
-        glyph.setAttribute('opacity', String(clamp((t - 0.1) / 0.25)));
-        bar.setAttribute('fill', color);
-        dot.setAttribute('fill', color);
-      },
-    };
-  },
-};
-
 const notify: EffectDef = {
   duration: 2.2,
   still: 0.6,
@@ -448,10 +428,8 @@ const burst: EffectDef = {
 };
 
 const EFFECTS: Record<string, EffectDef> = {
-  loading,
   think: loading,
   alert,
-  exclaim,
   notify,
   comet,
   burst,
