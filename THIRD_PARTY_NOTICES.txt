@@ -1,9 +1,9 @@
 Open Bot Avatar
 https://github.com/DominikScholz/open-bot-avatar
 
-Used in: src/engine/shared/hoops.ts, src/engine/shared/oklch.ts and src/engine/shared/agent-frames.ts. The ribbon hoop
-geometry, the body-colour ribbon palette, the colour space helpers and the working and done motion timings follow that
-project.
+Used in: src/engine/shared/hoops.ts, src/engine/shared/oklch.ts, src/engine/shared/agent-frames.ts and the three-dot
+thinking motion in src/engine/shared/effects.ts. The ribbon hoop geometry, the body-colour ribbon palette, the colour
+space helpers and the working, done and thinking motion timings follow that project.
 
 MIT License
 

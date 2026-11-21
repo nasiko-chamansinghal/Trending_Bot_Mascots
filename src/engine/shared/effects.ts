@@ -1,5 +1,5 @@
 import { easeOutQuint } from './inertia';
-import { easeInOutCubic } from './math';
+import { easeInOutCubic, hexToRgb } from './math';
 import { nextUid } from './uid';
 
 function clamp(value: number): number {
@@ -10,6 +10,8 @@ const NS = 'http://www.w3.org/2000/svg';
 const TAU = Math.PI * 2;
 const PALETTE = ['#FF5A5F', '#FFB547', '#2DD4BF', '#3B82F6', '#A855F7', '#84CC16'];
 const OUTLINE = 'rgba(16, 16, 18, 0.3)';
+const PALE_OUTLINE = 'rgba(16, 16, 18, 0.5)';
+const PALE_LUMA = 0.78;
 const LEAVE_MS = 240;
 const EDGE_STEPS = 72;
 const LEARN_SCALE = 0.9;
@@ -46,36 +48,40 @@ function fraction(i: number): number {
   return (i * 0.618033988749895) % 1;
 }
 
-function pulse(t: number, index: number): number {
-  const p = ((((t - index * 0.5) / 1.5) % 1) + 1) % 1;
-  if (p > 0.7) return 0;
-  const rise = p < 0.25 ? easeOutQuint(p / 0.25) : 1;
-  const fall = p > 0.5 ? 1 - easeInOutCubic((p - 0.5) / 0.2) : 1;
-  return rise * fall;
+function smooth(u: number): number {
+  const x = clamp(u);
+  return x * x * (3 - 2 * x);
 }
 
+const DOT_RADIUS = 0.2;
+const DOT_STEP = 0.62;
+const DOT_HOP = 0.32;
+const DOT_LIFT = 0.12;
+const DOT_CYCLE_S = 1.25;
+const DOT_BEAT_S = 0.17;
+const DOT_AIR = 0.4;
+const DOT_GROW_S = 0.45;
+
 const loading: EffectDef = {
-  duration: 3,
-  still: 1.2,
+  duration: Number.POSITIVE_INFINITY,
+  still: 0.6,
   build(layer, b) {
     const dots = [0, 1, 2].map(() => node('circle', { stroke: OUTLINE }, layer));
     return {
       frame(t, color) {
-        const collapse = clamp((t - 0.3) / 0.3);
-        const centre = clamp((t - 0.25) / 0.25);
-        const emerge = easeOutQuint(clamp((t - 0.3) / 0.5));
-        const settled = clamp((t - 0.7) / 0.3);
+        const grown = smooth(clamp((clamp(t / DOT_GROW_S) - 0.45) / 0.55));
+        const [red, green, blue] = hexToRgb(color);
+        const pale = (0.299 * red + 0.587 * green + 0.114 * blue) / 255 > PALE_LUMA;
         dots.forEach((dot, i) => {
-          const k = pulse(t, i) * settled;
-          const middle = i === 1;
-          const side = (i - 1) * b.r * 0.46 * emerge;
-          dot.setAttribute('cx', String(b.cx + side));
-          dot.setAttribute('cy', String(b.cy));
-          dot.setAttribute('r', String(b.r * (middle ? 0.14 : 0.1 * emerge) * (1 + 0.5 * k)));
+          const p = ((((t - i * DOT_BEAT_S) % DOT_CYCLE_S) + DOT_CYCLE_S) % DOT_CYCLE_S) / DOT_CYCLE_S;
+          const hop = p < DOT_AIR ? Math.sin(Math.PI * (p / DOT_AIR)) : 0;
+          dot.setAttribute('cx', String(b.cx + (i - 1) * DOT_STEP * b.r * grown));
+          dot.setAttribute('cy', String(b.cy - DOT_HOP * b.r * hop * grown));
+          dot.setAttribute('r', String(DOT_RADIUS * b.r * grown * (1 + DOT_LIFT * hop)));
           dot.setAttribute('fill', color);
-          dot.setAttribute('stroke-width', String(b.r * 0.012));
-          dot.setAttribute('stroke-opacity', String(collapse));
-          dot.setAttribute('opacity', String(middle ? centre : (0.55 + 0.45 * k) * emerge));
+          dot.setAttribute('stroke', pale ? PALE_OUTLINE : OUTLINE);
+          dot.setAttribute('stroke-width', String(b.r * (pale ? 0.035 : 0.012)));
+          dot.setAttribute('stroke-opacity', String(grown));
         });
       },
     };
@@ -443,6 +449,7 @@ const burst: EffectDef = {
 
 const EFFECTS: Record<string, EffectDef> = {
   loading,
+  think: loading,
   alert,
   exclaim,
   notify,
