@@ -1,12 +1,14 @@
+import { useEffect, useRef } from 'react';
 import { GitHubLink } from './GitHubLink';
 import { ThemeToggle } from './ThemeToggle';
 
-export type Tab = 'customise' | 'design' | 'animation';
+export type Tab = 'customise' | 'design' | 'animation' | 'skill';
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'customise', label: 'Customise' },
   { id: 'design', label: 'Design' },
   { id: 'animation', label: 'Animation' },
+  { id: 'skill', label: 'Agent skill' },
 ];
 
 interface AppBarProps {
@@ -14,6 +16,15 @@ interface AppBarProps {
 }
 
 export function AppBar({ tab }: AppBarProps) {
+  const navRef = useRef<HTMLElement>(null);
+
+  // On narrow screens the tabs scroll sideways; keep the current one in view.
+  useEffect(() => {
+    navRef.current
+      ?.querySelector(`[href="#${tab}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [tab]);
+
   return (
     <header className="appbar">
       <a className="brand" href="#customise" aria-label="Mascot Studio home">
@@ -24,7 +35,7 @@ export function AppBar({ tab }: AppBarProps) {
         </svg>
         <span className="brand-name">Mascot Studio</span>
       </a>
-      <nav className="tabs" aria-label="Studio">
+      <nav className="tabs" aria-label="Studio" ref={navRef}>
         {TABS.map((item) => (
           <a
             key={item.id}

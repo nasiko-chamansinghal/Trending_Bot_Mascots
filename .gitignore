@@ -4,6 +4,9 @@
 node_modules/
 dist/
 dist-lib/
+# Generated from skill/ by scripts/build-skill.mjs
+public/skill/
+public/llms.txt
 test-results/
 playwright-report/
 .claude/

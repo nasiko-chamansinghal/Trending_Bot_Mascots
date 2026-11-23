@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { copyText } from '../clipboard';
 import { download } from '../download';
 import { embedCode } from '../embed';
 import { type Look, renderVideo, type Segment, themeBackdrop, VideoUnsupportedError } from '../videoExport';
@@ -34,23 +35,6 @@ const VIDEO_ICON = (
 );
 const CODE_ICON = <path d="m8.5 8-4.5 4 4.5 4m7-8 4.5 4-4.5 4M13.5 6l-3 12" />;
 const CHECK_ICON = <path d="m5 12.5 4.5 4.5L19 7.5" />;
-
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const area = document.createElement('textarea');
-    area.value = text;
-    area.setAttribute('readonly', '');
-    Object.assign(area.style, { position: 'fixed', opacity: '0' });
-    document.body.appendChild(area);
-    area.select();
-    const copied = document.execCommand('copy');
-    area.remove();
-    return copied;
-  }
-}
 
 interface ExportActionsProps {
   look: Look;

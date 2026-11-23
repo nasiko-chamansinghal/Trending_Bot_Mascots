@@ -9,8 +9,10 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
+    "predev": "node scripts/build-skill.mjs",
     "dev": "vite",
-    "build": "tsc && vite build && pnpm build:lib && node scripts/publish-embed.mjs",
+    "build": "tsc && node scripts/build-skill.mjs && vite build && pnpm build:lib && node scripts/publish-embed.mjs",
+    "build:skill": "node scripts/build-skill.mjs",
     "preview": "vite preview",
     "typecheck": "tsc",
     "lint": "biome check",

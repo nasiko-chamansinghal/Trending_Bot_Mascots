@@ -9,6 +9,7 @@ import { ColorPicker } from './components/ColorPicker';
 import { DesignView } from './components/DesignView';
 import { EmotionPicker } from './components/EmotionPicker';
 import { EyePicker } from './components/EyePicker';
+import { SkillView } from './components/SkillView';
 import { Stage } from './components/Stage';
 import { useDesigns } from './designer/store';
 import { installGazeListeners } from './gaze';
@@ -50,6 +51,7 @@ function readTab(): Tab {
   const hash = window.location.hash;
   if (hash === '#animation') return 'animation';
   if (hash === '#design') return 'design';
+  if (hash === '#skill') return 'skill';
   return 'customise';
 }
 
@@ -94,7 +96,9 @@ export function App() {
     <>
       <AppBar tab={tab} />
       <main className="canvas" id={tab}>
-        {tab === 'design' ? (
+        {tab === 'skill' ? (
+          <SkillView character={character} color={color} eyes={eyeHexes[character] ?? null} />
+        ) : tab === 'design' ? (
           <DesignView
             state={designs}
             onUse={(id) => {
