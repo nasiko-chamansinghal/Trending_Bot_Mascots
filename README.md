@@ -65,11 +65,12 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:5173/` (Node `^20.19.0` or `>=22.12.0`). Mascot Studio has three tabs:
+Open `http://localhost:5173/` (Node `^20.19.0` or `>=22.12.0`). Mascot Studio has four tabs:
 
 - **Customise:** pick a mascot, recolour it and play any emotion.
 - **Design:** shape your own mascot. [More below.](#design-your-own-mascot)
 - **Animation:** chain 2-second clips into a timeline and export it.
+- **Agent skill:** install a skill that lets Claude Code or any coding agent add these mascots to your app. [More below.](#let-your-coding-agent-add-it)
 
 Every tab exports a PNG, SVG, GIF or MP4 video, or a one-paste embed code.
 
@@ -161,6 +162,18 @@ Build the script-tag bundles with `pnpm build:lib`, or press **Copy embed code**
 - The Ball uses `dist-lib/emotion-ball.iife.js` and `EmotionBall.create(el, { shape: 'blob' })`.
 - Every mascot shares the same emotion IDs, so one mapping works for all of them.
 - Unknown IDs and bad JSON fall back to idle (`02`) and emit an `error` event.
+
+### Let your coding agent add it
+
+The studio serves an agent skill, `mascot-studio`, that teaches Claude Code, the Claude apps and other coding agents to add any mascot to React, Next.js, Vue, Svelte, Angular or plain HTML, wire its emotions to app state, and clean it up properly. Install it for Claude Code with:
+
+```bash
+mkdir -p ~/.claude/skills && curl -fsSL https://trendingbotsmascots.vercel.app/skill/mascot-studio.tar.gz | tar -xz -C ~/.claude/skills
+```
+
+Then ask, for example, "add Ghosty to the chat page and show Thinking while it waits". The **Agent skill** tab has the project-level install, a `.zip` for the Claude apps, a one-line instruction for any other agent, and a ready prompt for the mascot you picked. `/llms.txt` lists everything for agents that look for it.
+
+The skill's text lives in `skill/`. `scripts/build-skill.mjs` fills in the character and emotion lists from the engine and writes the skill, its `.tar.gz` and `.zip`, and `llms.txt` into `public/` on every `pnpm dev` and `pnpm build`, so it always matches the code. Set `SKILL_SITE_URL` to change the address it points to; on Vercel it uses the production domain.
 
 ## Credits
 
