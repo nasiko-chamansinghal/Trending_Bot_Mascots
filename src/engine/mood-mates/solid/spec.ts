@@ -10,6 +10,26 @@ export interface StemShading {
   ball?: { radius: number; light: string; dark: string };
 }
 
+export interface FaceFollow {
+  anchor: [number, number];
+  gain: number;
+  lean: number;
+  limit: [number, number, number];
+}
+
+export interface RigPiece {
+  ring: Ring;
+  fill: string;
+  lift?: (x: number, y: number) => number;
+}
+
+export interface HeadRig {
+  rest: number;
+  share: number;
+  follow: FaceFollow;
+  pieces: RigPiece[];
+}
+
 export interface PlateSpec {
   ring: Ring;
   top: string;
@@ -17,7 +37,7 @@ export interface PlateSpec {
   inverse?: { top: string; bottom: string };
   tint?: BodyTint;
   darkTint?: BodyTint;
-  follow?: { anchor: [number, number]; gain: number; lean: number; limit: [number, number, number] };
+  follow?: FaceFollow;
 }
 
 export interface DecalSpec {
@@ -74,6 +94,7 @@ export interface SolidSpec {
     fill?: string;
     edge?: string;
     accent?: { ring: Ring; fill: string };
+    rig?: HeadRig;
   };
   wrapDecals?: boolean;
   ears?: EarSpec[];

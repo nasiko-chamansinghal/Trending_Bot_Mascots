@@ -28,6 +28,7 @@ import {
   TAU,
   turnFace,
   type Vec2,
+  type Vec3,
 } from './model';
 import type { HaloSpec, ShadeSpec, ShadeTone, SolidSpec } from './spec';
 
@@ -310,6 +311,27 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     ? (Math.min(...spec.topper.ring.map((p) => p[0])) + Math.max(...spec.topper.ring.map((p) => p[0]))) / 2
     : 0;
   if (topper) bodyG.appendChild(topper);
+  const rig = spec.topper?.rig;
+  const restTurn = rotation(spec.rest);
+  const unrest = (p: Vec3): Vec3 => [
+    restTurn[0] * p[0] + restTurn[3] * p[1] + restTurn[6] * p[2],
+    restTurn[1] * p[0] + restTurn[4] * p[1] + restTurn[7] * p[2],
+    restTurn[2] * p[0] + restTurn[5] * p[1] + restTurn[8] * p[2],
+  ];
+  const rigPoints = (rig?.pieces ?? []).map((piece) =>
+    piece.ring.map(([sx, sy]): Vec3 => {
+      const x = (sx - CX) / KX;
+      const y = -(sy - CY) / KY;
+      return unrest([x, y, -x * Math.tan(rig?.rest ?? 0) + (piece.lift?.(x, y) ?? 0)]);
+    }),
+  );
+  const rigNodes = (rig?.pieces ?? []).map((piece) => {
+    const node = el('path', { fill: piece.fill, stroke: 'none' }) as SVGPathElement;
+    bodyG.appendChild(node);
+    return node;
+  });
+  const rigFront = rigNodes.map(() => true);
+  if (rig && topper) topper.style.display = 'none';
   const topperAccent = spec.topper?.accent
     ? (el('path', {
         fill: spec.topper.accent.fill,
@@ -696,7 +718,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   }
 
   function faceTurn(pose: Pose): [number, number, number] {
-    const follow = plateLook?.follow;
+    const follow = plateLook?.follow ?? spec.topper?.rig?.follow;
     if (!follow) return [0, 0, 0];
     const [lx, ly] = eyeCentre(pose.left);
     const [rx, ry] = eyeCentre(pose.right);
@@ -709,6 +731,27 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       clamp(Math.asin(clamp(up, -1, 1)), -maxPitch, maxPitch),
       clamp(Math.atan2(ry - ly, rx - lx) + follow.lean * lean, -maxRoll, maxRoll),
     ];
+  }
+
+  function setRig(m: Mat3, turn: [number, number, number], sketchOn: boolean): void {
+    if (!rig) return;
+    const head = turnFace(m, turn[0] * rig.share, turn[1] * rig.share, 0);
+    rigPoints.forEach((points, i) => {
+      const node = rigNodes[i] as SVGPathElement;
+      node.style.display = sketchOn ? 'none' : '';
+      let depth = 0;
+      const screen = points.map((p): Vec2 => {
+        const q = apply(head, p);
+        depth += q[2];
+        return [CX + q[0] * KX, CY - q[1] * KY];
+      });
+      node.setAttribute('d', polyPath(screen));
+      const front = depth >= 0;
+      if (front === rigFront[i]) return;
+      rigFront[i] = front;
+      if (front) bodyG.appendChild(node);
+      else bodyG.insertBefore(node, body);
+    });
   }
 
   function turnKey(turn: [number, number, number]): string {
@@ -931,6 +974,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const turn = faceTurn(pose);
     if (plate) setPlate(plate, m, turn);
     setDecals(m, turn);
+    setRig(m, turn, (b.sketch || 0) > 0.5);
     setEars(m);
     const sqx = b.scaleX || 1;
     const sqy = b.scaleY || 1;
