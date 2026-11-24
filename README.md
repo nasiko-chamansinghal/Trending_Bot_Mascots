@@ -23,36 +23,40 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/nubby.png" alt="Nubby" width="150"><br><b>Nubby</b></td>
     <td align="center"><img src="docs/screenshots/stampy.png" alt="Stampy" width="150"><br><b>Stampy</b></td>
     <td align="center"><img src="docs/screenshots/pumpkin.png" alt="Pumpy" width="150"><br><b>Pumpy</b></td>
-    <td align="center"><img src="docs/screenshots/woody.png" alt="Woody" width="150"><br><b>Woody</b></td>
     <td align="center"><img src="docs/screenshots/peaky.png" alt="Peaky" width="150"><br><b>Peaky</b></td>
+    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="150"><br><b>Ghosty</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/ghosty.png" alt="Ghosty" width="150"><br><b>Ghosty</b></td>
     <td align="center"><img src="docs/screenshots/bloom.png" alt="Bloom" width="150"><br><b>Bloom</b></td>
     <td align="center"><img src="docs/screenshots/hexo.png" alt="Hexo" width="150"><br><b>Hexo</b></td>
     <td align="center"><img src="docs/screenshots/ninjo.png" alt="Ninjo" width="150"><br><b>Ninjo</b></td>
     <td align="center"><img src="docs/screenshots/jelo.png" alt="Jelo" width="150"><br><b>Jelo</b></td>
     <td align="center"><img src="docs/screenshots/drip.png" alt="Drip" width="150"><br><b>Drip</b></td>
+    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="150"><br><b>Flame</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/flame.png" alt="Flame" width="150"><br><b>Flame</b></td>
     <td align="center"><img src="docs/screenshots/germy.png" alt="Germy" width="150"><br><b>Germy</b></td>
     <td align="center"><img src="docs/screenshots/spiky.png" alt="Spiky" width="150"><br><b>Spiky</b></td>
     <td align="center"><img src="docs/screenshots/mokey.png" alt="Mokey" width="150"><br><b>Mokey</b></td>
     <td align="center"><img src="docs/screenshots/inky.png" alt="Inky" width="150"><br><b>Inky</b></td>
     <td align="center"><img src="docs/screenshots/dewy.png" alt="Dewy" width="150"><br><b>Dewy</b></td>
+    <td align="center"><img src="docs/screenshots/tufty.png" alt="Tufty" width="150"><br><b>Tufty</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/tufty.png" alt="Tufty" width="150"><br><b>Tufty</b></td>
     <td align="center"><img src="docs/screenshots/ember.png" alt="Ember" width="150"><br><b>Ember</b></td>
     <td align="center"><img src="docs/screenshots/cheffy.png" alt="Cheffy" width="150"><br><b>Cheffy</b></td>
     <td align="center"><img src="docs/screenshots/blaze.png" alt="Blaze" width="150"><br><b>Blaze</b></td>
     <td align="center"><img src="docs/screenshots/glowy.png" alt="Glowy" width="150"><br><b>Glowy</b></td>
     <td align="center"><img src="docs/screenshots/wispy.png" alt="Wispy" width="150"><br><b>Wispy</b></td>
+    <td align="center"><img src="docs/screenshots/cheeky.png" alt="Cheeky" width="150"><br><b>Cheeky</b></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/screenshots/cheeky.png" alt="Cheeky" width="150"><br><b>Cheeky</b></td>
     <td align="center"><img src="docs/screenshots/blobby.png" alt="Blobby" width="150"><br><b>Blobby</b></td>
+    <td align="center"><img src="docs/screenshots/fuzzy.png" alt="Fuzzy" width="150"><br><b>Fuzzy</b></td>
+    <td align="center"><img src="docs/screenshots/limey.png" alt="Limey" width="150"><br><b>Limey</b></td>
+    <td align="center"><img src="docs/screenshots/googly.png" alt="Googly" width="150"><br><b>Googly</b></td>
+    <td align="center"><img src="docs/screenshots/bunni.png" alt="Bunni" width="150"><br><b>Bunni</b></td>
+    <td align="center"><img src="docs/screenshots/bao.png" alt="Bao" width="150"><br><b>Bao</b></td>
   </tr>
 </table>
 
