@@ -26,6 +26,7 @@ interface Prefs {
 
 const PREF_KEY = 'mascot-studio.prefs.v2';
 const DEFAULTS: Prefs = { character: 'ball', colors: {}, eyes: {} };
+const DEFAULT_EYES: EyeTone = 'black';
 
 function sanitize(prefs: Prefs): Prefs {
   const storedColors: Colors = prefs.colors && typeof prefs.colors === 'object' ? prefs.colors : {};
@@ -36,7 +37,7 @@ function sanitize(prefs: Prefs): Prefs {
     const color = storedColors[c.id] ?? null;
     const tone = storedEyes[c.id];
     colors[c.id] = isSavedColor(color) ? color : null;
-    eyes[c.id] = isEyeTone(tone) ? tone : null;
+    eyes[c.id] = isEyeTone(tone) ? tone : DEFAULT_EYES;
   }
   return {
     character: hasCharacter(prefs.character) ? prefs.character : DEFAULTS.character,
@@ -74,9 +75,9 @@ export function App() {
   const emotions = emotionsOf(character);
   const current = emotions.find((def) => def.id === emotion);
   const color = prefs.colors[character] ?? null;
-  const tone = prefs.eyes[character] ?? null;
+  const tone = prefs.eyes[character] ?? DEFAULT_EYES;
   const eyeHexes: Record<string, string | null> = {};
-  for (const c of listCharacters()) eyeHexes[c.id] = eyeHex(prefs.eyes[c.id] ?? null);
+  for (const c of listCharacters()) eyeHexes[c.id] = eyeHex(prefs.eyes[c.id] ?? DEFAULT_EYES);
 
   const selectCharacter = (id: string) => {
     if (id === character) return;
@@ -88,7 +89,7 @@ export function App() {
     updatePrefs({ colors: { ...prefs.colors, [character]: hex } });
   };
 
-  const selectEyes = (next: EyeTone | null) => {
+  const selectEyes = (next: EyeTone) => {
     updatePrefs({ eyes: { ...prefs.eyes, [character]: next } });
   };
 
@@ -146,13 +147,6 @@ export function App() {
               <section className="inspector-section">
                 <div className="section-head">
                   <h2>Eyes</h2>
-                  {tone ? (
-                    <button type="button" className="button-quiet" onClick={() => selectEyes(null)}>
-                      Reset
-                    </button>
-                  ) : (
-                    <span className="meta">Original</span>
-                  )}
                 </div>
                 <EyePicker tone={tone} onSelect={selectEyes} />
               </section>
