@@ -4,7 +4,7 @@ import type { EyePair, Point, Ring } from '../geometry';
 import { type HeadFollow, headFollowFor } from '../headfollow';
 import { solidRestOutline } from '../solid/render';
 import type { BodyTint, SolidSpec } from '../solid/spec';
-import type { AnimSpec, CharacterRaw, ClipDef, Palette } from '../types';
+import type { AnimSpec, CharacterRaw, ClipDef, MouthShape, Palette } from '../types';
 import { centroid } from '../util';
 import { type EyeGrow, type EyeSlots, fxEmotions } from './fx-emotions';
 import { grokPairPlacer, normalizeRing } from './grok-rings';
@@ -219,6 +219,7 @@ export interface RimCharacter {
   spec: SolidSpec;
   palette: Palette;
   rings: Record<string, EyePair>;
+  mouths?: Record<string, MouthShape>;
   fear?: EyeGrow;
   clips?: Record<string, ClipDef>;
   headFollow?: HeadFollow;
@@ -238,6 +239,7 @@ export function rimCharacter(o: RimCharacter): CharacterRaw {
     palette: o.palette,
     eyeShapes: {},
     eyeRings: o.rings,
+    mouths: o.mouths,
     blink: [],
     blinkStyle: 'open',
     poseDefaults: { body: { turn: 0, pitch: 0 } },

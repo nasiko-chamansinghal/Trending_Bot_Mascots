@@ -1,3 +1,4 @@
+import { bao } from './characters/bao';
 import { blaze } from './characters/blaze';
 import { blobby } from './characters/blobby';
 import { bloom } from './characters/bloom';
@@ -64,6 +65,7 @@ characters.register(cheeky);
 characters.register(blobby);
 characters.register(fuzzy);
 characters.register(limey);
+characters.register(bao);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
