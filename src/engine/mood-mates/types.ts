@@ -46,10 +46,25 @@ export interface EyePose {
   ring?: Ring;
 }
 
+export interface MouthShape {
+  points: Ring;
+  width: number;
+  fill: boolean;
+  closed: boolean;
+}
+
+export interface MouthPose {
+  shape: MouthShape;
+  x: number;
+  y: number;
+  color: string;
+}
+
 export interface Pose {
   body: BodyPose;
   left: EyePose;
   right: EyePose;
+  mouth?: MouthPose;
   props: Record<string, number>;
 }
 
@@ -148,6 +163,7 @@ export interface CharacterRaw {
   palette: Palette;
   eyeShapes: Record<string, CutParams>;
   eyeRings?: Record<string, EyePair>;
+  mouths?: Record<string, MouthShape>;
   solid?: SolidSpec;
   blinkStyle?: 'ring' | 'open';
   poseDefaults?: PoseSpec;
@@ -180,6 +196,7 @@ export interface ResolvedCharacter {
   palette: Palette;
   eyeFamily: Record<string, EyePair>;
   defaultEyeRing: EyePair;
+  mouths: Record<string, MouthShape> | null;
   fxSkin: string;
   material: string;
   tint: BodyTint | null;

@@ -8,7 +8,7 @@ import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
 import type { BallHandle, BallOptions } from '../render';
 import { createTint, fromHsl, toHsl } from '../tint';
-import type { EyePose, Pose } from '../types';
+import type { EyePose, MouthPose, Pose } from '../types';
 import { centroid, clamp, shade as darken, el, r2, ringPath } from '../util';
 import { hullReach, projectEar } from './ears';
 import {
@@ -507,6 +507,15 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     eyeG.appendChild(node);
     return { node, lastD: '' };
   }) as [EyeNode, EyeNode];
+  const mouthNode = ch.mouths
+    ? (el('path', {
+        fill: 'none',
+        stroke: palette.eye,
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+      }) as SVGPathElement)
+    : null;
+  if (mouthNode) eyeG.appendChild(mouthNode);
   svg.appendChild(eyeG);
 
   const earFill = createTint(`${id}ea`, defs, spec.tint, palette.body, [prep.restTop, prep.restBottom]);
@@ -856,6 +865,62 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
   }
 
+  function setMouth(
+    mouth: MouthPose | undefined,
+    m: Mat3,
+    sketch: number,
+    bodyTf: string,
+    sqx: number,
+    sqy: number,
+  ): void {
+    if (!mouthNode) return;
+    const pts = mouth
+      ? projectEye(
+          prep.skin,
+          prep.map,
+          eyeRing({
+            x: mouth.x,
+            y: mouth.y,
+            scaleX: 1,
+            scaleY: 1,
+            rotate: 0,
+            open: 1,
+            color: mouth.color,
+            lookX: 0,
+            lookY: 0,
+            ring: mouth.shape.points,
+          }),
+          m,
+          spec.edge,
+          !spec.wrapDecals,
+        )
+      : null;
+    if (!mouth || !pts) {
+      mouthNode.style.display = 'none';
+      return;
+    }
+    mouthNode.style.display = '';
+    const scr = pts.map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
+    let mx = 0;
+    let my = 0;
+    for (const p of scr) {
+      mx += p[0];
+      my += p[1];
+    }
+    mx /= scr.length;
+    my /= scr.length;
+    const d = scr.map((p, i) => `${i ? 'L' : 'M'}${r2(p[0])} ${r2(p[1])}`).join('');
+    mouthNode.setAttribute('d', mouth.shape.closed ? `${d}Z` : d);
+    mouthNode.setAttribute(
+      'transform',
+      `${bodyTf} translate(${r2(mx)} ${r2(my)}) scale(${r2(1 / sqx)} ${r2(1 / sqy)}) translate(${r2(-mx)} ${r2(-my)})`,
+    );
+    const ink = sketch > 0.5 ? `var(--sketch-ink, ${mouth.color})` : mouth.color;
+    mouthNode.setAttribute('fill', mouth.shape.fill && sketch <= 0.5 ? mouth.color : 'none');
+    mouthNode.setAttribute('stroke', mouth.shape.width > 0 ? ink : 'none');
+    mouthNode.setAttribute('stroke-width', String(r2(mouth.shape.width)));
+  }
+
   function applyPose(pose: Pose): void {
     const b = pose.body;
     const now = performance.now();
@@ -945,6 +1010,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     if (b.chill > 0.001) washPaint.tint(b.color);
     setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
     setEye(eyes[1], pose.right, m, sketch, bodyTf, sqx, sqy);
+    setMouth(pose.mouth, m, sketch, bodyTf, sqx, sqy);
 
     const lift = clamp(-b.y / 52, 0, 1);
     const shOp = sketchOn ? 0 : 0.16 * (1 - 0.55 * lift);

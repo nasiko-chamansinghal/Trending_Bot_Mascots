@@ -26,6 +26,8 @@ import type {
   ClipDef,
   EmotionGroup,
   EmotionRaw,
+  MouthPose,
+  MouthShape,
   Palette,
   Pose,
   PoseSpec,
@@ -35,6 +37,7 @@ import type {
 
 const TAU = Math.PI * 2;
 const FALLBACK_ID = '02';
+const MOUTH_FOLLOW = 0.7;
 
 const characterMap = new Map<string, CharacterRaw>();
 const charOrder: string[] = [];
@@ -65,6 +68,7 @@ function resolveCharacter(raw: CharacterRaw): ResolvedCharacter {
     palette,
     eyeFamily: family,
     defaultEyeRing: family.calm,
+    mouths: raw.mouths ?? null,
     fxSkin: raw.fxSkin || 'spark',
     material: raw.material || 'flat',
     tint: raw.tint || null,
@@ -194,7 +198,17 @@ function clonePose(p: Pose): Pose {
     body: Object.assign({}, p.body),
     left: Object.assign({}, p.left),
     right: Object.assign({}, p.right),
+    mouth: p.mouth,
     props: Object.assign({}, p.props),
+  };
+}
+
+function lerpMouth(a: MouthShape, b: MouthShape, t: number): MouthShape {
+  return {
+    points: lerpRing(a.points, b.points, t),
+    width: lerp(a.width, b.width, t),
+    fill: t > 0.5 ? b.fill : a.fill,
+    closed: t > 0.5 ? b.closed : a.closed,
   };
 }
 
@@ -601,6 +615,8 @@ export class EmotionEngine {
   private ringDst: [Ring, Ring];
   private ringCur: [Ring, Ring];
   private ringSpring: Spring;
+  private mouthSrc: MouthShape | null;
+  private mouthDst: MouthShape | null;
   private ringSpeed = 7;
   private exprSlot = 'calm';
   private poolPos = 0;
@@ -659,6 +675,8 @@ export class EmotionEngine {
     this.ringDst = [calm[0], calm[1]];
     this.ringCur = this.ringDst;
     this.ringSpring = spring(1);
+    this.mouthSrc = ch.mouths?.calm ?? null;
+    this.mouthDst = this.mouthSrc;
 
     this.fallbackId = opts.fallbackId || FALLBACK_ID;
     this.lastActivity = performance.now();
@@ -917,6 +935,11 @@ export class EmotionEngine {
       lerpRing(this.ringSrc[1], this.ringDst[1], s),
     ];
     this.ringDst = [pair[0], pair[1]];
+    const mouths = this.character.mouths;
+    if (mouths && this.mouthSrc && this.mouthDst) {
+      this.mouthSrc = lerpMouth(this.mouthSrc, this.mouthDst, s);
+      this.mouthDst = mouths[slot] ?? mouths.calm ?? this.mouthDst;
+    }
     this.ringSpring.x = 0;
     this.ringSpring.v = 0;
     this.ringSpring.t = 1;
@@ -924,8 +947,22 @@ export class EmotionEngine {
     this.exprSlot = slot;
     if (speed != null && speed >= 60) {
       this.ringSrc = [pair[0], pair[1]];
+      this.mouthSrc = this.mouthDst;
       this.ringSpring.x = 1;
     }
+  }
+
+  private mouthPose(pose: Pose): MouthPose | undefined {
+    if (!this.mouthSrc || !this.mouthDst) return undefined;
+    const rs = clamp(this.ringSpring.x, 0, 1.35);
+    const shape = rs >= 0.999 ? this.mouthDst : lerpMouth(this.mouthSrc, this.mouthDst, rs);
+    const { left, right } = pose;
+    return {
+      shape,
+      x: ((left.x + left.lookX + right.x + right.lookX) / 2) * MOUTH_FOLLOW,
+      y: ((left.y + left.lookY + right.y + right.lookY) / 2) * MOUTH_FOLLOW,
+      color: left.color,
+    };
   }
 
   private blinkNow(t: number): void {
@@ -996,6 +1033,7 @@ export class EmotionEngine {
     if (this.idle && !this.isTouring) this.checkIdle(now);
     const pose = this.compose(now, 0);
     this.inertia.apply(pose, now);
+    pose.mouth = this.mouthPose(pose);
     this.ball.applyPose(pose);
     this.effects.frame(now, pose.body.color, pose.body.scale);
     this.lastPose = pose;
