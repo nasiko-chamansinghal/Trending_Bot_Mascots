@@ -84,6 +84,7 @@ const SPEC: SolidSpec = {
     bottom: '#DCD8D0',
     follow: { anchor: view(PATCH_ORIGIN[0], PATCH_ORIGIN[1]), gain: 1, lean: 0.3, limit: [0.26, 0.19, 0.28] },
   },
+  stemFollow: true,
   stemColor: '#60B2F3',
   capColor: '#60B2F3',
 };
