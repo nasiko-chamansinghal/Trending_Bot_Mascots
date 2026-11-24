@@ -963,10 +963,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
     body.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
     for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
-    stemRoot.setAttribute('fill', spec.stemColor);
-    stemBack.setAttribute('fill', sketchOn ? 'none' : stemFill);
-    stemFront.setAttribute('fill', sketchOn ? 'none' : stemFill);
-    cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
+    const stemPaint = spec.stemFollow ? bodyFill(b.color) : null;
+    stemRoot.setAttribute('fill', stemPaint ?? spec.stemColor);
+    stemBack.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? stemFill));
+    stemFront.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? stemFill));
+    cap.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? spec.capColor));
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
     for (const node of decals) node.style.visibility = sketchOn ? 'hidden' : '';
