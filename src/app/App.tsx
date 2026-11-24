@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { characterName, DEFAULT_EMOTION, emotionsOf, hasCharacter, listCharacters } from './characters';
 import type { Clip } from './clips';
-import { type EyeTone, eyeHex, isEyeTone, isSavedColor } from './colors';
+import { eyeColorOf, isSavedColor } from './colors';
 import { AnimationView } from './components/AnimationView';
 import { AppBar, type Tab } from './components/AppBar';
 import { CharacterPicker } from './components/CharacterPicker';
 import { ColorPicker } from './components/ColorPicker';
 import { DesignView } from './components/DesignView';
 import { EmotionPicker } from './components/EmotionPicker';
-import { EyePicker } from './components/EyePicker';
 import { SkillView } from './components/SkillView';
 import { Stage } from './components/Stage';
 import { useDesigns } from './designer/store';
@@ -16,33 +15,25 @@ import { installGazeListeners } from './gaze';
 import { usePrefs } from './prefs';
 
 type Colors = Record<string, string | null>;
-type Eyes = Record<string, EyeTone | null>;
 
 interface Prefs {
   character: string;
   colors: Colors;
-  eyes: Eyes;
 }
 
 const PREF_KEY = 'mascot-studio.prefs.v2';
-const DEFAULTS: Prefs = { character: 'ball', colors: {}, eyes: {} };
-const DEFAULT_EYES: EyeTone = 'black';
+const DEFAULTS: Prefs = { character: 'ball', colors: {} };
 
 function sanitize(prefs: Prefs): Prefs {
   const storedColors: Colors = prefs.colors && typeof prefs.colors === 'object' ? prefs.colors : {};
-  const storedEyes: Eyes = prefs.eyes && typeof prefs.eyes === 'object' ? prefs.eyes : {};
   const colors: Colors = {};
-  const eyes: Eyes = {};
   for (const c of listCharacters()) {
     const color = storedColors[c.id] ?? null;
-    const tone = storedEyes[c.id];
     colors[c.id] = isSavedColor(color) ? color : null;
-    eyes[c.id] = isEyeTone(tone) ? tone : DEFAULT_EYES;
   }
   return {
     character: hasCharacter(prefs.character) ? prefs.character : DEFAULTS.character,
     colors,
-    eyes,
   };
 }
 
@@ -75,9 +66,8 @@ export function App() {
   const emotions = emotionsOf(character);
   const current = emotions.find((def) => def.id === emotion);
   const color = prefs.colors[character] ?? null;
-  const tone = prefs.eyes[character] ?? DEFAULT_EYES;
   const eyeHexes: Record<string, string | null> = {};
-  for (const c of listCharacters()) eyeHexes[c.id] = eyeHex(prefs.eyes[c.id] ?? DEFAULT_EYES);
+  for (const c of listCharacters()) eyeHexes[c.id] = eyeColorOf(c.id);
 
   const selectCharacter = (id: string) => {
     if (id === character) return;
@@ -87,10 +77,6 @@ export function App() {
 
   const selectColor = (hex: string | null) => {
     updatePrefs({ colors: { ...prefs.colors, [character]: hex } });
-  };
-
-  const selectEyes = (next: EyeTone) => {
-    updatePrefs({ eyes: { ...prefs.eyes, [character]: next } });
   };
 
   return (
@@ -143,12 +129,6 @@ export function App() {
                   eyes={eyeHexes}
                   onSelect={selectCharacter}
                 />
-              </section>
-              <section className="inspector-section">
-                <div className="section-head">
-                  <h2>Eyes</h2>
-                </div>
-                <EyePicker tone={tone} onSelect={selectEyes} />
               </section>
               <section className="inspector-section">
                 <div className="section-head">

@@ -24,23 +24,45 @@ export function isSavedColor(hex: string | null): hex is string {
   return hex !== null && SAVED_COLORS.some((c) => c.hex === hex);
 }
 
-export type EyeTone = 'black' | 'white';
+const BLACK = '#111111';
+const WHITE = '#FFFFFF';
 
-export interface EyeOption {
-  tone: EyeTone;
-  name: string;
-  hex: string;
-}
-
-export const EYE_OPTIONS: EyeOption[] = [
-  { tone: 'black', name: 'Black', hex: '#111111' },
-  { tone: 'white', name: 'White', hex: '#FFFFFF' },
+const EYES_IN_GRID_ORDER: Array<[string, string]> = [
+  ['ball', BLACK],
+  ['nubby', WHITE],
+  ['stampy', WHITE],
+  ['pumpkin', BLACK],
+  ['peak', WHITE],
+  ['ghosty', WHITE],
+  ['bloom', WHITE],
+  ['hexo', WHITE],
+  ['ninjo', BLACK],
+  ['jelo', WHITE],
+  ['drip', BLACK],
+  ['flame', WHITE],
+  ['germy', BLACK],
+  ['spiky', WHITE],
+  ['mokey', BLACK],
+  ['inky', WHITE],
+  ['dewy', WHITE],
+  ['tufty', WHITE],
+  ['ember', BLACK],
+  ['cheffy', BLACK],
+  ['bunni', WHITE],
+  ['blaze', WHITE],
+  ['glowy', BLACK],
+  ['googly', BLACK],
+  ['wispy', BLACK],
+  ['cheeky', BLACK],
+  ['blobby', WHITE],
+  ['fuzzy', WHITE],
+  ['limey', BLACK],
+  ['bao', WHITE],
+  ['nimbo', BLACK],
 ];
 
-export function isEyeTone(value: unknown): value is EyeTone {
-  return value === 'black' || value === 'white';
-}
+const EYE_COLORS = new Map(EYES_IN_GRID_ORDER);
 
-export function eyeHex(tone: EyeTone | null): string | null {
-  return EYE_OPTIONS.find((o) => o.tone === tone)?.hex ?? null;
+export function eyeColorOf(character: string): string | null {
+  return EYE_COLORS.get(character) ?? null;
 }
