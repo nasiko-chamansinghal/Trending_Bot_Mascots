@@ -55,7 +55,6 @@ const SPEC: SolidSpec = {
     ring: plateRing(),
     top: '#FFD24D',
     bottom: '#FFF5CF',
-    inverse: { top: '#6B1F08', bottom: '#2E0D04' },
     follow: { anchor: EYE_CENTRE, gain: 1, lean: 0.3, limit: [0.26, 0.19, 0.28] },
   },
 };
