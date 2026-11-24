@@ -640,7 +640,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const st = projectStem(spec.stem, m);
     const toScreen = (p: Vec2): Vec2 => [CX + p[0] * KX, CY + p[1] * KY];
     const stemOutline = st.outline.map(toScreen);
-    stemRoot.setAttribute('d', polyPath(st.root.map(toScreen)));
+    stemRoot.setAttribute('d', spec.stemRoot === false ? 'M0 0Z' : polyPath(st.root.map(toScreen)));
     const d = polyPath(stemOutline);
     stemFront.setAttribute('d', st.front ? d : 'M0 0Z');
     stemBack.setAttribute('d', st.front ? 'M0 0Z' : d);
