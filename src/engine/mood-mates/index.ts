@@ -19,6 +19,7 @@ import { inky } from './characters/inky';
 import { jelo } from './characters/jelo';
 import { limey } from './characters/limey';
 import { mokey } from './characters/mokey';
+import { nimbo } from './characters/nimbo';
 import { ninjo } from './characters/ninjo';
 import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
@@ -66,6 +67,7 @@ characters.register(blobby);
 characters.register(fuzzy);
 characters.register(limey);
 characters.register(bao);
+characters.register(nimbo);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
