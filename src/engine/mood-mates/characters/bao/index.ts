@@ -30,7 +30,7 @@ const SPEC: SolidSpec = {
     unit: UNIT,
     depth: 0.8,
     puff: 2.2,
-    sigma: 16,
+    sigma: 3,
     edge: 0,
     tint: { top: ['#3A2420', 0.12], bottom: ['#120605', 0.12] },
     scale: FRAME.scale,
