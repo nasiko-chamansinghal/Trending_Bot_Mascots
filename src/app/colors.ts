@@ -59,6 +59,7 @@ const EYES_IN_GRID_ORDER: Array<[string, string]> = [
   ['limey', BLACK],
   ['bao', WHITE],
   ['nimbo', BLACK],
+  ['grokky', WHITE],
 ];
 
 const EYE_COLORS = new Map(EYES_IN_GRID_ORDER);
