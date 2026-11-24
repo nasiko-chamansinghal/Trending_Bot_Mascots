@@ -39,7 +39,7 @@ const EYES_IN_GRID_ORDER: Array<[string, string]> = [
   ['ninjo', BLACK],
   ['jelo', WHITE],
   ['drip', BLACK],
-  ['flame', WHITE],
+  ['flame', BLACK],
   ['germy', BLACK],
   ['spiky', WHITE],
   ['mokey', BLACK],
