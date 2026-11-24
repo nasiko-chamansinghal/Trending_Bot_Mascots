@@ -62,6 +62,8 @@ export interface SolidSpec {
   halo?: HaloSpec;
   stem?: StemShape;
   stemShading?: StemShading;
+  stemFollow?: boolean;
+  stemRoot?: boolean;
   plate?: PlateSpec;
   decals?: DecalSpec[];
   shades?: ShadeSpec[];
