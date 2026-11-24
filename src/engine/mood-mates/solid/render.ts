@@ -640,7 +640,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const st = projectStem(spec.stem, m);
     const toScreen = (p: Vec2): Vec2 => [CX + p[0] * KX, CY + p[1] * KY];
     const stemOutline = st.outline.map(toScreen);
-    stemRoot.setAttribute('d', polyPath(st.root.map(toScreen)));
+    stemRoot.setAttribute('d', spec.stemRoot === false ? 'M0 0Z' : polyPath(st.root.map(toScreen)));
     const d = polyPath(stemOutline);
     stemFront.setAttribute('d', st.front ? d : 'M0 0Z');
     stemBack.setAttribute('d', st.front ? 'M0 0Z' : d);
@@ -963,10 +963,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     }
     body.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
     for (const limb of limbs) limb.setAttribute('fill', sketchOn ? 'none' : bodyFill(b.color));
-    stemRoot.setAttribute('fill', spec.stemColor);
-    stemBack.setAttribute('fill', sketchOn ? 'none' : stemFill);
-    stemFront.setAttribute('fill', sketchOn ? 'none' : stemFill);
-    cap.setAttribute('fill', sketchOn ? 'none' : spec.capColor);
+    const stemPaint = spec.stemFollow ? bodyFill(b.color) : null;
+    stemRoot.setAttribute('fill', stemPaint ?? spec.stemColor);
+    stemBack.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? stemFill));
+    stemFront.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? stemFill));
+    cap.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? spec.capColor));
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
     for (const node of decals) node.style.visibility = sketchOn ? 'hidden' : '';
