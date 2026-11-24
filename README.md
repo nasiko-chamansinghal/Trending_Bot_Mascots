@@ -58,6 +58,10 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/bunni.png" alt="Bunni" width="150"><br><b>Bunni</b></td>
     <td align="center"><img src="docs/screenshots/bao.png" alt="Bao" width="150"><br><b>Bao</b></td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/nimbo.png" alt="Nimbo" width="150"><br><b>Nimbo</b></td>
+    <td align="center"><img src="docs/screenshots/grokky.png" alt="Grokky" width="150"><br><b>Grokky</b></td>
+  </tr>
 </table>
 
 <p align="center">Every mascot turns in 3D, follows your cursor and shares the same emotions. New ones are added all the time.</p>
