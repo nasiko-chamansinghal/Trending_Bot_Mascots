@@ -5,6 +5,7 @@ import { bloom } from './characters/bloom';
 import { bunni } from './characters/bunni';
 import { cheeky } from './characters/cheeky';
 import { cheffy } from './characters/cheffy';
+import { chimpy } from './characters/chimpy';
 import { dewy } from './characters/dewy';
 import { drip } from './characters/drip';
 import { ember } from './characters/ember';
@@ -70,6 +71,7 @@ characters.register(limey);
 characters.register(bao);
 characters.register(nimbo);
 characters.register(grokky);
+characters.register(chimpy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
