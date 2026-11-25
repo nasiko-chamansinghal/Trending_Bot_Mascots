@@ -61,6 +61,7 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
   <tr>
     <td align="center"><img src="docs/screenshots/nimbo.png" alt="Nimbo" width="150"><br><b>Nimbo</b></td>
     <td align="center"><img src="docs/screenshots/grokky.png" alt="Grokky" width="150"><br><b>Grokky</b></td>
+    <td align="center"><img src="docs/screenshots/chimpy.png" alt="Chimpy" width="150"><br><b>Chimpy</b></td>
   </tr>
 </table>
 
