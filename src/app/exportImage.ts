@@ -8,8 +8,26 @@ function paddedViewBox(svg: SVGSVGElement): string {
   return `${x - padX} ${y - padY} ${width + padX * 2} ${height + padY * 2}`;
 }
 
+function bakeFur(svg: SVGSVGElement, clone: SVGSVGElement): void {
+  const live = svg.querySelectorAll<HTMLCanvasElement>('.mm-fur canvas');
+  clone.querySelectorAll('.mm-fur foreignObject').forEach((frame, i) => {
+    const canvas = live[i];
+    if (!canvas || canvas.width === 0) {
+      frame.remove();
+      return;
+    }
+    const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    for (const name of ['x', 'y', 'width', 'height']) {
+      image.setAttribute(name, frame.getAttribute(name) ?? '0');
+    }
+    image.setAttribute('href', canvas.toDataURL('image/png'));
+    frame.replaceWith(image);
+  });
+}
+
 export function standaloneSvg(svg: SVGSVGElement, size = PNG_SIZE): string {
   const clone = svg.cloneNode(true) as SVGSVGElement;
+  bakeFur(svg, clone);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
   clone.setAttribute('viewBox', paddedViewBox(svg));

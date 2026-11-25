@@ -64,8 +64,8 @@ export function rig(look: Look, emotion: string): Rig {
     position: 'fixed',
     left: '-10000px',
     top: '0',
-    width: '240px',
-    height: '240px',
+    width: '512px',
+    height: '512px',
     pointerEvents: 'none',
   });
   document.body.appendChild(host);
