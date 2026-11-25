@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useBodyStyle } from '../bodyStyle';
 import { createMascot, emotionsOf } from '../characters';
 import { mmss } from '../clips';
 import type { MascotEngine } from '../engine-types';
@@ -43,6 +44,7 @@ export function Stage({
   clickable = true,
   onEmotionChange,
 }: StageProps) {
+  const body = useBodyStyle();
   const engineRef = useRef<MascotEngine | null>(null);
   const artRef = useRef<HTMLDivElement>(null);
   const emotionRef = useRef(emotion);
@@ -80,7 +82,7 @@ export function Stage({
     <section className="stage" aria-label="Preview">
       <div className="stage-art" ref={artRef}>
         <Mascot
-          key={character}
+          key={`${character}:${body}`}
           className="stage-mascot"
           data-static={clickable ? undefined : ''}
           gaze
