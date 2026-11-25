@@ -348,6 +348,7 @@ export interface EngineOptions {
   idle?: boolean | Partial<IdleConfig>;
   label?: string;
   lite?: boolean;
+  fluffy?: boolean;
   autostart?: boolean;
   color?: string;
   eyeColor?: string | null;

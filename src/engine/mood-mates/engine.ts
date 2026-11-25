@@ -555,6 +555,7 @@ export interface EngineOptions {
   character?: string;
   emotion?: string;
   material?: string;
+  fluffy?: boolean;
   idle?: boolean | Partial<IdleConfig>;
   label?: string;
   lite?: boolean;
