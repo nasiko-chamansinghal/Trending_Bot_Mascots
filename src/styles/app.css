@@ -1138,6 +1138,47 @@ button.tile {
   outline-offset: 7px;
 }
 
+.body-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--raised);
+}
+
+.body-option {
+  position: relative;
+  display: grid;
+  cursor: pointer;
+}
+
+.body-option-label {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-weight: 600;
+  transition:
+    background-color var(--press) var(--ease-out),
+    color var(--press) var(--ease-out);
+}
+
+.body-option:hover .body-option-label {
+  color: var(--text);
+}
+
+.body-option:has(input:checked) .body-option-label {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.body-option:has(input:focus-visible) .body-option-label {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
 /* Design tab */
 
 .design-stage {

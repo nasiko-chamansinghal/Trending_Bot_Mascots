@@ -4,6 +4,7 @@ import type { Clip } from './clips';
 import { eyeColorOf, isSavedColor } from './colors';
 import { AnimationView } from './components/AnimationView';
 import { AppBar, type Tab } from './components/AppBar';
+import { BodyPicker } from './components/BodyPicker';
 import { CharacterPicker } from './components/CharacterPicker';
 import { ColorPicker } from './components/ColorPicker';
 import { DesignView } from './components/DesignView';
@@ -119,6 +120,12 @@ export function App() {
               />
             </div>
             <aside className="inspector" aria-label="Customise options">
+              <section className="inspector-section">
+                <div className="section-head">
+                  <h2>Body</h2>
+                </div>
+                <BodyPicker />
+              </section>
               <section className="inspector-section">
                 <div className="section-head">
                   <h2>Character</h2>
