@@ -1,3 +1,4 @@
+import { getBodyStyle } from './bodyStyle';
 import { isCustomId } from './designer/design';
 import { hasDesign } from './designer/store';
 import type { DefLike, EmotionConfigApi, MascotEngine } from './engine-types';
@@ -17,6 +18,7 @@ export interface MascotOptions {
   label?: string;
   lite?: boolean;
   autostart?: boolean;
+  fluffy?: boolean;
 }
 
 export const DEFAULT_EMOTION = '02';
@@ -49,9 +51,10 @@ function configOf(character: string): EmotionConfigApi {
 }
 
 export function createMascot(el: HTMLElement, options: MascotOptions): MascotEngine {
-  const { character, color, ...rest } = options;
+  const { character, color, fluffy, ...rest } = options;
   const themed = color ? { ...rest, color } : rest;
+  const body = { fluffy: fluffy ?? getBodyStyle() === 'fluffy' };
   return character === 'ball'
-    ? EmotionBall.create(el, themed)
-    : MoodMates.create(el, { ...themed, character });
+    ? EmotionBall.create(el, { ...themed, ...body })
+    : MoodMates.create(el, { ...themed, ...body, character });
 }
