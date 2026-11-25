@@ -5,6 +5,10 @@ Used in: src/engine/shared/hoops.ts, src/engine/shared/oklch.ts, src/engine/shar
 thinking motion in src/engine/shared/effects.ts. The ribbon hoop geometry, the body-colour ribbon palette, the colour
 space helpers and the working, done and thinking motion timings follow that project.
 
+The fluffy body in src/engine/mood-mates/fluffy/ is adapted from that project's fluffy material: the shell and strand
+fur shaders, the dye ramp, the eye socket distance tiles and the root scatter. The meshes are built from this
+project's own body surface instead.
+
 MIT License
 
 Copyright (c) 2026 Dominik Scholz
