@@ -26,6 +26,7 @@ import { ninjo } from './characters/ninjo';
 import { nubby } from './characters/nubby';
 import { blockpop } from './characters/nubby/skin';
 import { peak } from './characters/peak';
+import { puffy } from './characters/puffy';
 import { pumpkin } from './characters/pumpkin';
 import { spiky } from './characters/spiky';
 import { stampy } from './characters/stampy';
@@ -72,6 +73,7 @@ characters.register(bao);
 characters.register(nimbo);
 characters.register(grokky);
 characters.register(chimpy);
+characters.register(puffy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
