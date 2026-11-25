@@ -1,3 +1,6 @@
+import { createFurLayer, furSupported } from '../mood-mates/fluffy/layer';
+import { furSpecOfRing } from '../mood-mates/fluffy/outline';
+import { rotation } from '../mood-mates/solid/model';
 import { createShiver, createWash } from '../shared/fear';
 import { createHoops, hashString } from '../shared/hoops';
 import { createRibbons } from '../shared/ribbons';
@@ -59,6 +62,7 @@ interface EyeState {
 export interface BallOptions {
   shape?: string;
   lite?: boolean;
+  fluffy?: boolean;
   label?: string;
 }
 
@@ -165,6 +169,18 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
   const eyeR = buildEye(1);
   bodyG.appendChild(eyeL.node);
   bodyG.appendChild(eyeR.node);
+  const fur = opts.fluffy && furSupported() ? createFurLayer({ svg, spec: furSpecOfRing(headRing) }) : null;
+  if (fur) bodyG.insertBefore(fur.node, wash);
+  const furCovered = [head, eyeL.node, eyeR.node];
+  let furShown: boolean | null = null;
+  const eyePolys: Array<Array<[number, number]> | null> = [null, null];
+
+  function showFur(on: boolean): void {
+    if (!fur || furShown === on) return;
+    furShown = on;
+    fur.node.style.display = on ? '' : 'none';
+    for (const node of furCovered) node.style.visibility = on ? 'hidden' : '';
+  }
   svg.appendChild(bodyG);
 
   const fxFront = el('g', { 'pointer-events': 'none' });
@@ -273,7 +289,13 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     if (curSketch > 0.5) head.style.stroke = `var(--sketch-ink, ${shade(color, -0.6)})`;
   }
 
-  function setEye(eye: EyeState, pose: EyePose, k: number, sketch: number, yaw: number): void {
+  function setEye(
+    eye: EyeState,
+    pose: EyePose,
+    k: number,
+    sketch: number,
+    yaw: number,
+  ): Array<[number, number]> | null {
     const ring = pose.ring;
     if (ring && ring !== eye.ring) {
       eye.ring = ring;
@@ -300,7 +322,7 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     const cn = Math.cos(total);
     if (cn <= 0.02) {
       eye.node.style.display = 'none';
-      return;
+      return null;
     }
     eye.node.style.display = '';
     const ex = cx0 + hw * Math.sin(total) * 0.985;
@@ -322,6 +344,17 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
       eye.node.style.stroke = stroke;
       eye.lastStroke = stroke;
     }
+    if (!fur) return null;
+    const turn = ((pose.rotate || 0) * Math.PI) / 180;
+    const cosT = Math.cos(turn);
+    const sinT = Math.sin(turn);
+    const sx = sxBase * cn;
+    const syFinal = sy * fy;
+    return eye.ring.map(([x, y]): [number, number] => {
+      const dx = (x - base[0]) * sx;
+      const dy = (y - base[1]) * syFinal;
+      return [ex + dx * cosT - dy * sinT, ey0 + dx * sinT + dy * cosT];
+    });
   }
 
   function applyPose(pose: Pose): void {
@@ -348,8 +381,20 @@ export function createBall(container: HTMLElement, opts: BallOptions = {}): Ball
     }
 
     const yaw = b.yaw || 0;
-    setEye(eyeL, pose.left, 0, sketch, yaw);
-    setEye(eyeR, pose.right, 1, sketch, yaw);
+    eyePolys[0] = setEye(eyeL, pose.left, 0, sketch, yaw);
+    eyePolys[1] = setEye(eyeR, pose.right, 1, sketch, yaw);
+    if (fur) {
+      const sketchOn = sketch > 0.5;
+      showFur(!sketchOn);
+      if (!sketchOn) {
+        fur.draw(rotation({ yaw, pitch: 0, roll: 0 }), {
+          color: b.color,
+          ink: pose.left.color,
+          eyes: eyePolys.map((poly) => poly ?? []),
+          patches: [],
+        });
+      }
+    }
 
     const washOpacity = sketch > 0.5 ? '0' : clamp(b.chill, 0, 1).toFixed(3);
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
