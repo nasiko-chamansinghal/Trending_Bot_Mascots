@@ -3,6 +3,7 @@ import { createHoops, hashString, unionOutline } from '../../shared/hoops';
 import { hexToRgb, lerpColor } from '../../shared/math';
 import { AURAS, createRibbons } from '../../shared/ribbons';
 import { nextUid } from '../../shared/uid';
+import { createFurLayer, furSupported } from '../fluffy/layer';
 import { createFx, type FxHandle } from '../fx';
 import type { Point, Ring } from '../geometry';
 import { createProps } from '../props';
@@ -47,6 +48,7 @@ const SHADE_DEEPEN = 0.55;
 const VIVID_CHROMA = 18;
 const VIVID_SATURATION = 0.9;
 const TOPPER_EDGE = 1.4;
+const RIG_SHADOW = 'drop-shadow(0 3px 4px rgb(0 0 0 / 0.38))';
 const EAR_WALL_SHADE = '0.14';
 const EAR_CAP_BLEED = '0.6';
 function radiusAt(table: Float64Array, angle: number): number {
@@ -547,6 +549,59 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
   bodyG.insertBefore(earsBack, body);
   svg.insertBefore(earsUnder, eyeG);
   svg.appendChild(earsOver);
+  const fur =
+    opts.fluffy && furSupported()
+      ? createFurLayer({ svg, spec, outline: () => solidRestOutline(spec, 360) })
+      : null;
+  if (fur) svg.insertBefore(fur.node, eyeG);
+  let furShown = false;
+  let platePoly: Vec2[] | null = null;
+  const decalPolys: Array<Vec2[] | null> = decals.map(() => null);
+  const eyePolys: Array<Vec2[] | null> = [null, null];
+  const flatStops = new Map<string, SVGStopElement[]>();
+
+  function flatOf(fill: string): string {
+    if (!fill.startsWith('url(#')) return fill;
+    const id = fill.slice(5, -1);
+    let stops = flatStops.get(id);
+    if (!stops) {
+      const gradient = svg.querySelector(`[id="${id}"]`);
+      stops = gradient ? (Array.from(gradient.children) as SVGStopElement[]) : [];
+      flatStops.set(id, stops);
+    }
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    if (!first || !last) return '#888888';
+    return lerpColor(
+      first.getAttribute('stop-color') ?? '#888888',
+      last.getAttribute('stop-color') ?? '#888888',
+      0.5,
+    );
+  }
+
+  function showFur(on: boolean): void {
+    if (!fur || furShown === on) return;
+    furShown = on;
+    fur.node.style.display = on ? '' : 'none';
+    body.style.display = on ? 'none' : '';
+    for (const eye of eyes) eye.node.style.visibility = on ? 'hidden' : '';
+    const covered: Array<SVGElement | null | undefined> = [
+      plate,
+      ...decals,
+      ...shades.map((s) => s.node),
+      ...limbs,
+      ...limbShades.map((s) => s.path),
+      earsBack,
+      earsUnder,
+      earsOver,
+    ];
+    for (const node of rigNodes) node.style.filter = on ? RIG_SHADOW : '';
+    if (spec.stem) covered.push(stemRoot, stemBack, stemFront, cap, ball);
+    if (spec.topper && !spec.topper.rig) covered.push(topper, topperWash, topperAccent);
+    for (const node of covered) {
+      if (node) node.style.visibility = on ? 'hidden' : '';
+    }
+  }
   const ears = (spec.ears ?? []).map((ear) => {
     const shell = el('g', {}) as SVGGElement;
     const wall = el('path', { fill: palette.body, stroke: 'none' }) as SVGPathElement;
@@ -766,7 +821,8 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     const faceMat = follow ? turnFace(m, turn[0], turn[1], turn[2]) : m;
     const face = projectEye(prep.skin, prep.map, plateRing, faceMat, spec.edge, !spec.wrapDecals);
     node.style.display = face ? '' : 'none';
-    if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+    platePoly = face ? face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY]) : null;
+    if (platePoly) node.setAttribute('d', polyPath(platePoly));
   }
 
   let decalKey = '';
@@ -781,7 +837,9 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       const mat = decalLooks[i]?.follow ? turned : m;
       const face = projectEye(prep.skin, prep.map, decalRings[i] as Vec2[], mat, spec.edge, !spec.wrapDecals);
       node.style.display = face ? '' : 'none';
-      if (face) node.setAttribute('d', polyPath(face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY])));
+      const poly = face ? face.map((p): Vec2 => [CX + p[0] * KX, CY + p[1] * KY]) : null;
+      decalPolys[i] = poly;
+      if (poly) node.setAttribute('d', polyPath(poly));
     });
   }
 
@@ -871,11 +929,11 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     bodyTf: string,
     sqx: number,
     sqy: number,
-  ): void {
+  ): Vec2[] | null {
     const pts = projectEye(prep.skin, prep.map, eyeRing(pose), m, spec.edge, !spec.wrapDecals);
     if (!pts) {
       eye.node.style.display = 'none';
-      return;
+      return null;
     }
     eye.node.style.display = '';
     const scr = pts.map((p) => [CX + p[0] * KX, CY + p[1] * KY] as Vec2);
@@ -906,6 +964,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
       eye.node.style.stroke = stroke;
       eye.lastStroke = stroke;
     }
+    return scr;
   }
 
   function setMouth(
@@ -1014,7 +1073,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     cap.setAttribute('fill', sketchOn ? 'none' : (stemPaint ?? spec.capColor));
     ball?.setAttribute('fill', sketchOn ? 'none' : ballFill);
     plate?.setAttribute('fill', sketchOn ? 'none' : plateFillFor(b.color, pose.left.color));
-    for (const node of decals) node.style.visibility = sketchOn ? 'hidden' : '';
+    for (const node of decals) node.style.visibility = sketchOn || furShown ? 'hidden' : '';
     for (const e of ears) {
       const paint = sketchOn ? 'none' : earFill(b.color);
       e.wall.setAttribute('fill', paint);
@@ -1053,9 +1112,28 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
     for (const e of ears) e.earWash.setAttribute('opacity', washOpacity);
     if (wash.getAttribute('opacity') !== washOpacity) wash.setAttribute('opacity', washOpacity);
     if (b.chill > 0.001) washPaint.tint(b.color);
-    setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
-    setEye(eyes[1], pose.right, m, sketch, bodyTf, sqx, sqy);
+    eyePolys[0] = setEye(eyes[0], pose.left, m, sketch, bodyTf, sqx, sqy);
+    eyePolys[1] = setEye(eyes[1], pose.right, m, sketch, bodyTf, sqx, sqy);
     setMouth(pose.mouth, m, sketch, bodyTf, sqx, sqy);
+    if (fur) {
+      showFur(!sketchOn);
+      fur.node.setAttribute('transform', bodyTf);
+      if (!sketchOn) {
+        const patches: Array<{ points: Vec2[]; fill: string }> = [];
+        if (platePoly) {
+          patches.push({ points: platePoly, fill: flatOf(plateFillFor(b.color, pose.left.color)) });
+        }
+        decalPolys.forEach((poly, i) => {
+          if (poly) patches.push({ points: poly, fill: decalLooks[i]?.fill ?? '#ffffff' });
+        });
+        fur.draw(m, {
+          color: flatOf(bodyFill(b.color)),
+          ink: pose.left.color,
+          eyes: eyePolys.map((poly) => poly ?? []),
+          patches,
+        });
+      }
+    }
 
     const lift = clamp(-b.y / 52, 0, 1);
     const shOp = sketchOn ? 0 : 0.16 * (1 - 0.55 * lift);
@@ -1107,6 +1185,7 @@ export function createSolidBall(container: HTMLElement, opts: BallOptions): Ball
 
   function destroy(): void {
     if (fx) fx.destroy();
+    fur?.destroy();
     if (svg.parentNode) svg.parentNode.removeChild(svg);
   }
 

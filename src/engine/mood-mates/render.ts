@@ -2,10 +2,13 @@ import { createShiver, createWash } from '../shared/fear';
 import { createHoops, hashString } from '../shared/hoops';
 import { createRibbons } from '../shared/ribbons';
 import { nextUid } from '../shared/uid';
+import { createFurLayer, furSupported } from './fluffy/layer';
+import { furSpecOfRing } from './fluffy/outline';
 import { createFx, type FxHandle } from './fx';
 import type { Point, Ring } from './geometry';
 import { getMaterial } from './materials';
 import { createProps } from './props';
+import { rotation } from './solid/model';
 import { createSolidBall } from './solid/render';
 import { createTint } from './tint';
 import type { BodyPose, EyePose, Pose, ResolvedCharacter } from './types';
@@ -37,6 +40,7 @@ export interface BallOptions {
   label?: string;
   lite?: boolean;
   material?: string;
+  fluffy?: boolean;
 }
 
 export interface BallHandle {
@@ -219,6 +223,22 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
   faceHost.appendChild(eyeR.node);
   if (faceG) bodyG.appendChild(faceG);
 
+  const fur = opts.fluffy && furSupported() ? createFurLayer({ svg, spec: furSpecOfRing(headRing) }) : null;
+  const furCovered = (Array.from(bodyG.children) as SVGElement[]).filter(
+    (node) => node !== wash && node !== faceG && node !== eyeL.node && node !== eyeR.node,
+  );
+  furCovered.push(eyeL.node, eyeR.node);
+  if (fur) bodyG.insertBefore(fur.node, wash);
+  let furShown: boolean | null = null;
+  const eyePolys: Array<Array<[number, number]> | null> = [null, null];
+
+  function showFur(on: boolean): void {
+    if (!fur || furShown === on) return;
+    furShown = on;
+    fur.node.style.display = on ? '' : 'none';
+    for (const node of furCovered) node.style.visibility = on ? 'hidden' : '';
+  }
+
   svg.appendChild(bodyG);
 
   const propsLayer = ch.props.length ? el('g', { 'pointer-events': 'none' }) : null;
@@ -287,7 +307,13 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     material.setSketch(on, color);
   }
 
-  function setEye(eye: EyeState, pose: EyePose, k: number, sketch: number, yaw: number): void {
+  function setEye(
+    eye: EyeState,
+    pose: EyePose,
+    k: number,
+    sketch: number,
+    yaw: number,
+  ): Array<[number, number]> | null {
     const ring = pose.ring;
     if (ring && ring !== eye.ring) {
       eye.ring = ring;
@@ -307,7 +333,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     const cn = Math.cos(yaw || 0);
     if (cn <= 0.02) {
       eye.node.style.display = 'none';
-      return;
+      return null;
     }
     eye.node.style.display = '';
     const row0 = silAt(ey0);
@@ -350,6 +376,16 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
       eye.node.style.stroke = stroke;
       eye.lastStroke = stroke;
     }
+    if (!fur) return null;
+    const turn = ((pose.rotate || 0) * Math.PI) / 180;
+    const cosT = Math.cos(turn);
+    const sinT = Math.sin(turn);
+    const sx = sxBase * cn;
+    return eye.ring.map(([x, y]): [number, number] => {
+      const dx = (x - base[0]) * sx;
+      const dy = (y - base[1]) * syAll;
+      return [ex + dx * cosT - dy * sinT, ey0 + dx * sinT + dy * cosT];
+    });
   }
 
   let peelState: {
@@ -510,7 +546,7 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     let spinSqX = 1;
     if (yaw0 > 0.001 || yaw0 < -0.001) {
       spinTilt = 5 * Math.sin(yaw0);
-      spinSqX = 0.88 + 0.12 * Math.abs(Math.cos(yaw0));
+      spinSqX = fur ? 1 : 0.88 + 0.12 * Math.abs(Math.cos(yaw0));
     }
 
     const bodyTf = `translate(${r2(C + b.x)} ${r2(C + b.y + (1 - b.scaleY) * b.scale * (silMaxY - C))}) rotate(${r2((b.rotate || 0) + spinTilt)}) scale(${r2(b.scale * spinSqX * b.scaleX)} ${r2(b.scale * b.scaleY)}) translate(${r2(-C)} ${r2(-C)})`;
@@ -538,8 +574,19 @@ export function createBall(container: HTMLElement, opts: BallOptions): BallHandl
     }
 
     const yaw = b.yaw || 0;
-    setEye(eyeL, pose.left, 0, sketch, yaw);
-    setEye(eyeR, pose.right, 1, sketch, yaw);
+    eyePolys[0] = setEye(eyeL, pose.left, 0, sketch, yaw);
+    eyePolys[1] = setEye(eyeR, pose.right, 1, sketch, yaw);
+    if (fur) {
+      showFur(!sketchOn);
+      if (!sketchOn) {
+        fur.draw(rotation({ yaw, pitch: 0, roll: 0 }), {
+          color: b.color,
+          ink: pose.left.color,
+          eyes: eyePolys.map((poly) => poly ?? []),
+          patches: [],
+        });
+      }
+    }
 
     if (props) props.apply(pose.props, { body: b.color, eye: pose.left.color, sketch: sketchOn });
 
