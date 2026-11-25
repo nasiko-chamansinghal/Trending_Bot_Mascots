@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useBodyStyle } from '../bodyStyle';
 import { createMascot } from '../characters';
 import type { MascotEngine } from '../engine-types';
 import { enqueue } from '../mountQueue';
@@ -12,6 +13,7 @@ interface MascotThumbProps {
 }
 
 export function MascotThumb({ character, emotion, color, eyes, label }: MascotThumbProps) {
+  const body = useBodyStyle();
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<MascotEngine | null>(null);
   const latest = useRef({ character, emotion, color, eyes, label });
@@ -47,6 +49,7 @@ export function MascotThumb({ character, emotion, color, eyes, label }: MascotTh
         label: o.label,
         lite: true,
         autostart: false,
+        fluffy: body === 'fluffy',
       });
     });
     return () => {
@@ -54,7 +57,7 @@ export function MascotThumb({ character, emotion, color, eyes, label }: MascotTh
       engineRef.current?.destroy();
       engineRef.current = null;
     };
-  }, [visible]);
+  }, [visible, body]);
 
   useEffect(() => {
     engineRef.current?.setColor(color, eyes, true);
