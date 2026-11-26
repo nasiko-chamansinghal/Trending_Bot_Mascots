@@ -20,6 +20,7 @@ import { hexo } from './characters/hexo';
 import { inky } from './characters/inky';
 import { jelo } from './characters/jelo';
 import { limey } from './characters/limey';
+import { mewy } from './characters/mewy';
 import { mokey } from './characters/mokey';
 import { nimbo } from './characters/nimbo';
 import { ninjo } from './characters/ninjo';
@@ -74,6 +75,7 @@ characters.register(nimbo);
 characters.register(grokky);
 characters.register(chimpy);
 characters.register(puffy);
+characters.register(mewy);
 
 function registerDesign(raw: unknown): string | null {
   const design = sanitizeDesign(raw);
