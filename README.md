@@ -62,6 +62,8 @@ Your AI picks one emotion with a single `emotionId`. The mascot does the rest.
     <td align="center"><img src="docs/screenshots/nimbo.png" alt="Nimbo" width="150"><br><b>Nimbo</b></td>
     <td align="center"><img src="docs/screenshots/grokky.png" alt="Grokky" width="150"><br><b>Grokky</b></td>
     <td align="center"><img src="docs/screenshots/chimpy.png" alt="Chimpy" width="150"><br><b>Chimpy</b></td>
+    <td align="center"><img src="docs/screenshots/puffy.png" alt="Puffy" width="150"><br><b>Puffy</b></td>
+    <td align="center"><img src="docs/screenshots/mewy.png" alt="Mewy" width="150"><br><b>Mewy</b></td>
   </tr>
 </table>
 
@@ -76,7 +78,7 @@ pnpm dev
 
 Open `http://localhost:5173/` (Node `^20.19.0` or `>=22.12.0`). Mascot Studio has four tabs:
 
-- **Customise:** pick a mascot, recolour it and play any emotion.
+- **Customise:** pick a mascot, recolour it and play any emotion. The **Body** switch turns every mascot between **Flat** and **Fluffy**, a coat of fur that turns in 3D with the eyes set into it. Fluffy needs WebGL2, and falls back to flat without it.
 - **Design:** shape your own mascot. [More below.](#design-your-own-mascot)
 - **Animation:** chain 2-second clips into a timeline and export it.
 - **Agent skill:** install a skill that lets Claude Code or any coding agent add these mascots to your app. [More below.](#let-your-coding-agent-add-it)
@@ -186,4 +188,4 @@ The skill's text lives in `skill/`. `scripts/build-skill.mjs` fills in the chara
 
 ## Credits
 
-The ribbons, the three hopping dots and the Working and Done motion follow [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) (MIT). See `THIRD_PARTY_NOTICES.txt`.
+The ribbons, the three hopping dots, the Working and Done motion and the fluffy fur renderer follow [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) (MIT). See `THIRD_PARTY_NOTICES.txt`.
