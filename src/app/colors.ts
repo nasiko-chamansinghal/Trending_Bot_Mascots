@@ -26,6 +26,7 @@ export function isSavedColor(hex: string | null): hex is string {
 
 const BLACK = '#111111';
 const WHITE = '#FFFFFF';
+const PURPLE = '#BF01FE';
 
 const EYES_IN_GRID_ORDER: Array<[string, string]> = [
   ['ball', BLACK],
@@ -62,6 +63,7 @@ const EYES_IN_GRID_ORDER: Array<[string, string]> = [
   ['grokky', WHITE],
   ['chimpy', BLACK],
   ['puffy', BLACK],
+  ['mewy', PURPLE],
 ];
 
 const EYE_COLORS = new Map(EYES_IN_GRID_ORDER);
