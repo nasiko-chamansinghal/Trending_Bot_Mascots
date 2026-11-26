@@ -188,4 +188,4 @@ The skill's text lives in `skill/`. `scripts/build-skill.mjs` fills in the chara
 
 ## Credits
 
-The ribbons, the three hopping dots and the Working and Done motion follow [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) (MIT). See `THIRD_PARTY_NOTICES.txt`.
+The ribbons, the three hopping dots, the Working and Done motion and the fluffy fur renderer follow [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) (MIT). See `THIRD_PARTY_NOTICES.txt`.
